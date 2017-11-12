@@ -59,7 +59,12 @@ enum cache_event {
 };
 
 const char * cache_request_status_str(enum cache_request_status status); 
+typedef std::set<unsigned> sector_referred;
 
+typedef struct {
+    unsigned num_referred;
+    sector_referred sectors;
+}blk_stats_t;
 struct cache_block_t {
     cache_block_t()
     {
@@ -93,247 +98,7 @@ struct cache_block_t {
     unsigned         m_fill_time;
     cache_block_state    m_status;
 };
-
-enum replacement_policy_t {
-    LRU,
-    FIFO
-};
-
-enum write_policy_t {
-    READ_ONLY,
-    WRITE_BACK,
-    WRITE_THROUGH,
-    WRITE_EVICT,
-    LOCAL_WB_GLOBAL_WT
-};
-
-enum allocation_policy_t {
-    ON_MISS,
-    ON_FILL
-};
-
-
-enum write_allocate_policy_t {
-	NO_WRITE_ALLOCATE,
-	WRITE_ALLOCATE
-};
-
-enum mshr_config_t {
-    TEX_FIFO,
-    ASSOC // normal cache 
-};
-
-enum set_index_function{
-    FERMI_HASH_SET_FUNCTION = 0,
-    LINEAR_SET_FUNCTION,
-    CUSTOM_SET_FUNCTION
-};
-
-class cache_config {
-public:
-    cache_config() 
-    { 
-        m_valid = false; 
-        m_disabled = false;
-        m_config_string = NULL; // set by option parser
-        m_config_stringPrefL1 = NULL;
-        m_config_stringPrefShared = NULL;
-        m_data_port_width = 0;
-        m_set_index_function = LINEAR_SET_FUNCTION;
-    }
-    void init(char * config, FuncCache status)
-    {
-    	cache_status= status;
-        assert( config );
-        char rp, wp, ap, mshr_type, wap, sif;
-
-
-        int ntok = sscanf(config,"%u:%u:%u,%c:%c:%c:%c:%c,%c:%u:%u,%u:%u,%u",
-                          &m_nset, &m_line_sz, &m_assoc, &rp, &wp, &ap, &wap,
-                          &sif,&mshr_type,&m_mshr_entries,&m_mshr_max_merge,
-                          &m_miss_queue_size, &m_result_fifo_entries,
-                          &m_data_port_width);
-
-        if ( ntok < 11 ) {
-            if ( !strcmp(config,"none") ) {
-                m_disabled = true;
-                return;
-            }
-            exit_parse_error();
-        }
-        switch (rp) {
-        case 'L': m_replacement_policy = LRU; break;
-        case 'F': m_replacement_policy = FIFO; break;
-        default: exit_parse_error();
-        }
-        switch (wp) {
-        case 'R': m_write_policy = READ_ONLY; break;
-        case 'B': m_write_policy = WRITE_BACK; break;
-        case 'T': m_write_policy = WRITE_THROUGH; break;
-        case 'E': m_write_policy = WRITE_EVICT; break;
-        case 'L': m_write_policy = LOCAL_WB_GLOBAL_WT; break;
-        default: exit_parse_error();
-        }
-        switch (ap) {
-        case 'm': m_alloc_policy = ON_MISS; break;
-        case 'f': m_alloc_policy = ON_FILL; break;
-        default: exit_parse_error();
-        }
-        switch (mshr_type) {
-        case 'F': m_mshr_type = TEX_FIFO; assert(ntok==13); break;
-        case 'A': m_mshr_type = ASSOC; break;
-        default: exit_parse_error();
-        }
-        m_line_sz_log2 = LOGB2(m_line_sz);
-        m_nset_log2 = LOGB2(m_nset);
-        m_valid = true;
-
-        switch(wap){
-        case 'W': m_write_alloc_policy = WRITE_ALLOCATE; break;
-        case 'N': m_write_alloc_policy = NO_WRITE_ALLOCATE; break;
-        default: exit_parse_error();
-        }
-
-        // detect invalid configuration 
-        if (m_alloc_policy == ON_FILL and m_write_policy == WRITE_BACK) {
-            // A writeback cache with allocate-on-fill policy will inevitably lead to deadlock:  
-            // The deadlock happens when an incoming cache-fill evicts a dirty
-            // line, generating a writeback request.  If the memory subsystem
-            // is congested, the interconnection network may not have
-            // sufficient buffer for the writeback request.  This stalls the
-            // incoming cache-fill.  The stall may propagate through the memory
-            // subsystem back to the output port of the same core, creating a
-            // deadlock where the wrtieback request and the incoming cache-fill
-            // are stalling each other.  
-            assert(0 && "Invalid cache configuration: Writeback cache cannot allocate new line on fill. "); 
-        }
-
-        // default: port to data array width and granularity = line size 
-        if (m_data_port_width == 0) {
-            m_data_port_width = m_line_sz; 
-        }
-        assert(m_line_sz % m_data_port_width == 0); 
-
-        switch(sif){
-        case 'H': m_set_index_function = FERMI_HASH_SET_FUNCTION; break;
-        case 'C': m_set_index_function = CUSTOM_SET_FUNCTION; break;
-        case 'L': m_set_index_function = LINEAR_SET_FUNCTION; break;
-        default: exit_parse_error();
-        }
-    }
-    bool disabled() const { return m_disabled;}
-    unsigned get_line_sz() const
-    {
-        assert( m_valid );
-        return m_line_sz;
-    }
-    unsigned get_num_lines() const
-    {
-        assert( m_valid );
-        return m_nset * m_assoc;
-    }
-
-    void print( FILE *fp ) const
-    {
-        fprintf( fp, "Size = %d B (%d Set x %d-way x %d byte line)\n", 
-                 m_line_sz * m_nset * m_assoc,
-                 m_nset, m_assoc, m_line_sz );
-    }
-
-    virtual unsigned set_index( new_addr_type addr ) const
-    {
-        if(m_set_index_function != LINEAR_SET_FUNCTION){
-            printf("\nGPGPU-Sim cache configuration error: Hashing or "
-                    "custom set index function selected in configuration "
-                    "file for a cache that has not overloaded the set_index "
-                    "function\n");
-            abort();
-        }
-        return(addr >> m_line_sz_log2) & (m_nset-1);
-    }
-
-    new_addr_type tag( new_addr_type addr ) const
-    {
-        // For generality, the tag includes both index and tag. This allows for more complex set index
-        // calculations that can result in different indexes mapping to the same set, thus the full
-        // tag + index is required to check for hit/miss. Tag is now identical to the block address.
-
-        //return addr >> (m_line_sz_log2+m_nset_log2);
-        return addr & ~(m_line_sz-1);
-    }
-    new_addr_type block_addr( new_addr_type addr ) const
-    {
-        return addr & ~(m_line_sz-1);
-    }
-    FuncCache get_cache_status() {return cache_status;}
-    char *m_config_string;
-    char *m_config_stringPrefL1;
-    char *m_config_stringPrefShared;
-    FuncCache cache_status;
-
-protected:
-    void exit_parse_error()
-    {
-        printf("GPGPU-Sim uArch: cache configuration parsing error (%s)\n", m_config_string );
-        abort();
-    }
-
-    bool m_valid;
-    bool m_disabled;
-    unsigned m_line_sz;
-    unsigned m_line_sz_log2;
-    unsigned m_nset;
-    unsigned m_nset_log2;
-    unsigned m_assoc;
-
-    enum replacement_policy_t m_replacement_policy; // 'L' = LRU, 'F' = FIFO
-    enum write_policy_t m_write_policy;             // 'T' = write through, 'B' = write back, 'R' = read only
-    enum allocation_policy_t m_alloc_policy;        // 'm' = allocate on miss, 'f' = allocate on fill
-    enum mshr_config_t m_mshr_type;
-
-    write_allocate_policy_t m_write_alloc_policy;	// 'W' = Write allocate, 'N' = No write allocate
-
-    union {
-        unsigned m_mshr_entries;
-        unsigned m_fragment_fifo_entries;
-    };
-    union {
-        unsigned m_mshr_max_merge;
-        unsigned m_request_fifo_entries;
-    };
-    union {
-        unsigned m_miss_queue_size;
-        unsigned m_rob_entries;
-    };
-    unsigned m_result_fifo_entries;
-    unsigned m_data_port_width; //< number of byte the cache can access per cycle 
-    enum set_index_function m_set_index_function; // Hash, linear, or custom set index function
-
-    friend class tag_array;
-    friend class baseline_cache;
-    friend class read_only_cache;
-    friend class tex_cache;
-    friend class data_cache;
-    friend class l1_cache;
-    friend class l2_cache;
-};
-
-class l1d_cache_config : public cache_config{
-public:
-	l1d_cache_config() : cache_config(){}
-	virtual unsigned set_index(new_addr_type addr) const;
-};
-
-class l2_cache_config : public cache_config {
-public:
-	l2_cache_config() : cache_config(){}
-	void init(linear_to_raw_address_translation *address_mapping);
-	virtual unsigned set_index(new_addr_type addr) const;
-
-private:
-	linear_to_raw_address_translation *m_address_mapping;
-};
-
+#define SECTOR_MASK 0x60
 class tag_array {
 public:
     // Use this constructor
@@ -358,6 +123,34 @@ public:
     void get_stats(unsigned &total_access, unsigned &total_misses, unsigned &total_hit_res, unsigned &total_res_fail) const;
 
 	void update_cache_parameters(cache_config &config);
+
+    void reinit_kernel_stat(int core_id , int type_id);
+    void update_blk_stat(unsigned blk_id, sector_referred sectors)
+    {
+        m_line_stat[blk_id]->num_referred++;
+        m_line_stat[blk_id]->sectors.set_union(sectors.begin(),sectors.end());
+    }
+    void del_blk_and_commit(unsigned blk_id)
+    {
+        unsigned num_sector = m_line_stat[blk_id]->sectors.size();
+        assert(num_sector>0);
+        tot_sector_referred[num_sector-1]++;
+        kernel_sector_referred[num_sector-1]++;
+
+        unsigned num_referred = m_line_stat[blk_id]->num_referred;
+        switch(num_referred){
+            case 1: tot_block_referred[0]++;kernel_block_referred[0]++;break;
+            case 2: tot_block_referred[1]++;kernel_block_referred[1]++;break;
+            case 3:case 4:case 5:case 6: 
+            tot_block_referred[2]++;kernel_block_referred[2]++;break;
+            case 7:case 8:case 9: case 10: case 11:
+            tot_block_referred[3]++;kernel_block_referred[3]++;break;
+            default: tot_block_referred[4]++;kernel_block_referred[4]++;break;
+        }
+        m_line_stat[blk_id]->sectors.clear();
+        m_line_stat[blk_id]->num_referred=0;
+    }
+
 protected:
     // This constructor is intended for use only from derived classes that wish to
     // avoid unnecessary memory allocation that takes place in the
@@ -373,11 +166,18 @@ protected:
     cache_config &m_config;
 
     cache_block_t *m_lines; /* nbanks x nset x assoc lines in total */
+    blk_stats_t *m_line_stat;
 
     unsigned m_access;
     unsigned m_miss;
     unsigned m_pending_hit; // number of cache miss that hit a line that is allocated but not filled
     unsigned m_res_fail;
+
+    //block reference stats
+    std::vector<unsigned> kernel_block_referred;//<num_referred,num_blks>
+    std::vector<unsigned> tot_block_referred;//<num_referred,num_blks>/
+    std::vector<unsigned> tot_sector_referred;
+    std::vector<unsigned> kernel_sector_referred;
 
     // performance counters for calculating the amount of misses within a time window
     unsigned m_prev_snapshot_access;
@@ -611,6 +411,8 @@ public:
     // accessors for cache bandwidth availability 
     bool data_port_free() const { return m_bandwidth_management.data_port_free(); } 
     bool fill_port_free() const { return m_bandwidth_management.fill_port_free(); } 
+
+    tag_array* get_tag_array() {return m_tag_array;}
 
 protected:
     // Constructor that can be used by derived classes with custom tag arrays

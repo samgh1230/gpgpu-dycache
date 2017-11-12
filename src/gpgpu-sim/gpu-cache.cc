@@ -138,6 +138,7 @@ tag_array::tag_array( cache_config &config,
 {
     //assert( m_config.m_write_policy == READ_ONLY ); Old assert
     m_lines = new cache_block_t[MAX_DEFAULT_CACHE_SIZE_MULTIBLIER*config.get_num_lines()];
+    m_line_stat = new blk_stats[MAX_DEFAULT_CACHE_SIZE_MULTIBLIER*config.get_num_lines()];
     init( core_id, type_id );
 }
 
@@ -153,6 +154,20 @@ void tag_array::init( int core_id, int type_id )
     m_prev_snapshot_pending_hit = 0;
     m_core_id = core_id; 
     m_type_id = type_id;
+
+    //initialize block referenced stats
+    tot_block_referred.resize(5,0);
+    kernel_block_referred.resize(5,0);
+    tot_sector_referred.resize(4,0);
+    kernel_sector_referred.resize(4,0);
+}
+
+void tag_array::reinit_kernel_stat(int core_id, int type_id)
+{
+    kernel_block_referred.clear();
+    kernel_sector_referred.clear();
+    kernel_block_referred.resize(5,0);
+    kernel_sector_referred.resize(4,0);
 }
 
 enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx ) const {
@@ -787,6 +802,15 @@ void data_cache::send_write_request(mem_fetch *mf, cache_event request, unsigned
 
 /// Write-back hit: Mark block as modified
 cache_request_status data_cache::wr_hit_wb(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
+    unsigned data_size = mf->get_data_size();
+    unsigned sector_num = data_size/32;
+    new_addr_type start_sector = (addr & SECTOR_MASK)>>5;
+    assert(start_sector+sector_num<4);
+    printf("addr:%.8u, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
+    sector_referred sectors;
+    for(int i=0;i<sector_num;i++)
+        sectors.insert(start_sector+i);
+    m_tag_array->update_blk_stat(cache_index,sectors);
 	new_addr_type block_addr = m_config.block_addr(addr);
 	m_tag_array->access(block_addr,time,cache_index); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
@@ -799,6 +823,16 @@ cache_request_status data_cache::wr_hit_wb(new_addr_type addr, unsigned cache_in
 cache_request_status data_cache::wr_hit_wt(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
 	if(miss_queue_full(0))
 		return RESERVATION_FAIL; // cannot handle request this cycle
+
+    unsigned data_size = mf->get_data_size();
+    unsigned sector_num = data_size/32;
+    new_addr_type start_sector = (addr & SECTOR_MASK)>>5;
+    assert(start_sector+sector_num<4);
+    printf("addr:%.8u, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
+    sector_referred sectors;
+    for(int i=0;i<sector_num;i++)
+        sectors.insert(start_sector+i);
+    m_tag_array->update_blk_stat(cache_index,sectors);
 
 	new_addr_type block_addr = m_config.block_addr(addr);
 	m_tag_array->access(block_addr,time,cache_index); // update LRU state
@@ -818,9 +852,10 @@ cache_request_status data_cache::wr_hit_we(new_addr_type addr, unsigned cache_in
 
 	// generate a write-through/evict
 	cache_block_t &block = m_tag_array->get_block(cache_index);
-	send_write_request(mf, WRITE_REQUEST_SENT, time, events);
+    m_tag_array->del_blk_and_commit(cache_index);
 
-	// Invalidate block
+	send_write_request(mf, WRITE_REQUEST_SENT, time, events);
+   	// Invalidate block
 	block.m_status = INVALID;
 
 	return HIT;
@@ -886,6 +921,7 @@ data_cache::wr_miss_wa( new_addr_type addr,
         evicted, events, false, true);
 
     if( do_miss ){
+        m_tag_array->del_blk_and_commit(cache_index);
         // If evicted block is modified and not a write-through
         // (already modified lower level)
         if( wb && (m_config.m_write_policy != WRITE_THROUGH) ) { 
@@ -930,6 +966,16 @@ data_cache::rd_hit_base( new_addr_type addr,
                          std::list<cache_event> &events,
                          enum cache_request_status status )
 {
+    unsigned data_size = mf->get_data_size();
+    unsigned sector_num = data_size/32;
+    new_addr_type start_sector = (addr & SECTOR_MASK)>>5;
+    assert(start_sector+sector_num<4);
+    printf("addr:%.8u, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
+    sector_referred sectors;
+    for(int i=0;i<sector_num;i++)
+        sectors.insert(start_sector+i);
+    m_tag_array->update_blk_stat(cache_index,sectors);
+
     new_addr_type block_addr = m_config.block_addr(addr);
     m_tag_array->access(block_addr,time,cache_index);
     // Atomics treated as global read/write requests - Perform read, mark line as
@@ -959,22 +1005,23 @@ data_cache::rd_miss_base( new_addr_type addr,
         return RESERVATION_FAIL; 
 
     new_addr_type block_addr = m_config.block_addr(addr);
+    m_tag_array->del_blk_and_commit(cache_index);
     bool do_miss = false;
     bool wb = false;
-    cache_block_t evicted;
+    cacheblock_t evicted;
     send_read_request( addr,
                        block_addr,
                        cache_index,
                        mf, time, do_miss, wb, evicted, events, false, false);
-
+    
     if( do_miss ){
         // If evicted block is modified and not a write-through
         // (already modified lower level)
         if(wb && (m_config.m_write_policy != WRITE_THROUGH) ){ 
             mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr,
                 m_wrbk_type,m_config.get_line_sz(),true);
-        send_write_request(wb, WRITE_BACK_REQUEST_SENT, time, events);
-    }
+            send_write_request(wb, WRITE_BACK_REQUEST_SENT, time, events);
+        }
         return MISS;
     }
     return RESERVATION_FAIL;
