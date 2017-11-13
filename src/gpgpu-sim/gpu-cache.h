@@ -342,7 +342,7 @@ public:
 private:
 	linear_to_raw_address_translation *m_address_mapping;
 };
-#define SECTOR_MASK 0xc0
+#define SECTOR_MASK 0x60
 class tag_array {
 public:
     // Use this constructor
