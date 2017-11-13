@@ -353,8 +353,8 @@ public:
     enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx );
     enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted );
 
-    void fill( new_addr_type addr, unsigned time );
-    void fill( unsigned idx, unsigned time );
+    unsigned fill( new_addr_type addr, unsigned time );
+    unsigned fill( unsigned idx, unsigned time );
 
     unsigned size() const { return m_config.get_num_lines();}
     cache_block_t &get_block(unsigned idx) { return m_lines[idx];}
@@ -739,15 +739,17 @@ protected:
 
     struct extra_mf_fields {
         extra_mf_fields()  { m_valid = false;}
-        extra_mf_fields( new_addr_type a, unsigned i, unsigned d ) 
+        extra_mf_fields( new_addr_type a, unsigned i, unsigned d ,new_addr_type addr) 
         {
             m_valid = true;
             m_block_addr = a;
+            m_addr = addr;
             m_cache_index = i;
             m_data_size = d;
         }
         bool m_valid;
         new_addr_type m_block_addr;
+        new_addr_type m_addr;
         unsigned m_cache_index;
         unsigned m_data_size;
     };

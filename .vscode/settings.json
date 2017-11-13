@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "xmemory0": "cpp",
-        "ios": "cpp"
+        "ios": "cpp",
+        "xutility": "cpp"
     }
 }

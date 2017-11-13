@@ -276,20 +276,26 @@ enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, 
     return status;
 }
 
-void tag_array::fill( new_addr_type addr, unsigned time )
+unsigned tag_array::fill( new_addr_type addr, unsigned time )
 {
     assert( m_config.m_alloc_policy == ON_FILL );
     unsigned idx;
     enum cache_request_status status = probe(addr,idx);
     assert(status==MISS); // MSHR should have prevented redundant memory request
+    if(m_lines[idx].m_status==VALID||m_lines[idx].m_status==MODIFIED)
+        del_blk_and_commit(idx);
     m_lines[idx].allocate( m_config.tag(addr), m_config.block_addr(addr), time );
     m_lines[idx].fill(time);
+    return idx;
 }
 
-void tag_array::fill( unsigned index, unsigned time ) 
+unsigned tag_array::fill( unsigned index, unsigned time ) 
 {
     assert( m_config.m_alloc_policy == ON_MISS );
+    if(m_lines[index].m_status==VALID||m_lines[index].m_status==MODIFIED)
+        del_blk_and_commit(index);
     m_lines[index].fill(time);
+    return index;
 }
 
 void tag_array::flush() 
@@ -732,6 +738,17 @@ void baseline_cache::fill(mem_fetch *mf, unsigned time){
     else if ( m_config.m_alloc_policy == ON_FILL )
         m_tag_array->fill(e->second.m_block_addr,time);
     else abort();
+    
+    unsigned data_size = e->second.m_data_size;
+    unsigned sector_num = data_size/32;
+    new_addr_type start_sector = m_config.block_index(e->second.m_addr)>>5;
+    assert(start_sector+sector_num<5);
+    printf("addr:%.16x, data_size:%u, start_sectorid:%u\n",e->second.m_addr,data_size,start_sector);
+    std::set<unsigned> sectors;
+    for(int i=0;i<sector_num;i++)
+        sectors.insert(start_sector+i);
+    m_tag_array->update_blk_stat(e->second.m_cache_index,sectors);
+
     bool has_atomic = false;
     m_mshrs.mark_ready(e->second.m_block_addr, has_atomic);
     if (has_atomic) {
@@ -790,7 +807,7 @@ void baseline_cache::send_read_request(new_addr_type addr, new_addr_type block_a
     		m_tag_array->access(block_addr,time,cache_index,wb,evicted);
 
         m_mshrs.add(block_addr,mf);
-        m_extra_mf_fields[mf] = extra_mf_fields(block_addr,cache_index, mf->get_data_size());
+        m_extra_mf_fields[mf] = extra_mf_fields(block_addr,cache_index, mf->get_data_size(),addr);
         mf->set_data_size( m_config.get_line_sz() );
         m_miss_queue.push_back(mf);
         mf->set_status(m_miss_queue_status,time);
@@ -863,9 +880,9 @@ cache_request_status data_cache::wr_hit_we(new_addr_type addr, unsigned cache_in
 
 	// generate a write-through/evict
 	cache_block_t &block = m_tag_array->get_block(cache_index);
-    if(block.m_status==VALID||block.m_status==MODIFIED)
+    /*if(block.m_status==VALID||block.m_status==MODIFIED)
         m_tag_array->del_blk_and_commit(cache_index);
-
+    */
 	send_write_request(mf, WRITE_REQUEST_SENT, time, events);
    	// Invalidate block
 	block.m_status = INVALID;
@@ -933,15 +950,14 @@ data_cache::wr_miss_wa( new_addr_type addr,
         evicted, events, false, true);
 
     if( do_miss ){
-        if(evicted.m_status==VALID||evicted.m_status==MODIFIED)
+        /*if(evicted.m_status==VALID||evicted.m_status==MODIFIED)
             m_tag_array->del_blk_and_commit(cache_index);
-        
-        unsigned data_size;
+        */
+        /*unsigned data_size;
         if(m_extra_mf_fields.find(mf)!=m_extra_mf_fields.end())
             data_size = m_extra_mf_fields.find(mf)->second.m_data_size;
         else 
             data_size = mf->get_data_size();
-        //unsigned data_size = mf->get_data_size();
         unsigned sector_num = data_size/32;
         new_addr_type start_sector = m_config.block_index(addr)>>5;
         assert(start_sector+sector_num<5);
@@ -949,7 +965,7 @@ data_cache::wr_miss_wa( new_addr_type addr,
         std::set<unsigned> sectors;
         for(int i=0;i<sector_num;i++)
             sectors.insert(start_sector+i);
-        m_tag_array->update_blk_stat(cache_index,sectors);
+        m_tag_array->update_blk_stat(cache_index,sectors);*/
 
         // If evicted block is modified and not a write-through
         // (already modified lower level)
@@ -1043,10 +1059,10 @@ data_cache::rd_miss_base( new_addr_type addr,
                        mf, time, do_miss, wb, evicted, events, false, false);
 
     if( do_miss ){
-        if(evicted.m_status==VALID||evicted.m_status==MODIFIED)
+        /*if(evicted.m_status==VALID||evicted.m_status==MODIFIED)
             m_tag_array->del_blk_and_commit(cache_index);
-
-        unsigned data_size;
+        */
+        /*unsigned data_size;
         if(m_extra_mf_fields.find(mf)!=m_extra_mf_fields.end())
             data_size = m_extra_mf_fields.find(mf)->second.m_data_size;
         else 
@@ -1060,7 +1076,7 @@ data_cache::rd_miss_base( new_addr_type addr,
         std::set<unsigned> sectors;
         for(int i=0;i<sector_num;i++)
             sectors.insert(start_sector+i);
-        m_tag_array->update_blk_stat(cache_index,sectors);
+        m_tag_array->update_blk_stat(cache_index,sectors);*/
 
         // If evicted block is modified and not a write-through
         // (already modified lower level)
