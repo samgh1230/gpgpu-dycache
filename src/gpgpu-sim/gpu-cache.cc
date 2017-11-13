@@ -1045,7 +1045,7 @@ data_cache::rd_miss_base( new_addr_type addr,
         unsigned sector_num = data_size/32;
         new_addr_type start_sector = (addr & SECTOR_MASK)>>5;
         printf("addr:%.8x, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
-        assert(start_sector+sector_num<4);
+        assert(start_sector+sector_num<5);
         
         std::set<unsigned> sectors;
         for(int i=0;i<sector_num;i++)
