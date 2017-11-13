@@ -671,6 +671,7 @@ public:
     }
     void get_sub_stats(struct cache_sub_stats &css) const {
         m_stats.get_sub_stats(css);
+        m_stats.get_blk_sub_stats(css,m_tag_array);
     }
 
     // accessors for cache bandwidth availability 
@@ -1094,7 +1095,7 @@ public:
 
     void get_sub_stats(struct cache_sub_stats &css) const{
         m_stats.get_sub_stats(css);
-        m_stats.get_blk_sub_stats(css,m_tag_array);
+        //m_stats.get_blk_sub_stats(css,m_tag_array);
     }
 private:
     std::string m_name;
