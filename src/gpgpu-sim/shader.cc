@@ -2047,11 +2047,11 @@ void gpgpu_sim::shader_print_cache_stats( FILE *fout ) const{
         fprintf(fout, "\tL1D_total_cache_reservation_fails = %u\n", total_css.res_fails);
 
         fprintf(fout,"L1D num_ref_distro\n");
-        for(int i=0;i<4;i++){
+        for(int i=0;i<5;i++){
             fprintf(fout,"N[%d]:%u\t",i,total_css.num_ref_distro[i]);
         }
         fprintf(fout,"\nL1D data_size_accessed_distro\n");
-        for(int i=0;i<5;i++){
+        for(int i=0;i<4;i++){
             fprintf(fout,"N[%d]:%u\t",i,total_css.data_size_accessed_distro[i]);
         }
         total_css.print_port_stats(fout, "\n\tL1D_cache"); 
