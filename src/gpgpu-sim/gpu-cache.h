@@ -139,6 +139,7 @@ public:
 
         unsigned num_referred = m_line_stat[blk_id]->num_referred;
         switch(num_referred){
+            case 0: printf("missed blk.blk:%d\n",blk_id);exit(1);
             case 1: tot_block_referred[0]++;kernel_block_referred[0]++;break;
             case 2: tot_block_referred[1]++;kernel_block_referred[1]++;break;
             case 3:case 4:case 5:case 6: 
@@ -150,6 +151,12 @@ public:
         m_line_stat[blk_id]->sectors.clear();
         m_line_stat[blk_id]->num_referred=0;
     }
+    
+    //block reference stats
+    std::vector<unsigned> kernel_block_referred;//<num_referred,num_blks>
+    std::vector<unsigned> tot_block_referred;//<num_referred,num_blks>/
+    std::vector<unsigned> tot_sector_referred;
+    std::vector<unsigned> kernel_sector_referred;
 
 protected:
     // This constructor is intended for use only from derived classes that wish to
@@ -173,11 +180,7 @@ protected:
     unsigned m_pending_hit; // number of cache miss that hit a line that is allocated but not filled
     unsigned m_res_fail;
 
-    //block reference stats
-    std::vector<unsigned> kernel_block_referred;//<num_referred,num_blks>
-    std::vector<unsigned> tot_block_referred;//<num_referred,num_blks>/
-    std::vector<unsigned> tot_sector_referred;
-    std::vector<unsigned> kernel_sector_referred;
+    
 
     // performance counters for calculating the amount of misses within a time window
     unsigned m_prev_snapshot_access;
@@ -255,6 +258,12 @@ struct cache_sub_stats{
     unsigned long long data_port_busy_cycles; 
     unsigned long long fill_port_busy_cycles; 
 
+    //blk accessed stats
+    std::vector<unsigned> kernel_sector_referred;
+    std::vector<unsigned> total_sector_referred;
+    std::vector<unsigned> kernel_block_referred;
+    std::vector<unsigned> total_block_referred;
+
     cache_sub_stats(){
         clear();
     }
@@ -266,6 +275,24 @@ struct cache_sub_stats{
         port_available_cycles = 0; 
         data_port_busy_cycles = 0; 
         fill_port_busy_cycles = 0; 
+        
+        kernel_block_referred.clear();
+        kernel_block_referred.resize(5,0);
+        total_block_referred.clear();
+        total_block_referred.resize(5,0);
+
+        kernel_sector_referred.clear();
+        kernel_sector_referred.resize(4,0);
+        total_sector_referred.clear();
+        total_sector_referred.resize(4,0);
+    }
+
+    void kernel_stats_clear()
+    {
+        kernel_block_referred.clear();
+        kernel_block_referred.resize(5,0);
+        kernel_sector_referred.clear();
+        kernel_sector_referred.resize(4,0);
     }
     cache_sub_stats &operator+=(const cache_sub_stats &css){
         ///
@@ -278,6 +305,18 @@ struct cache_sub_stats{
         port_available_cycles += css.port_available_cycles; 
         data_port_busy_cycles += css.data_port_busy_cycles; 
         fill_port_busy_cycles += css.fill_port_busy_cycles; 
+
+        int i;
+        for(i=0;i<4;i++)
+        {
+            kernel_sector_referred[i] += css.kernel_sector_referred[i];
+            total_sector_referred[i] += css.total_sector_referred[i];
+        }
+        for(i=5;i<5;i++)
+        {
+            kernel_block_referred[i] += css.kernel_block_referred[i];
+            total_block_referred[i] += css.total_block_referred[i];
+        }
         return *this;
     }
 
@@ -293,6 +332,18 @@ struct cache_sub_stats{
         ret.port_available_cycles = port_available_cycles + cs.port_available_cycles; 
         ret.data_port_busy_cycles = data_port_busy_cycles + cs.data_port_busy_cycles; 
         ret.fill_port_busy_cycles = fill_port_busy_cycles + cs.fill_port_busy_cycles; 
+        
+        int i;
+        for(i=0;i<4;i++)
+        {
+            ret.kernel_sector_referred[i] = kernel_sector_referred[i] + css.kernel_sector_referred[i];
+            ret.total_sector_referred[i] = total_sector_referred[i] + css.total_sector_referred[i];
+        }
+        for(i=5;i<5;i++)
+        {
+            ret.kernel_block_referred[i] = kernel_block_referred[i] + css.kernel_block_referred[i];
+            ret.total_block_referred[i] = total_block_referred[i] + css.total_block_referred[i];
+        }
         return ret;
     }
 
@@ -319,6 +370,7 @@ public:
 
     unsigned get_stats(enum mem_access_type *access_type, unsigned num_access_type, enum cache_request_status *access_status, unsigned num_access_status)  const;
     void get_sub_stats(struct cache_sub_stats &css) const;
+    void get_sub_blk_stats(struct cache_sub_stats &css, class tag_array* m_tag_array) const;
 
     void sample_cache_port_utility(bool data_port_busy, bool fill_port_busy); 
 private:
@@ -406,6 +458,7 @@ public:
     }
     void get_sub_stats(struct cache_sub_stats &css) const {
         m_stats.get_sub_stats(css);
+        m_stats.get_sub_blk_stats(css,m_tag_array);
     }
 
     // accessors for cache bandwidth availability 

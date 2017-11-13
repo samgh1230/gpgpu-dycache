@@ -606,6 +606,17 @@ void cache_stats::get_sub_stats(struct cache_sub_stats &css) const{
     css = t_css;
 }
 
+void cache_stats::get_sub_blk_stats(struct cache_sub_stats &css, class tag_array* m_tag_array) const {
+    struct cache_sub_stats t_css;
+    t_css.clear();
+    t_css.kernel_sector_referred = m_tag_array->kernel_sector_referred;
+    t_css.total_sector_referred = m_tag_array->tot_sector_referred;
+    t_css.kernel_block_referred = m_tag_array->kernel_block_referred;
+    t_css.total_block_referred = m_tag_array->tot_block_referred;
+
+    css = t_css;
+}
+
 bool cache_stats::check_valid(int type, int status) const{
     ///
     /// Verify a valid access_type/access_status
@@ -922,6 +933,17 @@ data_cache::wr_miss_wa( new_addr_type addr,
 
     if( do_miss ){
         m_tag_array->del_blk_and_commit(cache_index);
+        
+        unsigned data_size = mf->get_data_size();
+        unsigned sector_num = data_size/32;
+        new_addr_type start_sector = (addr & SECTOR_MASK)>>5;
+        assert(start_sector+sector_num<4);
+        printf("addr:%.8u, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
+        sector_referred sectors;
+        for(int i=0;i<sector_num;i++)
+            sectors.insert(start_sector+i);
+        m_tag_array->update_blk_stat(cache_index,sectors);
+
         // If evicted block is modified and not a write-through
         // (already modified lower level)
         if( wb && (m_config.m_write_policy != WRITE_THROUGH) ) { 
@@ -1013,8 +1035,20 @@ data_cache::rd_miss_base( new_addr_type addr,
                        block_addr,
                        cache_index,
                        mf, time, do_miss, wb, evicted, events, false, false);
-    
+
     if( do_miss ){
+        m_tag_array->del_blk_and_commit(cache_index);
+
+        unsigned data_size = mf->get_data_size();
+        unsigned sector_num = data_size/32;
+        new_addr_type start_sector = (addr & SECTOR_MASK)>>5;
+        assert(start_sector+sector_num<4);
+        printf("addr:%.8u, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
+        sector_referred sectors;
+        for(int i=0;i<sector_num;i++)
+            sectors.insert(start_sector+i);
+        m_tag_array->update_blk_stat(cache_index,sectors);
+
         // If evicted block is modified and not a write-through
         // (already modified lower level)
         if(wb && (m_config.m_write_policy != WRITE_THROUGH) ){ 
