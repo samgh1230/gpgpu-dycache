@@ -716,7 +716,7 @@ void baseline_cache::fill(mem_fetch *mf, unsigned time){
     else if ( m_config.m_alloc_policy == ON_FILL )
         blk_id=m_tag_array->fill(e->second.m_block_addr,time);
     else abort();
-    if(m_tag_array->m_lines[blk_id].m_status==VALID||m_tag_array->m_lines[blk_id].m_status==MODIFIED)
+    if(m_tag_array->get_block(blk_id).m_status==VALID||m_tag_array->get_block(blk_id).m_status==MODIFIED)
         m_tag_array->commit_blk_ref(blk_id);
     m_tag_array->update_blk_ref(blk_id,mf->get_data_size());
     bool has_atomic = false;
