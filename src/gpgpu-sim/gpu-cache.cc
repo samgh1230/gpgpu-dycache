@@ -818,7 +818,7 @@ cache_request_status data_cache::wr_hit_wb(new_addr_type addr, unsigned cache_in
     new_addr_type start_sector = (addr & SECTOR_MASK)>>5;
     assert(start_sector+sector_num<4);
     printf("addr:%.8u, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
-    sector_referred sectors;
+    std::set<unsigned> sectors;
     for(int i=0;i<sector_num;i++)
         sectors.insert(start_sector+i);
     m_tag_array->update_blk_stat(cache_index,sectors);
@@ -840,7 +840,7 @@ cache_request_status data_cache::wr_hit_wt(new_addr_type addr, unsigned cache_in
     new_addr_type start_sector = (addr & SECTOR_MASK)>>5;
     assert(start_sector+sector_num<4);
     printf("addr:%.8u, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
-    sector_referred sectors;
+    std::set<unsigned> sectors;
     for(int i=0;i<sector_num;i++)
         sectors.insert(start_sector+i);
     m_tag_array->update_blk_stat(cache_index,sectors);
@@ -939,7 +939,7 @@ data_cache::wr_miss_wa( new_addr_type addr,
         new_addr_type start_sector = (addr & SECTOR_MASK)>>5;
         assert(start_sector+sector_num<4);
         printf("addr:%.8u, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
-        sector_referred sectors;
+        std::set<unsigned> sectors;
         for(int i=0;i<sector_num;i++)
             sectors.insert(start_sector+i);
         m_tag_array->update_blk_stat(cache_index,sectors);
@@ -993,7 +993,7 @@ data_cache::rd_hit_base( new_addr_type addr,
     new_addr_type start_sector = (addr & SECTOR_MASK)>>5;
     assert(start_sector+sector_num<4);
     printf("addr:%.8u, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
-    sector_referred sectors;
+    std::set<unsigned> sectors;
     for(int i=0;i<sector_num;i++)
         sectors.insert(start_sector+i);
     m_tag_array->update_blk_stat(cache_index,sectors);
@@ -1044,7 +1044,7 @@ data_cache::rd_miss_base( new_addr_type addr,
         new_addr_type start_sector = (addr & SECTOR_MASK)>>5;
         assert(start_sector+sector_num<4);
         printf("addr:%.8u, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
-        sector_referred sectors;
+        std::set<unsigned> sectors;
         for(int i=0;i<sector_num;i++)
             sectors.insert(start_sector+i);
         m_tag_array->update_blk_stat(cache_index,sectors);
