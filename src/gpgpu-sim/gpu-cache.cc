@@ -1043,7 +1043,7 @@ data_cache::rd_miss_base( new_addr_type addr,
 
         unsigned data_size;
         if(m_extra_mf_fields.find(mf)!=m_extra_mf_fields.end())
-            data_size = m_extra_mf_fields.find(mf).second.m_data_size;
+            data_size = m_extra_mf_fields.find(mf)->second.m_data_size;
         else 
             data_size = mf->get_data_size();
 
