@@ -138,7 +138,7 @@ tag_array::tag_array( cache_config &config,
 {
     //assert( m_config.m_write_policy == READ_ONLY ); Old assert
     m_lines = new cache_block_t[MAX_DEFAULT_CACHE_SIZE_MULTIBLIER*config.get_num_lines()];
-    m_line_stat = new blk_stats[MAX_DEFAULT_CACHE_SIZE_MULTIBLIER*config.get_num_lines()];
+    m_line_stat = new blk_stats_t[MAX_DEFAULT_CACHE_SIZE_MULTIBLIER*config.get_num_lines()];
     init( core_id, type_id );
 }
 
