@@ -59,7 +59,7 @@ enum cache_event {
 };
 
 const char * cache_request_status_str(enum cache_request_status status); 
-typedef std::set<unsigned> sector_referred;
+typedef std::set<unsigned> sector_referred_t;
 
 typedef struct {
     unsigned num_referred;
