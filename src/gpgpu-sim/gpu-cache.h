@@ -270,6 +270,10 @@ public:
     {
         return addr & ~(m_line_sz-1);
     }
+    new_addr_type block_index(new_addr_type addr ) const
+    {
+        return addr & (m_line_sz-1);
+    }
     FuncCache get_cache_status() {return cache_status;}
     char *m_config_string;
     char *m_config_stringPrefL1;
