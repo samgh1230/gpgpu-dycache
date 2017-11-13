@@ -63,7 +63,7 @@ typedef std::set<unsigned> sector_referred_t;
 
 typedef struct {
     unsigned num_referred;
-    sector_referred sectors;
+    sector_referred_t sectors;
 }blk_stats_t;
 struct cache_block_t {
     cache_block_t()
@@ -364,7 +364,7 @@ public:
 	void update_cache_parameters(cache_config &config);
 
     void reinit_kernel_stat(int core_id , int type_id);
-    void update_blk_stat(unsigned blk_id, sector_referred sectors)
+    void update_blk_stat(unsigned blk_id, sector_referred_t sectors)
     {
         m_line_stat[blk_id].num_referred++;
         m_line_stat[blk_id].sectors.insert(sectors.begin(),sectors.end());
