@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <set>
 #include "gpu-misc.h"
 #include "mem_fetch.h"
 #include "../abstract_hardware_model.h"
