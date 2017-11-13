@@ -2002,7 +2002,7 @@ void gpgpu_sim::shader_print_scheduler_stat( FILE* fout, bool print_dynamic_info
 }
 
 void gpgpu_sim::shader_print_cache_stats( FILE *fout ) const{
-    FILE* f = fopen("blk_stats.txt",'a');
+    FILE* f = fopen("blk_stats.txt","a");
     // L1I
     struct cache_sub_stats total_css;
     struct cache_sub_stats css;
