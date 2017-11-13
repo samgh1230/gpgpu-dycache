@@ -366,17 +366,17 @@ public:
     void reinit_kernel_stat(int core_id , int type_id);
     void update_blk_stat(unsigned blk_id, sector_referred sectors)
     {
-        m_line_stat[blk_id]->num_referred++;
-        m_line_stat[blk_id]->sectors.set_union(sectors.begin(),sectors.end());
+        m_line_stat[blk_id].num_referred++;
+        m_line_stat[blk_id].sectors.set_union(sectors.begin(),sectors.end());
     }
     void del_blk_and_commit(unsigned blk_id)
     {
-        unsigned num_sector = m_line_stat[blk_id]->sectors.size();
+        unsigned num_sector = m_line_stat[blk_id].sectors.size();
         assert(num_sector>0);
         tot_sector_referred[num_sector-1]++;
         kernel_sector_referred[num_sector-1]++;
 
-        unsigned num_referred = m_line_stat[blk_id]->num_referred;
+        unsigned num_referred = m_line_stat[blk_id].num_referred;
         switch(num_referred){
             case 0: printf("missed blk.blk:%d\n",blk_id);exit(1);
             case 1: tot_block_referred[0]++;kernel_block_referred[0]++;break;
@@ -387,8 +387,8 @@ public:
             tot_block_referred[3]++;kernel_block_referred[3]++;break;
             default: tot_block_referred[4]++;kernel_block_referred[4]++;break;
         }
-        m_line_stat[blk_id]->sectors.clear();
-        m_line_stat[blk_id]->num_referred=0;
+        m_line_stat[blk_id].sectors.clear();
+        m_line_stat[blk_id].num_referred=0;
     }
     
     //block reference stats
