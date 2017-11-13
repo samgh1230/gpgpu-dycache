@@ -559,7 +559,7 @@ struct cache_sub_stats{
         return *this;
     }
 
-    cache_sub_stats operator+(const cache_sub_stats &css){
+    cache_sub_stats operator+(const cache_sub_stats &cs){
         ///
         /// Overloading + operator to easily accumulate stats
         ///
@@ -575,13 +575,13 @@ struct cache_sub_stats{
         int i;
         for(i=0;i<4;i++)
         {
-            ret.kernel_sector_referred[i] = kernel_sector_referred[i] + css.kernel_sector_referred[i];
-            ret.total_sector_referred[i] = total_sector_referred[i] + css.total_sector_referred[i];
+            ret.kernel_sector_referred[i] = kernel_sector_referred[i] + cs.kernel_sector_referred[i];
+            ret.total_sector_referred[i] = total_sector_referred[i] + cs.total_sector_referred[i];
         }
         for(i=5;i<5;i++)
         {
-            ret.kernel_block_referred[i] = kernel_block_referred[i] + css.kernel_block_referred[i];
-            ret.total_block_referred[i] = total_block_referred[i] + css.total_block_referred[i];
+            ret.kernel_block_referred[i] = kernel_block_referred[i] + cs.kernel_block_referred[i];
+            ret.total_block_referred[i] = total_block_referred[i] + cs.total_block_referred[i];
         }
         return ret;
     }
