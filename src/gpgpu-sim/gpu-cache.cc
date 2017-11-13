@@ -815,7 +815,7 @@ void data_cache::send_write_request(mem_fetch *mf, cache_event request, unsigned
 cache_request_status data_cache::wr_hit_wb(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
     unsigned data_size = mf->get_data_size();
     unsigned sector_num = data_size/32;
-    new_addr_type start_sector = m_config.block_index(addr)&SECTOR_MASK>>5;
+    new_addr_type start_sector = m_config.block_index(addr)>>5;
     assert(start_sector+sector_num<5);
     printf("addr:%.16x, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
     std::set<unsigned> sectors;
@@ -837,7 +837,7 @@ cache_request_status data_cache::wr_hit_wt(new_addr_type addr, unsigned cache_in
 
     unsigned data_size = mf->get_data_size();
     unsigned sector_num = data_size/32;
-    new_addr_type start_sector = m_config.block_index(addr)&SECTOR_MASK>>5;
+    new_addr_type start_sector = m_config.block_index(addr>>5;
     assert(start_sector+sector_num<5);
     printf("addr:%.16x, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
     std::set<unsigned> sectors;
@@ -938,7 +938,7 @@ data_cache::wr_miss_wa( new_addr_type addr,
         
         unsigned data_size = mf->get_data_size();
         unsigned sector_num = data_size/32;
-        new_addr_type start_sector = m_config.block_index(addr)&SECTOR_MASK>>5;
+        new_addr_type start_sector = m_config.block_index(addr)>>5;
         assert(start_sector+sector_num<5);
         printf("addr:%.16x, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
         std::set<unsigned> sectors;
@@ -992,7 +992,7 @@ data_cache::rd_hit_base( new_addr_type addr,
 {
     unsigned data_size = mf->get_data_size();
     unsigned sector_num = data_size/32;
-    new_addr_type start_sector = m_config.block_index(addr)&SECTOR_MASK>>5;
+    new_addr_type start_sector = m_config.block_index(addr)>>5;
     assert(start_sector+sector_num<5);
     printf("addr:%.16x, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
     std::set<unsigned> sectors;
@@ -1043,7 +1043,7 @@ data_cache::rd_miss_base( new_addr_type addr,
 
         unsigned data_size = mf->get_data_size();
         unsigned sector_num = data_size/32;
-        new_addr_type start_sector = m_config.block_index(addr)&SECTOR_MASK>>5;
+        new_addr_type start_sector = m_config.block_index(addr)>>5;
         printf("addr:%.16x, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
         assert(start_sector+sector_num<5);
         
