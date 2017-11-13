@@ -1040,8 +1040,13 @@ data_cache::rd_miss_base( new_addr_type addr,
     if( do_miss ){
         if(evicted.m_status==VALID||evicted.m_status==MODIFIED)
             m_tag_array->del_blk_and_commit(cache_index);
+            
+        unsigned data_size;
+        if(m_extra_mf_fields.find(mf)!=m_extra_mf_fields.end())
+            data_size = m_extra_mf_fields.find(mf).m_data_size;
+        else 
+            data_size = mf->get_data_size();
 
-        unsigned data_size = mf->get_data_size();
         unsigned sector_num = data_size/32;
         new_addr_type start_sector = m_config.block_index(addr)>>5;
         printf("addr:%.16x, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
