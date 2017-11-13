@@ -394,6 +394,9 @@ public:
         m_line_stats[blk_id].data_size_accessed.clear();
         m_line_stats[blk_id].data_size_accessed.resize(4,0);
     }
+    blk_ref_t *m_line_stats;
+    std::vector<unsigned> num_ref_distro;
+    std::vector<unsigned> data_size_accessed_distro;
 protected:
     // This constructor is intended for use only from derived classes that wish to
     // avoid unnecessary memory allocation that takes place in the
@@ -409,15 +412,11 @@ protected:
     cache_config &m_config;
 
     cache_block_t *m_lines; /* nbanks x nset x assoc lines in total */
-    blk_ref_t *m_line_stats;
-
+    
     unsigned m_access;
     unsigned m_miss;
     unsigned m_pending_hit; // number of cache miss that hit a line that is allocated but not filled
     unsigned m_res_fail;
-
-    std::vector<unsigned> num_ref_distro;
-    std::vector<unsigned> data_size_accessed_distro;
 
     // performance counters for calculating the amount of misses within a time window
     unsigned m_prev_snapshot_access;
