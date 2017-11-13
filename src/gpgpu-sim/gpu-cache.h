@@ -391,8 +391,8 @@ public:
         }
         //clear ref stats
         m_line_stats[blk_id].num_ref=0;
-        m_line_stats[blk_id].data_size_accessed_distro.clear();
-        m_line_stats[blk_id].data_size_accessed_distro.resize(4,0);
+        m_line_stats[blk_id].data_size_accessed.clear();
+        m_line_stats[blk_id].data_size_accessed.resize(4,0);
     }
 protected:
     // This constructor is intended for use only from derived classes that wish to
