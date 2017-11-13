@@ -372,14 +372,14 @@ public:
     //void update_blk_stat(unsigned blk_id, std::set<unsigned> sectors)
     void update_blk_stat(unsigned blk_id, unsigned data_size)
     {
-        printf("2\n");
+        //printf("2\n");
         m_line_stat[blk_id].num_referred++;
-        m_line_stat[blk_id].sectors[data_size/4]++;
-        printf("end\n");
+        assert(data_size>0);
+        m_line_stat[blk_id].sectors[data_size/4 - 1]++;
+        //printf("end\n");
     }
     void del_blk_and_commit(unsigned blk_id)
     {  
-        printf("1\n");
         for(int i=0;i<32;i++)
             kernel_sector_referred[i] += m_line_stat[blk_id].sectors[i];
 
@@ -396,7 +396,6 @@ public:
         }
         m_line_stat[blk_id].sectors.resize(32,0);
         m_line_stat[blk_id].num_referred=0;
-        printf("end\n");
     }
     
     //block reference stats
