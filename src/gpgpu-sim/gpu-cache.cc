@@ -576,12 +576,12 @@ unsigned cache_stats::get_stats(enum mem_access_type *access_type, unsigned num_
     }
     return total;
 }
-void cache_stats::get_blk_sub_stats(struct cache_sub_stats &css) const{
+void cache_stats::get_blk_sub_stats(struct cache_sub_stats &css, class tag_array *m_tag_array) const{
     struct cache_sub_stats t_css;
     t_css.clear();
 
-    t_css.num_ref_distro = num_ref_distro;
-    t_css.data_size_accessed_distro = data_size_accessed_distro;
+    t_css.num_ref_distro = m_tag_array->num_ref_distro;
+    t_css.data_size_accessed_distro = m_tag_array->data_size_accessed_distro;
 
     css = t_css;
 }

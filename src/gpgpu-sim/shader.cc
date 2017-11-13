@@ -2054,7 +2054,7 @@ void gpgpu_sim::shader_print_cache_stats( FILE *fout ) const{
         for(int i=0;i<5;i++){
             fprintf(fout,"N[%d]:%u\t",i,total_css.data_size_accessed_distro[i]);
         }
-        total_css.print_port_stats(fout, "\tL1D_cache"); 
+        total_css.print_port_stats(fout, "\n\tL1D_cache"); 
     }
 
     // L1C
