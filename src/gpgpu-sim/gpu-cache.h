@@ -367,7 +367,7 @@ public:
     void update_blk_stat(unsigned blk_id, sector_referred sectors)
     {
         m_line_stat[blk_id].num_referred++;
-        m_line_stat[blk_id].sectors.set_union(sectors.begin(),sectors.end());
+        m_line_stat[blk_id].sectors.insert(sectors.begin(),sectors.end());
     }
     void del_blk_and_commit(unsigned blk_id)
     {
