@@ -722,7 +722,7 @@ protected:
 
     extra_mf_fields_lookup m_extra_mf_fields;
 
-    cache_stats m_stats
+    cache_stats m_stats;
 
     /// Checks whether this request can be handled on this cycle. num_miss equals max # of misses to be handled on this cycle
     bool miss_queue_full(unsigned num_miss){
