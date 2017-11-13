@@ -863,7 +863,8 @@ cache_request_status data_cache::wr_hit_we(new_addr_type addr, unsigned cache_in
 
 	// generate a write-through/evict
 	cache_block_t &block = m_tag_array->get_block(cache_index);
-    m_tag_array->del_blk_and_commit(cache_index);
+    if(block.m_status==VALID||block.m_status==MODIFIED)
+        m_tag_array->del_blk_and_commit(cache_index);
 
 	send_write_request(mf, WRITE_REQUEST_SENT, time, events);
    	// Invalidate block
@@ -932,7 +933,8 @@ data_cache::wr_miss_wa( new_addr_type addr,
         evicted, events, false, true);
 
     if( do_miss ){
-        m_tag_array->del_blk_and_commit(cache_index);
+        if(evicted.m_status==VALID||evicted.m_status==MODIFIED)
+            m_tag_array->del_blk_and_commit(cache_index);
         
         unsigned data_size = mf->get_data_size();
         unsigned sector_num = data_size/32;
@@ -1027,7 +1029,6 @@ data_cache::rd_miss_base( new_addr_type addr,
         return RESERVATION_FAIL; 
 
     new_addr_type block_addr = m_config.block_addr(addr);
-    m_tag_array->del_blk_and_commit(cache_index);
     bool do_miss = false;
     bool wb = false;
     cache_block_t evicted;
@@ -1037,7 +1038,8 @@ data_cache::rd_miss_base( new_addr_type addr,
                        mf, time, do_miss, wb, evicted, events, false, false);
 
     if( do_miss ){
-        m_tag_array->del_blk_and_commit(cache_index);
+        if(evicted.m_status==VALID||evicted.m_status==MODIFIED)
+            m_tag_array->del_blk_and_commit(cache_index);
 
         unsigned data_size = mf->get_data_size();
         unsigned sector_num = data_size/32;
