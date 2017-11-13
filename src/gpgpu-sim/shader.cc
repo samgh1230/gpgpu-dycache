@@ -2048,7 +2048,7 @@ void gpgpu_sim::shader_print_cache_stats( FILE *fout ) const{
 
         fprintf(fout, "\tL1D_total_block_reference_distribution\n");
         for(int i=0;i<5;i++){
-            fprinf(fout,"N[%d]:%u\t",i,total_css.total_block_referred[i]);
+            fprintf(fout,"N[%d]:%u\t",i,total_css.total_block_referred[i]);
         }
         fprintf(fout,"\n");
         fprintf(fout,"\tL1D_kernel_block_reference_distribution\n");
