@@ -716,9 +716,9 @@ void baseline_cache::fill(mem_fetch *mf, unsigned time){
     else if ( m_config.m_alloc_policy == ON_FILL )
         blk_id=m_tag_array->fill(e->second.m_block_addr,time);
     else abort();
-    printf("fill\n");
+    /*printf("fill\n");
     if(m_tag_array->get_block(blk_id).m_status==VALID||m_tag_array->get_block(blk_id).m_status==MODIFIED)
-        m_tag_array->commit_blk_ref(blk_id);
+        m_tag_array->commit_blk_ref(blk_id);*/
     m_tag_array->update_blk_ref(blk_id,mf->get_data_size());
     bool has_atomic = false;
     m_mshrs.mark_ready(e->second.m_block_addr, has_atomic);
@@ -904,8 +904,11 @@ data_cache::wr_miss_wa( new_addr_type addr,
     // Send read request resulting from write miss
     send_read_request(addr, block_addr, cache_index, n_mf, time, do_miss, wb,
         evicted, events, false, true);
-
+    
     if( do_miss ){
+        cache_block_t blk = m_tag_array->get_block(cache_index);
+        if(blk.m_status==VALID||blk.m_status==MODIFIED)
+            m_tag_array->commit_blk_ref(cache_index);
         // If evicted block is modified and not a write-through
         // (already modified lower level)
         if( wb && (m_config.m_write_policy != WRITE_THROUGH) ) { 
@@ -988,15 +991,18 @@ data_cache::rd_miss_base( new_addr_type addr,
                        block_addr,
                        cache_index,
                        mf, time, do_miss, wb, evicted, events, false, false);
-
+    
     if( do_miss ){
+        cache_block_t blk = m_tag_array->get_block(cache_index);
+        if(blk.m_status==VALID||blk.m_status==MODIFIED)
+            m_tag_array->commit_blk_ref(cache_index);
         // If evicted block is modified and not a write-through
         // (already modified lower level)
         if(wb && (m_config.m_write_policy != WRITE_THROUGH) ){ 
             mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr,
                 m_wrbk_type,m_config.get_line_sz(),true);
-        send_write_request(wb, WRITE_BACK_REQUEST_SENT, time, events);
-    }
+            send_write_request(wb, WRITE_BACK_REQUEST_SENT, time, events);
+        }
         return MISS;
     }
     return RESERVATION_FAIL;
