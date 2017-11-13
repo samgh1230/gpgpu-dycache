@@ -333,7 +333,10 @@ public:
 private:
 	linear_to_raw_address_translation *m_address_mapping;
 };
-
+struct blk_ref_t{
+    unsigned num_ref;
+    std::vector<unsigned> data_size_accessed;
+};
 class tag_array {
 public:
     // Use this constructor
@@ -344,8 +347,8 @@ public:
     enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx );
     enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted );
 
-    void fill( new_addr_type addr, unsigned time );
-    void fill( unsigned idx, unsigned time );
+    unsigned fill( new_addr_type addr, unsigned time );
+    unsigned fill( unsigned idx, unsigned time );
 
     unsigned size() const { return m_config.get_num_lines();}
     cache_block_t &get_block(unsigned idx) { return m_lines[idx];}
@@ -358,6 +361,39 @@ public:
     void get_stats(unsigned &total_access, unsigned &total_misses, unsigned &total_hit_res, unsigned &total_res_fail) const;
 
 	void update_cache_parameters(cache_config &config);
+
+    void update_blk_ref(unsigned blk_id,unsigned data_size)
+    {
+        m_line_stats[blk_id].num_ref++;
+        switch(data_size){
+            case 32: m_line_stats[blk_id].data_size_accessed[1]++;break;
+            case 64: m_line_stats[blk_id].data_size_accessed[2]++;break;
+            case 128: m_line_stats[blk_id].data_size_accessed[3]++;break;
+            default: m_line_stats[blk_id].data_size_accessed[0]++;break;
+        }
+    }
+    void commit_blk_ref(unsigned blk_id)
+    {
+        unsigned num_ref = m_line_stats[blk_id].num_ref;
+        switch(num_ref){
+            case 0: printf("Error:non-accessed block\n");exit(1);
+            case 1: num_ref_distro[0]++;break;
+            case 2: num_ref_distro[1]++;break;
+            case 3: case 4: case 5: case 6: case 7: case 8: case 9: case 10:
+            num_ref_distro[2]++;break;
+            case 11:case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 20:
+            num_ref_distro[3]++;break;
+            default:
+            num_ref_distro[4]++;break;
+        }
+        for(int i=0;i<4;i++){
+            data_size_accessed_distro[i] += m_line_stats[blk_id].data_size_accessed[i];
+        }
+        //clear ref stats
+        m_line_stats[blk_id].num_ref=0;
+        m_line_stats[blk_id].data_size_accessed_distro.clear();
+        m_line_stats[blk_id].data_size_accessed_distro.resize(4,0);
+    }
 protected:
     // This constructor is intended for use only from derived classes that wish to
     // avoid unnecessary memory allocation that takes place in the
@@ -373,11 +409,15 @@ protected:
     cache_config &m_config;
 
     cache_block_t *m_lines; /* nbanks x nset x assoc lines in total */
+    blk_ref_t *m_line_stats;
 
     unsigned m_access;
     unsigned m_miss;
     unsigned m_pending_hit; // number of cache miss that hit a line that is allocated but not filled
     unsigned m_res_fail;
+
+    std::vector<unsigned> num_ref_distro;
+    std::vector<unsigned> data_size_accessed_distro;
 
     // performance counters for calculating the amount of misses within a time window
     unsigned m_prev_snapshot_access;

@@ -138,6 +138,13 @@ tag_array::tag_array( cache_config &config,
 {
     //assert( m_config.m_write_policy == READ_ONLY ); Old assert
     m_lines = new cache_block_t[MAX_DEFAULT_CACHE_SIZE_MULTIBLIER*config.get_num_lines()];
+    m_line_stats = new blk_ref_t[MAX_DEFAULT_CACHE_SIZE_MULTIBLIER*config.get_num_lines()];
+    for(int i=0;i<MAX_DEFAULT_CACHE_SIZE_MULTIBLIER*config.get_num_lines();i++){
+        m_line_stats[i].num_ref=0;
+        m_line_stats[i].data_size_accessed.resize(33,0);
+    }
+    num_ref_distro.resize(5,0);
+    data_size_accessed_distro.resize(4,0);
     init( core_id, type_id );
 }
 
@@ -261,7 +268,7 @@ enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, 
     return status;
 }
 
-void tag_array::fill( new_addr_type addr, unsigned time )
+unsigned tag_array::fill( new_addr_type addr, unsigned time )
 {
     assert( m_config.m_alloc_policy == ON_FILL );
     unsigned idx;
@@ -269,12 +276,14 @@ void tag_array::fill( new_addr_type addr, unsigned time )
     assert(status==MISS); // MSHR should have prevented redundant memory request
     m_lines[idx].allocate( m_config.tag(addr), m_config.block_addr(addr), time );
     m_lines[idx].fill(time);
+    return idx;
 }
 
-void tag_array::fill( unsigned index, unsigned time ) 
+unsigned tag_array::fill( unsigned index, unsigned time ) 
 {
     assert( m_config.m_alloc_policy == ON_MISS );
     m_lines[index].fill(time);
+    return index;
 }
 
 void tag_array::flush() 
@@ -701,11 +710,14 @@ void baseline_cache::fill(mem_fetch *mf, unsigned time){
     assert( e != m_extra_mf_fields.end() );
     assert( e->second.m_valid );
     mf->set_data_size( e->second.m_data_size );
+    unsigned blk_id;
     if ( m_config.m_alloc_policy == ON_MISS )
-        m_tag_array->fill(e->second.m_cache_index,time);
+        blk_id=m_tag_array->fill(e->second.m_cache_index,time);
     else if ( m_config.m_alloc_policy == ON_FILL )
-        m_tag_array->fill(e->second.m_block_addr,time);
+        blk_id=m_tag_array->fill(e->second.m_block_addr,time);
     else abort();
+    m_tag_array->commit_blk_ref(blk_id);
+    m_tag_array->update_blk_ref(blk_id,mf->get_data_size());
     bool has_atomic = false;
     m_mshrs.mark_ready(e->second.m_block_addr, has_atomic);
     if (has_atomic) {
@@ -791,6 +803,7 @@ cache_request_status data_cache::wr_hit_wb(new_addr_type addr, unsigned cache_in
 	m_tag_array->access(block_addr,time,cache_index); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	block.m_status = MODIFIED;
+    m_tag_array->update_blk_ref(cache_index,mf->get_data_size());
 
 	return HIT;
 }
@@ -804,6 +817,7 @@ cache_request_status data_cache::wr_hit_wt(new_addr_type addr, unsigned cache_in
 	m_tag_array->access(block_addr,time,cache_index); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	block.m_status = MODIFIED;
+    m_tag_array->update_blk_ref(cache_index,mf->get_data_size());
 
 	// generate a write-through
 	send_write_request(mf, WRITE_REQUEST_SENT, time, events);
@@ -819,6 +833,9 @@ cache_request_status data_cache::wr_hit_we(new_addr_type addr, unsigned cache_in
 	// generate a write-through/evict
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	send_write_request(mf, WRITE_REQUEST_SENT, time, events);
+    m_tag_array->update_blk_ref(cache_index,mf->get_data_size());
+    if(block.m_status==VALID||block.m_status==MODIFIED)
+        m_tag_array->commit_blk_ref(cache_index);
 
 	// Invalidate block
 	block.m_status = INVALID;
@@ -932,6 +949,8 @@ data_cache::rd_hit_base( new_addr_type addr,
 {
     new_addr_type block_addr = m_config.block_addr(addr);
     m_tag_array->access(block_addr,time,cache_index);
+
+    m_tag_array->update_blk_ref(cache_index,mf->get_data_size());
     // Atomics treated as global read/write requests - Perform read, mark line as
     // MODIFIED
     if(mf->isatomic()){ 
