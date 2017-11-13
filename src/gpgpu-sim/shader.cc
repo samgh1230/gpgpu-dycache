@@ -2045,6 +2045,17 @@ void gpgpu_sim::shader_print_cache_stats( FILE *fout ) const{
         }
         fprintf(fout, "\tL1D_total_cache_pending_hits = %u\n", total_css.pending_hits);
         fprintf(fout, "\tL1D_total_cache_reservation_fails = %u\n", total_css.res_fails);
+
+        fprintf(fout, "\tL1D_total_block_reference_distribution\n");
+        for(int i=0;i<5;i++){
+            fprinf(fout,"N[%d]:%u\t",i,total_css.total_block_referred[i]);
+        }
+        fprintf(fout,"\n");
+        fprintf(fout,"\tL1D_kernel_block_reference_distribution\n");
+        for(int i=0;i<5;i++){
+            fprintf(fout,"N[%d]:%u\t",i,total_css.kernel_block_referred[i]);
+        }
+
         total_css.print_port_stats(fout, "\tL1D_cache"); 
     }
 
