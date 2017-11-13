@@ -1030,7 +1030,7 @@ data_cache::rd_miss_base( new_addr_type addr,
     m_tag_array->del_blk_and_commit(cache_index);
     bool do_miss = false;
     bool wb = false;
-    cacheblock_t evicted;
+    cache_block_t evicted;
     send_read_request( addr,
                        block_addr,
                        cache_index,
