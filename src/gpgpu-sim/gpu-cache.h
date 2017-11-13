@@ -64,7 +64,7 @@ const char * cache_request_status_str(enum cache_request_status status);
 
 typedef struct {
     unsigned num_referred;
-    std::set<unsigned> sectors;
+    std::vector<unsigned> sectors;
 }blk_stats_t;
 struct cache_block_t {
     cache_block_t()
@@ -369,30 +369,29 @@ public:
 	void update_cache_parameters(cache_config &config);
 
     void reinit_kernel_stat(int core_id , int type_id);
-    void update_blk_stat(unsigned blk_id, std::set<unsigned> sectors)
+    //void update_blk_stat(unsigned blk_id, std::set<unsigned> sectors)
+    void update_blk_stat(unsigned blk_id, unsigned data_size)
     {
         m_line_stat[blk_id].num_referred++;
-        m_line_stat[blk_id].sectors.insert(sectors.begin(),sectors.end());
+        m_line_stat[blk_id].sectors[data_size/4]++;
     }
     void del_blk_and_commit(unsigned blk_id)
-    {
-        unsigned num_sector = m_line_stat[blk_id].sectors.size();
-        assert(num_sector>0);
-        tot_sector_referred[num_sector-1]++;
-        kernel_sector_referred[num_sector-1]++;
+    {  
+        for(int i=0;i<32;i++)
+            kernel_sector_referred[i] += m_line_stat[blk_id].sectors[i];
 
         unsigned num_referred = m_line_stat[blk_id].num_referred;
         switch(num_referred){
             case 0: printf("missed blk.blk:%d\n",blk_id);exit(1);
-            case 1: tot_block_referred[0]++;kernel_block_referred[0]++;break;
-            case 2: tot_block_referred[1]++;kernel_block_referred[1]++;break;
+            case 1: kernel_block_referred[0]++;break;
+            case 2: kernel_block_referred[1]++;break;
             case 3:case 4:case 5:case 6: 
-            tot_block_referred[2]++;kernel_block_referred[2]++;break;
+            kernel_block_referred[2]++;break;
             case 7:case 8:case 9: case 10: case 11:
-            tot_block_referred[3]++;kernel_block_referred[3]++;break;
-            default: tot_block_referred[4]++;kernel_block_referred[4]++;break;
+            kernel_block_referred[3]++;break;
+            default: kernel_block_referred[4]++;break;
         }
-        m_line_stat[blk_id].sectors.clear();
+        m_line_stat[blk_id].sectors.resize(32,0);
         m_line_stat[blk_id].num_referred=0;
     }
     
@@ -551,7 +550,7 @@ struct cache_sub_stats{
         fill_port_busy_cycles += css.fill_port_busy_cycles; 
 
         int i;
-        for(i=0;i<4;i++)
+        for(i=0;i<32;i++)
         {
             kernel_sector_referred[i] += css.kernel_sector_referred[i];
             total_sector_referred[i] += css.total_sector_referred[i];
@@ -578,7 +577,7 @@ struct cache_sub_stats{
         ret.fill_port_busy_cycles = fill_port_busy_cycles + cs.fill_port_busy_cycles; 
         
         int i;
-        for(i=0;i<4;i++)
+        for(i=0;i<32;i++)
         {
             ret.kernel_sector_referred[i] = kernel_sector_referred[i] + cs.kernel_sector_referred[i];
             ret.total_sector_referred[i] = total_sector_referred[i] + cs.total_sector_referred[i];

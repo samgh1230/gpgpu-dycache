@@ -158,8 +158,8 @@ void tag_array::init( int core_id, int type_id )
     //initialize block referenced stats
     tot_block_referred.resize(5,0);
     kernel_block_referred.resize(5,0);
-    tot_sector_referred.resize(4,0);
-    kernel_sector_referred.resize(4,0);
+    tot_sector_referred.resize(32,0);
+    kernel_sector_referred.resize(32,0);
 }
 
 void tag_array::reinit_kernel_stat(int core_id, int type_id)
@@ -167,7 +167,7 @@ void tag_array::reinit_kernel_stat(int core_id, int type_id)
     kernel_block_referred.clear();
     kernel_sector_referred.clear();
     kernel_block_referred.resize(5,0);
-    kernel_sector_referred.resize(4,0);
+    kernel_sector_referred.resize(32,0);
 }
 
 enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx ) const {
@@ -733,22 +733,23 @@ void baseline_cache::fill(mem_fetch *mf, unsigned time){
     assert( e != m_extra_mf_fields.end() );
     assert( e->second.m_valid );
     mf->set_data_size( e->second.m_data_size );
+    unsigned cache_index;
     if ( m_config.m_alloc_policy == ON_MISS )
-        m_tag_array->fill(e->second.m_cache_index,time);
+        cache_index = m_tag_array->fill(e->second.m_cache_index,time);
     else if ( m_config.m_alloc_policy == ON_FILL )
-        m_tag_array->fill(e->second.m_block_addr,time);
+        cache_index = m_tag_array->fill(e->second.m_block_addr,time);
     else abort();
     
     unsigned data_size = e->second.m_data_size;
     unsigned sector_num = data_size/32;
-    new_addr_type start_sector = m_config.block_index(e->second.m_addr)>>5;
+    /*new_addr_type start_sector = m_config.block_index(e->second.m_addr)>>5;
     
     printf("addr:%.16x, data_size:%u, start_sectorid:%u\n",e->second.m_addr,data_size,start_sector);
     assert(start_sector+sector_num<5);
     std::set<unsigned> sectors;
     for(int i=0;i<sector_num;i++)
-        sectors.insert(start_sector+i);
-    m_tag_array->update_blk_stat(e->second.m_cache_index,sectors);
+        sectors.insert(start_sector+i);*/
+    m_tag_array->update_blk_stat(cache_index,data_size);
 
     bool has_atomic = false;
     m_mshrs.mark_ready(e->second.m_block_addr, has_atomic);
@@ -833,13 +834,13 @@ void data_cache::send_write_request(mem_fetch *mf, cache_event request, unsigned
 cache_request_status data_cache::wr_hit_wb(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
     unsigned data_size = mf->get_data_size();
     unsigned sector_num = data_size/32;
-    new_addr_type start_sector = m_config.block_index(addr)>>5;
+    /*new_addr_type start_sector = m_config.block_index(addr)>>5;
     assert(start_sector+sector_num<5);
     printf("addr:%.16x, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
     std::set<unsigned> sectors;
     for(int i=0;i<sector_num;i++)
-        sectors.insert(start_sector+i);
-    m_tag_array->update_blk_stat(cache_index,sectors);
+        sectors.insert(start_sector+i);*/
+    m_tag_array->update_blk_stat(cache_index,data_size);
 	new_addr_type block_addr = m_config.block_addr(addr);
 	m_tag_array->access(block_addr,time,cache_index); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
@@ -855,13 +856,13 @@ cache_request_status data_cache::wr_hit_wt(new_addr_type addr, unsigned cache_in
 
     unsigned data_size = mf->get_data_size();
     unsigned sector_num = data_size/32;
-    new_addr_type start_sector = m_config.block_index(addr)>>5;
+    /*new_addr_type start_sector = m_config.block_index(addr)>>5;
     assert(start_sector+sector_num<5);
     printf("addr:%.16x, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
     std::set<unsigned> sectors;
     for(int i=0;i<sector_num;i++)
-        sectors.insert(start_sector+i);
-    m_tag_array->update_blk_stat(cache_index,sectors);
+        sectors.insert(start_sector+i);*/
+    m_tag_array->update_blk_stat(cache_index,data_size);
 
 	new_addr_type block_addr = m_config.block_addr(addr);
 	m_tag_array->access(block_addr,time,cache_index); // update LRU state
@@ -1014,13 +1015,13 @@ data_cache::rd_hit_base( new_addr_type addr,
 {
     unsigned data_size = mf->get_data_size();
     unsigned sector_num = data_size/32;
-    new_addr_type start_sector = m_config.block_index(addr)>>5;
+    /*new_addr_type start_sector = m_config.block_index(addr)>>5;
     assert(start_sector+sector_num<5);
     printf("addr:%.16x, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
     std::set<unsigned> sectors;
     for(int i=0;i<sector_num;i++)
-        sectors.insert(start_sector+i);
-    m_tag_array->update_blk_stat(cache_index,sectors);
+        sectors.insert(start_sector+i);*/
+    m_tag_array->update_blk_stat(cache_index,data_size);
 
     new_addr_type block_addr = m_config.block_addr(addr);
     m_tag_array->access(block_addr,time,cache_index);
