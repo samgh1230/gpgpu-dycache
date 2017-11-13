@@ -372,11 +372,12 @@ public:
     //void update_blk_stat(unsigned blk_id, std::set<unsigned> sectors)
     void update_blk_stat(unsigned blk_id, unsigned data_size)
     {
-        //printf("2\n");
+        printf("2\n");
         m_line_stat[blk_id].num_referred++;
         assert(data_size>0);
+        printf("data size:%u\n",data_size);
         m_line_stat[blk_id].sectors[data_size/4 - 1]++;
-        //printf("end\n");
+        printf("end\n");
     }
     void del_blk_and_commit(unsigned blk_id)
     {  
