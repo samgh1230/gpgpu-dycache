@@ -716,7 +716,8 @@ void baseline_cache::fill(mem_fetch *mf, unsigned time){
     else if ( m_config.m_alloc_policy == ON_FILL )
         blk_id=m_tag_array->fill(e->second.m_block_addr,time);
     else abort();
-    m_tag_array->commit_blk_ref(blk_id);
+    if(m_tag_array->m_lines[blk_id].m_status==VALID||m_tag_array->m_lines[blk_id].m_status==MODIFIED)
+        m_tag_array->commit_blk_ref(blk_id);
     m_tag_array->update_blk_ref(blk_id,mf->get_data_size());
     bool has_atomic = false;
     m_mshrs.mark_ready(e->second.m_block_addr, has_atomic);
@@ -834,6 +835,7 @@ cache_request_status data_cache::wr_hit_we(new_addr_type addr, unsigned cache_in
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	send_write_request(mf, WRITE_REQUEST_SENT, time, events);
     m_tag_array->update_blk_ref(cache_index,mf->get_data_size());
+    printf("wr_hit_we\n");
     if(block.m_status==VALID||block.m_status==MODIFIED)
         m_tag_array->commit_blk_ref(cache_index);
 
