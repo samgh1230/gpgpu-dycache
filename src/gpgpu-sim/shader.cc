@@ -941,7 +941,7 @@ bool scheduler_unit::sort_warps_by_oldest_dynamic_id(shd_warp_t* lhs, shd_warp_t
         return lhs < rhs;
     }
 }
-o
+
 void lrr_scheduler::order_warps()
 {
     order_lrr( m_next_cycle_prioritized_warps,
