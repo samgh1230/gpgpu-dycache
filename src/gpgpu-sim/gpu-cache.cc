@@ -432,6 +432,9 @@ cache_stats::cache_stats(){
     m_cache_port_available_cycles = 0; 
     m_cache_data_port_busy_cycles = 0; 
     m_cache_fill_port_busy_cycles = 0; 
+
+    num_ref_distro.resize(5,0);
+    data_size_accessed_distro.resize(4,0);
 }
 
 void cache_stats::clear(){
@@ -444,6 +447,9 @@ void cache_stats::clear(){
     m_cache_port_available_cycles = 0; 
     m_cache_data_port_busy_cycles = 0; 
     m_cache_fill_port_busy_cycles = 0; 
+
+    std::fill(num_ref_distro.begin(),num_ref_distro.end(),0);
+    std::fill(data_size_accessed_distro.begin(), data_size_accessed_distro.end(),0);
 }
 
 void cache_stats::inc_stats(int access_type, int access_outcome){
@@ -569,6 +575,15 @@ unsigned cache_stats::get_stats(enum mem_access_type *access_type, unsigned num_
         }
     }
     return total;
+}
+void cache_stats::get_blk_sub_stats(struct cache_sub_stats &css) const{
+    struct cache_sub_stats t_css;
+    t_css.clear();
+
+    t_css.num_ref_distro = num_ref_distro;
+    t_css.data_size_accessed_distro = data_size_accessed_distro;
+
+    css = t_css;
 }
 void cache_stats::get_sub_stats(struct cache_sub_stats &css) const{
     ///
@@ -836,7 +851,6 @@ cache_request_status data_cache::wr_hit_we(new_addr_type addr, unsigned cache_in
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	send_write_request(mf, WRITE_REQUEST_SENT, time, events);
     m_tag_array->update_blk_ref(cache_index,mf->get_data_size());
-    printf("wr_hit_we\n");
     if(block.m_status==VALID||block.m_status==MODIFIED)
         m_tag_array->commit_blk_ref(cache_index);
 

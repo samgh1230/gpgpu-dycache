@@ -496,6 +496,9 @@ struct cache_sub_stats{
     unsigned long long data_port_busy_cycles; 
     unsigned long long fill_port_busy_cycles; 
 
+    std::vector<unsigned> num_ref_distro;
+    std::vector<unsigned> data_size_accessed_distro;
+
     cache_sub_stats(){
         clear();
     }
@@ -507,6 +510,10 @@ struct cache_sub_stats{
         port_available_cycles = 0; 
         data_port_busy_cycles = 0; 
         fill_port_busy_cycles = 0; 
+        num_ref_distro.clear();
+        num_ref_distro.resize(5,0);
+        data_size_accessed_distro.clear();
+        data_size_accessed_distro.resize(4,0);
     }
     cache_sub_stats &operator+=(const cache_sub_stats &css){
         ///
@@ -519,6 +526,12 @@ struct cache_sub_stats{
         port_available_cycles += css.port_available_cycles; 
         data_port_busy_cycles += css.data_port_busy_cycles; 
         fill_port_busy_cycles += css.fill_port_busy_cycles; 
+        for(int i=0;i<5;i++){
+            num_ref_distro[i] += css.num_ref_distro[i];
+        }
+        for(int i=0;i<4;i++){
+            data_size_accessed_distro[i] += css.data_size_accessed_distro[i];
+        }
         return *this;
     }
 
@@ -534,6 +547,13 @@ struct cache_sub_stats{
         ret.port_available_cycles = port_available_cycles + cs.port_available_cycles; 
         ret.data_port_busy_cycles = data_port_busy_cycles + cs.data_port_busy_cycles; 
         ret.fill_port_busy_cycles = fill_port_busy_cycles + cs.fill_port_busy_cycles; 
+
+        for(int i=0;i<5;i++){
+            ret.num_ref_distro[i] = num_ref_distro[i] + cs.num_ref_distro[i];
+        }
+        for(int i=0;i<4;i++){
+            ret.data_size_accessed_distro[i] = data_size_accessed_distro[i] + cs.data_size_accessed_distro[i];
+        }
         return ret;
     }
 
@@ -560,12 +580,16 @@ public:
 
     unsigned get_stats(enum mem_access_type *access_type, unsigned num_access_type, enum cache_request_status *access_status, unsigned num_access_status)  const;
     void get_sub_stats(struct cache_sub_stats &css) const;
+    void get_blk_sub_stats(struct cache_sub_stats &css) const;
 
     void sample_cache_port_utility(bool data_port_busy, bool fill_port_busy); 
 private:
     bool check_valid(int type, int status) const;
 
     std::vector< std::vector<unsigned> > m_stats;
+
+    std::vector<unsigned> num_ref_distro;
+    std::vector<unsigned> data_size_accessed_distro;
 
     unsigned long long m_cache_port_available_cycles; 
     unsigned long long m_cache_data_port_busy_cycles; 
@@ -698,7 +722,7 @@ protected:
 
     extra_mf_fields_lookup m_extra_mf_fields;
 
-    cache_stats m_stats;
+    cache_stats m_stats
 
     /// Checks whether this request can be handled on this cycle. num_miss equals max # of misses to be handled on this cycle
     bool miss_queue_full(unsigned num_miss){
@@ -1070,6 +1094,7 @@ public:
 
     void get_sub_stats(struct cache_sub_stats &css) const{
         m_stats.get_sub_stats(css);
+        m_stats.get_blk_sub_stats(css);
     }
 private:
     std::string m_name;
