@@ -559,7 +559,7 @@ struct cache_sub_stats{
         return *this;
     }
 
-    cache_sub_stats operator+(const cache_sub_stats &cs){
+    cache_sub_stats operator+(const cache_sub_stats &css){
         ///
         /// Overloading + operator to easily accumulate stats
         ///
