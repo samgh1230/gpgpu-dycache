@@ -837,7 +837,7 @@ cache_request_status data_cache::wr_hit_wt(new_addr_type addr, unsigned cache_in
 
     unsigned data_size = mf->get_data_size();
     unsigned sector_num = data_size/32;
-    new_addr_type start_sector = m_config.block_index(addr>>5;
+    new_addr_type start_sector = m_config.block_index(addr)>>5;
     assert(start_sector+sector_num<5);
     printf("addr:%.16x, data_size:%u, start_sectorid:%u\n",addr,data_size,start_sector);
     std::set<unsigned> sectors;
