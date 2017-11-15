@@ -321,6 +321,20 @@ void tag_array::print( FILE *stream, unsigned &total_access, unsigned &total_mis
     total_access+=m_access;
 }
 
+void tag_array::print_blk_stats()
+{
+    FILE* f = fopen("L2_blk_stat.txt","a");
+    for(int i=0;i<5;i++){
+        fprintf(f,"%u\t",total_css.num_ref_distro[i]);
+    }
+    for(int i=0;i<4;i++){
+        fprintf(f,"%u\t",total_css.data_size_accessed_distro[i]);
+    }
+    fprintf( f, "%.3g\n", (float) total_misses / total_access);
+    fflush(f);
+    fclose(f);
+}
+
 void tag_array::get_stats(unsigned &total_access, unsigned &total_misses, unsigned &total_hit_res, unsigned &total_res_fail) const{
     // Update statistics from the tag array
     total_access    = m_access;
@@ -734,7 +748,7 @@ void baseline_cache::fill(mem_fetch *mf, unsigned time){
     /*printf("fill\n");
     if(m_tag_array->get_block(blk_id).m_status==VALID||m_tag_array->get_block(blk_id).m_status==MODIFIED)
         m_tag_array->commit_blk_ref(blk_id);*/
-    m_tag_array->update_blk_ref(blk_id,mf->get_data_size());
+    //m_tag_array->update_blk_ref(blk_id,mf->get_data_size());
     bool has_atomic = false;
     m_mshrs.mark_ready(e->second.m_block_addr, has_atomic);
     if (has_atomic) {
@@ -755,6 +769,11 @@ bool baseline_cache::waiting_for_fill( mem_fetch *mf ){
 void baseline_cache::print(FILE *fp, unsigned &accesses, unsigned &misses) const{
     fprintf( fp, "Cache %s:\t", m_name.c_str() );
     m_tag_array->print(fp,accesses,misses);
+}
+
+void baseline_cache::print_l2()
+{
+    m_tag_array->print_blk_stats();
 }
 
 void baseline_cache::display_state( FILE *fp ) const{
@@ -1001,11 +1020,15 @@ data_cache::rd_miss_base( new_addr_type addr,
     bool do_miss = false;
     bool wb = false;
     cache_block_t evicted;
+
+    unsigned blk_index = cache_index;
+
     send_read_request( addr,
                        block_addr,
                        cache_index,
                        mf, time, do_miss, wb, evicted, events, false, false);
     
+    assert(blk_index==cache_index);
     if( do_miss ){
         cache_block_t blk = m_tag_array->get_block(cache_index);
         if(blk.m_status==VALID||blk.m_status==MODIFIED)

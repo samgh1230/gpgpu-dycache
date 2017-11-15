@@ -394,6 +394,7 @@ public:
         m_line_stats[blk_id].data_size_accessed.clear();
         m_line_stats[blk_id].data_size_accessed.resize(4,0);
     }
+    void print_blk_stats();
     std::vector<unsigned> num_ref_distro;
     std::vector<unsigned> data_size_accessed_distro;
 protected:
@@ -677,6 +678,8 @@ public:
     // accessors for cache bandwidth availability 
     bool data_port_free() const { return m_bandwidth_management.data_port_free(); } 
     bool fill_port_free() const { return m_bandwidth_management.fill_port_free(); } 
+
+    void print_l2();
 
 protected:
     // Constructor that can be used by derived classes with custom tag arrays

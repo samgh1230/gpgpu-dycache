@@ -2002,7 +2002,7 @@ void gpgpu_sim::shader_print_scheduler_stat( FILE* fout, bool print_dynamic_info
 }
 
 void gpgpu_sim::shader_print_cache_stats( FILE *fout ) const{
-    FILE* f = fopen("blk_stats.txt","a");
+    FILE* f = fopen("L1_blk_stats.txt","a");
     // L1I
     struct cache_sub_stats total_css;
     struct cache_sub_stats css;
@@ -2046,6 +2046,9 @@ void gpgpu_sim::shader_print_cache_stats( FILE *fout ) const{
         fprintf(fout, "\tL1D_total_cache_pending_hits = %u\n", total_css.pending_hits);
         fprintf(fout, "\tL1D_total_cache_reservation_fails = %u\n", total_css.res_fails);
 
+        
+        total_css.print_port_stats(fout, "\n\tL1D_cache"); 
+        
         fprintf(fout,"L1D num_ref_distro\n");
         for(int i=0;i<5;i++){
             fprintf(f,"%u\t",total_css.num_ref_distro[i]);
@@ -2054,8 +2057,10 @@ void gpgpu_sim::shader_print_cache_stats( FILE *fout ) const{
         for(int i=0;i<4;i++){
             fprintf(f,"%u\t",total_css.data_size_accessed_distro[i]);
         }
-        fprintf(f,"\n");
-        total_css.print_port_stats(fout, "\n\tL1D_cache"); 
+        if(total_css.accesses > 0){
+            fprintf(f, "%.4lf\n", (double)total_css.misses / (double)total_css.accesses);
+        }
+        else fprintf(f,"0.0\n");
         fflush(f);
         fclose(f);
     }
