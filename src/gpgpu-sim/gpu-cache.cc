@@ -321,7 +321,7 @@ void tag_array::print( FILE *stream, unsigned &total_access, unsigned &total_mis
     total_access+=m_access;
 }
 
-void tag_array::print_blk_stats()
+void tag_array::print_blk_stats(unsigned total_access, unsigned total_misses)
 {
     FILE* f = fopen("L2_blk_stat.txt","a");
     for(int i=0;i<5;i++){

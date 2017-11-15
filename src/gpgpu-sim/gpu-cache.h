@@ -394,7 +394,7 @@ public:
         m_line_stats[blk_id].data_size_accessed.clear();
         m_line_stats[blk_id].data_size_accessed.resize(4,0);
     }
-    void print_blk_stats();
+    void print_blk_stats(unsigned total_access, unsigned total_misses);
     std::vector<unsigned> num_ref_distro;
     std::vector<unsigned> data_size_accessed_distro;
 protected:
