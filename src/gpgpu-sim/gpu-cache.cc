@@ -330,7 +330,9 @@ void tag_array::print_blk_stats(unsigned total_access, unsigned total_misses)
     for(int i=0;i<4;i++){
         fprintf(f,"%u\t",data_size_accessed_distro[i]);
     }
-    fprintf( f, "%.3g\n", (float) total_misses / total_access);
+    if(total_access!=0)
+        fprintf( f, "%.3g\n", (float) total_misses / total_access);
+    else fprintf(f,"0.0\n");
     fflush(f);
     fclose(f);
 }
