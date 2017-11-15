@@ -463,7 +463,7 @@ void memory_sub_partition::print_cache_stat(unsigned &accesses, unsigned &misses
     if( !m_config->m_L2_config.disabled() )
     {
         m_L2cache->print(fp,accesses,misses);
-        m_L2cache->print_l2();
+        m_L2cache->print_l2(accesses,misses);
     }
 }
 

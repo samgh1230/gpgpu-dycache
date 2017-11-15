@@ -771,9 +771,9 @@ void baseline_cache::print(FILE *fp, unsigned &accesses, unsigned &misses) const
     m_tag_array->print(fp,accesses,misses);
 }
 
-void baseline_cache::print_l2()
+void baseline_cache::print_l2(unsigned total_access,unsigned total_misses)
 {
-    m_tag_array->print_blk_stats();
+    m_tag_array->print_blk_stats(total_access,total_misses);
 }
 
 void baseline_cache::display_state( FILE *fp ) const{
