@@ -325,10 +325,10 @@ void tag_array::print_blk_stats()
 {
     FILE* f = fopen("L2_blk_stat.txt","a");
     for(int i=0;i<5;i++){
-        fprintf(f,"%u\t",total_css.num_ref_distro[i]);
+        fprintf(f,"%u\t",num_ref_distro[i]);
     }
     for(int i=0;i<4;i++){
-        fprintf(f,"%u\t",total_css.data_size_accessed_distro[i]);
+        fprintf(f,"%u\t",data_size_accessed_distro[i]);
     }
     fprintf( f, "%.3g\n", (float) total_misses / total_access);
     fflush(f);
