@@ -596,6 +596,8 @@ void cache_stats::get_blk_sub_stats(struct cache_sub_stats &css, class tag_array
     struct cache_sub_stats t_css;
     t_css.clear();
 
+    t_css=css;
+
     t_css.num_ref_distro = m_tag_array->num_ref_distro;
     t_css.data_size_accessed_distro = m_tag_array->data_size_accessed_distro;
 
