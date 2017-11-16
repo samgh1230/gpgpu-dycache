@@ -600,10 +600,7 @@ void cache_stats::get_blk_sub_stats(struct cache_sub_stats &css, class tag_array
 
     t_css.num_ref_distro = m_tag_array->num_ref_distro;
     t_css.data_size_accessed_distro = m_tag_array->data_size_accessed_distro;
-    printf("blk sub stats:\n");
-    for(int i=0;i<5;i++){
-        printf("%u\t",t_css.num_ref_distro[i]);
-    }
+   
     css = t_css;
 }
 void cache_stats::get_sub_stats(struct cache_sub_stats &css) const{
@@ -752,10 +749,10 @@ void baseline_cache::fill(mem_fetch *mf, unsigned time){
     else if ( m_config.m_alloc_policy == ON_FILL )
         blk_id=m_tag_array->fill(e->second.m_block_addr,time);
     else abort();
-    /*printf("fill\n");
+    //printf("fill\n");
     if(m_tag_array->get_block(blk_id).m_status==VALID||m_tag_array->get_block(blk_id).m_status==MODIFIED)
-        m_tag_array->commit_blk_ref(blk_id);*/
-    //m_tag_array->update_blk_ref(blk_id,mf->get_data_size());
+        m_tag_array->commit_blk_ref(blk_id);
+    m_tag_array->update_blk_ref(blk_id,mf->get_data_size());
     bool has_atomic = false;
     m_mshrs.mark_ready(e->second.m_block_addr, has_atomic);
     if (has_atomic) {
