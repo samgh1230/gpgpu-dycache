@@ -680,6 +680,7 @@ public:
     bool fill_port_free() const { return m_bandwidth_management.fill_port_free(); } 
 
     void print_l2(unsigned total_access,unsigned total_misses);
+    tag_array* get_tag_array() {return m_tag_array;}
 
 protected:
     // Constructor that can be used by derived classes with custom tag arrays
