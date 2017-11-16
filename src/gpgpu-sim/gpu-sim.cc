@@ -968,7 +968,7 @@ void gpgpu_sim::gpu_print_stat()
           for(int i=0;i<4;i++){
               fprintf(f,"%u\t",total_l2_css.data_size_accessed_distro[i]);
           }
-          if(total_css.accesses > 0){
+          if(total_l2_css.accesses > 0){
               fprintf(f, "%.4lf\n", (double)total_l2_css.misses / (double)total_l2_css.accesses);
           }
           else fprintf(f,"0.0\n");
