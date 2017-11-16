@@ -2057,6 +2057,7 @@ void gpgpu_sim::shader_print_cache_stats( FILE *fout ) const{
         for(int i=0;i<4;i++){
             fprintf(f,"%u\t",total_css.data_size_accessed_distro[i]);
         }
+        fprintf(f,"%u\t",total_css.accesses);
         if(total_css.accesses > 0){
             fprintf(f, "%.4lf\n", (double)total_css.misses / (double)total_css.accesses);
         }
