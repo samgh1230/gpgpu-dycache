@@ -600,7 +600,10 @@ void cache_stats::get_blk_sub_stats(struct cache_sub_stats &css, class tag_array
 
     t_css.num_ref_distro = m_tag_array->num_ref_distro;
     t_css.data_size_accessed_distro = m_tag_array->data_size_accessed_distro;
-
+    printf("blk sub stats:\n");
+    for(int i=0;i<5;i++){
+        printf("%u\t",t_css.num_ref_distro[i]);
+    }
     css = t_css;
 }
 void cache_stats::get_sub_stats(struct cache_sub_stats &css) const{
@@ -775,10 +778,6 @@ void baseline_cache::print(FILE *fp, unsigned &accesses, unsigned &misses) const
     m_tag_array->print(fp,accesses,misses);
 }
 
-void baseline_cache::print_l2(unsigned total_access,unsigned total_misses)
-{
-    m_tag_array->print_blk_stats(total_access,total_misses);
-}
 
 void baseline_cache::display_state( FILE *fp ) const{
     fprintf(fp,"Cache %s:\n", m_name.c_str() );

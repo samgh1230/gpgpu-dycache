@@ -942,6 +942,7 @@ void gpgpu_sim::gpu_print_stat()
        printf("\n========= L2 cache stats =========\n");
        for (unsigned i=0;i<m_memory_config->m_n_mem_sub_partition;i++){
            m_memory_sub_partition[i]->accumulate_L2cache_stats(l2_stats);
+           printf("L2 cache sub stats\n");
            m_memory_sub_partition[i]->get_L2cache_sub_stats(l2_css);
 
            fprintf( stdout, "L2_cache_bank[%d]: Access = %u, Miss = %u, Miss_rate = %.3lf, Pending_hits = %u, Reservation_fails = %u\n",
@@ -968,7 +969,7 @@ void gpgpu_sim::gpu_print_stat()
           for(int i=0;i<4;i++){
               fprintf(f,"%u\t",total_l2_css.data_size_accessed_distro[i]);
           }
-          fprintf(f,"%u\t",total_l2_css.accesses);
+          fprintf(f,"%u\t",total_l2_css.accesses-total_l2_css.misses-total_l2_css.pending_hits-total_l2_css.res_fails);
           if(total_l2_css.accesses > 0){
               fprintf(f, "%.4lf\n", (double)total_l2_css.misses / (double)total_l2_css.accesses);
           }
