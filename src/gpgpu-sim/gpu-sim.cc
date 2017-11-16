@@ -960,6 +960,20 @@ void gpgpu_sim::gpu_print_stat()
           printf("L2_total_cache_breakdown:\n");
           l2_stats.print_stats(stdout, "L2_cache_stats_breakdown");
           total_l2_css.print_port_stats(stdout, "L2_cache");
+          
+          FILE* f=fopen("L2_blk_ref_stats.txt","a");
+          for(int i=0;i<5;i++){
+              fprintf(f,"%u\t",total_l2_css.num_ref_distro[i]);
+          }
+          for(int i=0;i<4;i++){
+              fprintf(f,"%u\t",total_l2_css.data_size_accessed_distro[i]);
+          }
+          if(total_css.accesses > 0){
+              fprintf(f, "%.4lf\n", (double)total_l2_css.misses / (double)total_l2_css.accesses);
+          }
+          else fprintf(f,"0.0\n");
+          fflush(f);
+          fclose(f);
        }
    }
 
