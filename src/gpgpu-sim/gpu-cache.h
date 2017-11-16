@@ -376,7 +376,7 @@ public:
     {
         unsigned num_ref = m_line_stats[blk_id].num_ref;
         switch(num_ref){
-            case 0: printf("Error:non-accessed block\n");//exit(1);
+            case 0: printf("Error:non-accessed block\n");exit(1);
             case 1: num_ref_distro[0]++;break;
             case 2: num_ref_distro[1]++;break;
             case 3: case 4: case 5: case 6: case 7: case 8: case 9: case 10:

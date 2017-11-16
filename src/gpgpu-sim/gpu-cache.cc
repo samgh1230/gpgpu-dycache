@@ -750,9 +750,9 @@ void baseline_cache::fill(mem_fetch *mf, unsigned time){
         blk_id=m_tag_array->fill(e->second.m_block_addr,time);
     else abort();
     //printf("fill\n");
-    if(m_tag_array->get_block(blk_id).m_status==VALID||m_tag_array->get_block(blk_id).m_status==MODIFIED)
+    /*if(m_tag_array->get_block(blk_id).m_status==VALID||m_tag_array->get_block(blk_id).m_status==MODIFIED)
         m_tag_array->commit_blk_ref(blk_id);
-    m_tag_array->update_blk_ref(blk_id,mf->get_data_size());
+    m_tag_array->update_blk_ref(blk_id,mf->get_data_size());*/
     bool has_atomic = false;
     m_mshrs.mark_ready(e->second.m_block_addr, has_atomic);
     if (has_atomic) {
