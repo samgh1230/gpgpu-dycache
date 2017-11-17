@@ -2026,6 +2026,7 @@ void gpgpu_sim::shader_print_cache_stats( FILE *fout ) const{
     }
 
     // L1D
+    printf("L1D disabled:%d\n",m_shader_config->m_L1D_config.disabled());
     if(!m_shader_config->m_L1D_config.disabled()){
         total_css.clear();
         css.clear();
