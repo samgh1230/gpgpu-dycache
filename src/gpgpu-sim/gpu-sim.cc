@@ -931,6 +931,7 @@ void gpgpu_sim::gpu_print_stat()
       m_memory_partition_unit[i]->print(stdout);
 
    // L2 cache stats
+   printf("L2 texure only:%u\n",m_memory_config->m_L2_texure_only);
    if(!m_memory_config->m_L2_config.disabled()){
        cache_stats l2_stats;
        struct cache_sub_stats l2_css;
