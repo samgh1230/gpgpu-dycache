@@ -839,6 +839,7 @@ cache_request_status data_cache::wr_hit_wb(new_addr_type addr, unsigned cache_in
 	m_tag_array->access(block_addr,time,cache_index); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	block.m_status = MODIFIED;
+    printf("update_blk_ref\n");
     m_tag_array->update_blk_ref(cache_index,mf->get_data_size());
 
 	return HIT;
@@ -939,9 +940,13 @@ data_cache::wr_miss_wa( new_addr_type addr,
         evicted, events, false, true);
     
     if( do_miss ){
-        cache_block_t blk = m_tag_array->get_block(cache_index);
+        cache_block_t blk = m_tag_array->get_block(cache_index);a
+        
         if(blk.m_status==VALID||blk.m_status==MODIFIED)
+        {
             m_tag_array->commit_blk_ref(cache_index);
+            printf("write allocate. commit_blk_ref\n");
+        }
         // If evicted block is modified and not a write-through
         // (already modified lower level)
         if( wb && (m_config.m_write_policy != WRITE_THROUGH) ) { 
@@ -988,7 +993,7 @@ data_cache::rd_hit_base( new_addr_type addr,
 {
     new_addr_type block_addr = m_config.block_addr(addr);
     m_tag_array->access(block_addr,time,cache_index);
-
+    printf("rd_hit update_blk_ref\n");
     m_tag_array->update_blk_ref(cache_index,mf->get_data_size());
     // Atomics treated as global read/write requests - Perform read, mark line as
     // MODIFIED
