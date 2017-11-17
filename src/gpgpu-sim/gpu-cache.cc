@@ -940,7 +940,7 @@ data_cache::wr_miss_wa( new_addr_type addr,
         evicted, events, false, true);
     
     if( do_miss ){
-        cache_block_t blk = m_tag_array->get_block(cache_index);a
+        cache_block_t blk = m_tag_array->get_block(cache_index);
         
         if(blk.m_status==VALID||blk.m_status==MODIFIED)
         {
