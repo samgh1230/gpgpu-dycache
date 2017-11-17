@@ -938,7 +938,7 @@ data_cache::wr_miss_wa( new_addr_type addr,
     // Send read request resulting from write miss
     send_read_request(addr, block_addr, cache_index, n_mf, time, do_miss, wb,
         evicted, events, false, true);
-    
+    printf("do_miss:%d\n",do_miss);
     if( do_miss ){
         cache_block_t blk = m_tag_array->get_block(cache_index);
         
@@ -1026,18 +1026,18 @@ data_cache::rd_miss_base( new_addr_type addr,
     bool wb = false;
     cache_block_t evicted;
 
-    unsigned blk_index = cache_index;
-
     send_read_request( addr,
                        block_addr,
                        cache_index,
                        mf, time, do_miss, wb, evicted, events, false, false);
-    
-    assert(blk_index==cache_index);
+    printf("do_miss:%d\n",do_miss);
     if( do_miss ){
         cache_block_t blk = m_tag_array->get_block(cache_index);
         if(blk.m_status==VALID||blk.m_status==MODIFIED)
+        {
             m_tag_array->commit_blk_ref(cache_index);
+            printf("rd_miss.commit_blk\n");
+        }
         // If evicted block is modified and not a write-through
         // (already modified lower level)
         if(wb && (m_config.m_write_policy != WRITE_THROUGH) ){ 
