@@ -1108,6 +1108,7 @@ data_cache::process_tag_probe( bool wr,
                                       cache_index,
                                       mf, time, events, probe_status );
         }else if ( probe_status != RESERVATION_FAIL ) {
+            printf("write miss\n");
             access_status = (this->*m_wr_miss)( addr,
                                        cache_index,
                                        mf, time, events, probe_status );
@@ -1118,6 +1119,7 @@ data_cache::process_tag_probe( bool wr,
                                       cache_index,
                                       mf, time, events, probe_status );
         }else if ( probe_status != RESERVATION_FAIL ) {
+            printf("read miss\n");
             access_status = (this->*m_rd_miss)( addr,
                                        cache_index,
                                        mf, time, events, probe_status );
