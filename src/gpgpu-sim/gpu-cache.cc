@@ -972,7 +972,7 @@ data_cache::wr_miss_no_wa( new_addr_type addr,
 {
     if(miss_queue_full(0))
         return RESERVATION_FAIL; // cannot handle request this cycle
-
+    printf("write miss. no allocate\n");
     // on miss, generate write through (no write buffering -- too many threads for that)
     send_write_request(mf, WRITE_REQUEST_SENT, time, events);
 

@@ -156,9 +156,8 @@ public:
 
         if ( ntok < 11 ) {
             if ( !strcmp(config,"none") ) {
-                printf("cache disabled. ntok:%u\n",ntok);
-
-                exit(1);
+                //printf("cache disabled\n"
+                //exit(1)
                 m_disabled = true;
                 return;
             }
