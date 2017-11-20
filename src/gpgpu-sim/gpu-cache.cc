@@ -271,7 +271,7 @@ void tag_array::fill( new_addr_type addr, unsigned time )
     assert( m_config.m_alloc_policy == ON_FILL );
     unsigned idx;
     unsigned sc_id;
-    enum cache_request_status status = addr,idx,sc_id);
+    enum cache_request_status status = probe(addr,idx,sc_id);
     assert(status==MISS); // MSHR should have prevented redundant memory request
     m_lines[idx].allocate( m_config.tag(addr), m_config.block_addr(addr), time , m_config.sector_id(addr));
     m_lines[idx].fill(time,m_config.sector_id(addr));
