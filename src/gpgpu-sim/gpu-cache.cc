@@ -771,9 +771,9 @@ void baseline_cache::send_read_request(new_addr_type addr, new_addr_type block_a
     bool mshr_avail = !m_mshrs.full(block_addr);
     if ( mshr_hit && mshr_avail ) {
     	if(read_only)
-    		m_tag_array->access(block_addr,time,cache_index,sid);
+    		m_tag_array->access(block_addr,time,cache_index,sc_id);
     	else
-    		m_tag_array->access(block_addr,time,cache_index,wb,evicted,sid);
+    		m_tag_array->access(block_addr,time,cache_index,wb,evicted,sc_id);
 
         m_mshrs.add(block_addr,mf);
         do_miss = true;
@@ -809,7 +809,7 @@ void data_cache::send_write_request(mem_fetch *mf, cache_event request, unsigned
 cache_request_status data_cache::wr_hit_wb(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
 	new_addr_type block_addr = m_config.block_addr(addr);
     unsigned sid;
-	m_tag_array->access(block_addr,time,cache_index,sc_id); // update LRU state
+	m_tag_array->access(block_addr,time,cache_index,sid); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	//block.m_sc_status[m_config.sector_id(addr)] = MODIFIED;
     block.change_blk_status(MODIFIED,m_config.sector_id(addr));
@@ -824,7 +824,7 @@ cache_request_status data_cache::wr_hit_wt(new_addr_type addr, unsigned cache_in
 
 	new_addr_type block_addr = m_config.block_addr(addr);
     unsigned sid;
-	m_tag_array->access(block_addr,time,cache_index,sc_id); // update LRU state
+	m_tag_array->access(block_addr,time,cache_index,sid); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	//block.m_status = MODIFIED;
     block.change_blk_status(MODIFIED,m_config.sector_id(addr));
