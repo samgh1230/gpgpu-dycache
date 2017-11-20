@@ -63,35 +63,128 @@ const char * cache_request_status_str(enum cache_request_status status);
 struct cache_block_t {
     cache_block_t()
     {
-        m_tag=0;
+        /*m_tag=0;
         m_block_addr=0;
         m_alloc_time=0;
         m_fill_time=0;
         m_last_access_time=0;
-        m_status=INVALID;
+        m_status=INVALID;*/
+
+        m_block_addrs.resize(4,0);
+        m_tags.resize(4,0);
+        m_sc_status.resize(4,INVALID);
+        m_alloc_times.resize(4,0);
+        m_fill_times.resize(4,0);
+        m_last_access_times.resize(4,0);
+        blksz_mark=m_128;
     }
-    void allocate( new_addr_type tag, new_addr_type block_addr, unsigned time )
+    void allocate( new_addr_type tag, new_addr_type block_addr, unsigned time, unsigned sc_id)
     {
-        m_tag=tag;
+        /*m_tag=tag;
         m_block_addr=block_addr;
         m_alloc_time=time;
         m_last_access_time=time;
         m_fill_time=0;
-        m_status=RESERVED;
-    }
-    void fill( unsigned time )
-    {
-        assert( m_status == RESERVED );
-        m_status=VALID;
-        m_fill_time=time;
+        m_status=RESERVED;*/
+
+        switch(m_blksz_mark)
+        {
+            case m_32:
+            m_tags[sc_id] = tag;
+            m_block_addrs[sc_id] = block_addr;
+            m_alloc_times[sc_id]=time;
+            m_last_access_times[sc_id]=time;
+            m_sc_status[sc_id]=RESERVED;
+            break;
+            case m_64:
+            for(int i=0;i<2;i++){
+                m_tags[sc_id+i] = tag;
+                m_block_addrs[sc_id+i] = block_addr;
+                m_alloc_times[sc_id+i]=time;
+                m_last_access_times[sc_id+i]=time;
+                m_sc_status[sc_id+i]=RESERVED;
+            }
+            break;
+            case m_128:
+            for(int i=0;i<4;i++){
+                m_tags[sc_id+i] = tag;
+                m_block_addrs[sc_id+i] = block_addr;
+                m_alloc_times[sc_id+i]=time;
+                m_last_access_times[sc_id+i]=time;
+                m_sc_status[sc_id+i]=RESERVED;
+            }
+            break;
+            default:
+            printf("Error: no such a block size\n");
+            exit(1);
+        }
     }
 
-    new_addr_type    m_tag;
+    void change2big_blksz(enum block_size blksz)
+    {  
+        m_blksz_mark = blksz;
+        m_valid_sectors.reset();
+        m_sc_status.clear();
+        m_sc_status.resize(4,0);
+    }
+
+    void change2small_blksz(enum block_size blksz)
+    {
+        m_blksz_mark = blksz;
+    }
+
+    void fill( unsigned time, unsigned sc_id)
+    {
+        /*assert( m_status == RESERVED );
+        m_status=VALID;
+        m_fill_time=time;*/
+
+        switch(m_blksz_mark)
+        {
+            case m_32:
+            assert(m_sc_status[sc_id]==RESERVED);
+            m_sc_status[sc_id]=VALID;
+            m_fill_times[sc_id]=time;
+            break;
+            case m_64:
+            for(int i=0;i<2;i++){
+                assert(m_sc_status[sc_id+i]==RESERVED);
+                m_sc_status[sc_id+i]=VALID;
+                m_fill_times[sc_id+i]=time;
+            }
+            break;
+            case m_128:
+            for(int i=0;i<4;i++){
+                assert(m_sc_status[sc_id+i]==RESERVED);
+                m_sc_status[sc_id+i]=VALID;
+                m_fill_times[sc_id+i]=time;
+            }
+            break;
+            default:
+            printf("Error: no such a block size\n");
+            exit(1);
+        }
+    }
+
+    /*new_addr_type    m_tag;
     new_addr_type    m_block_addr;
     unsigned         m_alloc_time;
     unsigned         m_last_access_time;
     unsigned         m_fill_time;
-    cache_block_state    m_status;
+    cache_block_state    m_status;*/
+
+    enum block_size{
+        m_32,
+        m_64,
+        m_128
+    };
+    block_size m_blksz_mark;//indicate block granularity
+    std::vector< cache_block_state > m_sc_status;//indicate each sector status
+    std::vector< new_addr_type > m_tags;//indicate each sector tag addr
+    std::vector< new_addr_type > m_block_addrs;//indicate each sector block addrs
+    std::vector<unsigned> m_alloc_times;
+    std::vector<unsigned> m_last_access_times;
+    std::vector<unsigned> m_fill_times;
 };
 
 enum replacement_policy_t {
@@ -265,6 +358,10 @@ public:
     {
         return addr & ~(m_line_sz-1);
     }
+    unsigned sector_id(new_addr_type addr) const{
+        new_addr_type blk = add & (m_line_sz-1);
+        return blk>>5;
+    }
     FuncCache get_cache_status() {return cache_status;}
     char *m_config_string;
     char *m_config_stringPrefL1;
@@ -345,7 +442,7 @@ public:
     enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted );
 
     void fill( new_addr_type addr, unsigned time );
-    void fill( unsigned idx, unsigned time );
+    void fill( new_addr_type addr, unsigned idx, unsigned time );
 
     unsigned size() const { return m_config.get_num_lines();}
     cache_block_t &get_block(unsigned idx) { return m_lines[idx];}
@@ -640,17 +737,19 @@ protected:
 
     struct extra_mf_fields {
         extra_mf_fields()  { m_valid = false;}
-        extra_mf_fields( new_addr_type a, unsigned i, unsigned d ) 
+        extra_mf_fields( new_addr_type a, unsigned i, unsigned d , new_addr_type addr) 
         {
             m_valid = true;
             m_block_addr = a;
             m_cache_index = i;
             m_data_size = d;
+            m_addr = addr;
         }
         bool m_valid;
         new_addr_type m_block_addr;
         unsigned m_cache_index;
         unsigned m_data_size;
+        new_addr_type m_addr;
     };
 
     typedef std::map<mem_fetch*,extra_mf_fields> extra_mf_fields_lookup;
