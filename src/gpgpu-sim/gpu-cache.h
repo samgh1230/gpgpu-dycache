@@ -120,7 +120,7 @@ struct cache_block_t {
         }
     }
 
-    void change2big_blksz(enum block_size blksz)
+    void change2big_blksz(block_size blksz)
     {  
         m_blksz_mark = blksz;
         m_valid_sectors.reset();
@@ -128,7 +128,7 @@ struct cache_block_t {
         m_sc_status.resize(4,0);
     }
 
-    void change2small_blksz(enum block_size blksz)
+    void change2small_blksz(block_size blksz)
     {
         m_blksz_mark = blksz;
     }
