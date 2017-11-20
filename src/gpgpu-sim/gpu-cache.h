@@ -80,7 +80,7 @@ struct cache_block_t {
         m_alloc_times.resize(4,0);
         m_fill_times.resize(4,0);
         m_last_access_times.resize(4,0);
-        blksz_mark=m_128;
+        m_blksz_mark=m_128;
     }
     void allocate( new_addr_type tag, new_addr_type block_addr, unsigned time, unsigned sc_id)
     {
@@ -127,9 +127,8 @@ struct cache_block_t {
     void change2big_blksz(block_size blksz)
     {  
         m_blksz_mark = blksz;
-        m_valid_sectors.reset();
         m_sc_status.clear();
-        m_sc_status.resize(4,0);
+        m_sc_status.resize(4,INVALID);
     }
 
     void change2small_blksz(block_size blksz)
@@ -359,7 +358,7 @@ public:
         return addr & ~(m_line_sz-1);
     }
     unsigned sector_id(new_addr_type addr) const{
-        new_addr_type blk = add & (m_line_sz-1);
+        new_addr_type blk = addr & (m_line_sz-1);
         return blk>>5;
     }
     FuncCache get_cache_status() {return cache_status;}
