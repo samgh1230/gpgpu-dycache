@@ -771,17 +771,17 @@ void baseline_cache::send_read_request(new_addr_type addr, new_addr_type block_a
     bool mshr_avail = !m_mshrs.full(block_addr);
     if ( mshr_hit && mshr_avail ) {
     	if(read_only)
-    		m_tag_array->access(block_addr,time,cache_index);
+    		m_tag_array->access(block_addr,time,cache_index,sid);
     	else
-    		m_tag_array->access(block_addr,time,cache_index,wb,evicted);
+    		m_tag_array->access(block_addr,time,cache_index,wb,evicted,sid);
 
         m_mshrs.add(block_addr,mf);
         do_miss = true;
     } else if ( !mshr_hit && mshr_avail && (m_miss_queue.size() < m_config.m_miss_queue_size) ) {
     	if(read_only)
-    		m_tag_array->access(block_addr,time,cache_index);
+    		m_tag_array->access(block_addr,time,cache_index,sid);
     	else
-    		m_tag_array->access(block_addr,time,cache_index,wb,evicted);
+    		m_tag_array->access(block_addr,time,cache_index,wb,evicted,sid);
 
         m_mshrs.add(block_addr,mf);
         m_extra_mf_fields[mf] = extra_mf_fields(block_addr,cache_index, mf->get_data_size(),addr);
