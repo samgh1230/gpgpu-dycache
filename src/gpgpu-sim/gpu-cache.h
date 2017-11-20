@@ -440,8 +440,8 @@ public:
     ~tag_array();
 
     enum cache_request_status probe( new_addr_type addr, unsigned &idx , unsigned &sid) const;
-    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx );
-    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted );
+    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx , unsigned &sid);
+    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted , unsigned &sid);
 
     void fill( new_addr_type addr, unsigned time );
     void fill( new_addr_type addr, unsigned idx, unsigned time );
