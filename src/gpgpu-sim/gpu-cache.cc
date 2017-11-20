@@ -908,7 +908,7 @@ data_cache::wr_miss_wa( new_addr_type addr,
 
     // Send read request resulting from write miss
     send_read_request(addr, block_addr, cache_index, n_mf, time, do_miss, wb,
-        evicted, events, false, true);
+        evicted, events, false, true, m_config.sector_id(addr));
 
     if( do_miss ){
         // If evicted block is modified and not a write-through
@@ -1020,7 +1020,7 @@ data_cache::rd_miss_base( new_addr_type addr,
     send_read_request( addr,
                        block_addr,
                        cache_index,
-                       mf, time, do_miss, wb, evicted, events, false, false);
+                       mf, time, do_miss, wb, evicted, events, false, false, m_config.sector_id(addr));
 
     if( do_miss ){
         // If evicted block is modified and not a write-through
@@ -1085,7 +1085,7 @@ read_only_cache::access( new_addr_type addr,
     }else if ( status != RESERVATION_FAIL ) {
         if(!miss_queue_full(0)){
             bool do_miss=false;
-            send_read_request(addr, block_addr, cache_index, mf, time, do_miss, events, true, false);
+            send_read_request(addr, block_addr, cache_index, mf, time, do_miss, events, true, false, m_config.sector_id(addr));
             if(do_miss)
                 cache_status = MISS;
             else

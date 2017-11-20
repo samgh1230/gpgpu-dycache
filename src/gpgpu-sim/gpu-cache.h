@@ -110,16 +110,24 @@ struct cache_block_t {
         }
     }
 
-    void change2big_blksz(block_size blksz)
+    void change2big_blksz(unsigned blksz)
     {  
-        m_blksz_mark = blksz;
+        assert(blksz>32);
+        if(blksz==64)
+            m_blksz_mark=m_64;
+        else if(blksz==128)
+            m_blksz_mark=m_128;
         m_sc_status.clear();
         m_sc_status.resize(4,INVALID);
     }
 
-    void change2small_blksz(block_size blksz)
+    void change2small_blksz(unsigned blksz)
     {
-        m_blksz_mark = blksz;
+        assert(blksz<128);
+        if(blksz==64)
+            m_blksz_mark = m_64;
+        else if(blksz==32)
+            m_blksz_mark = m_32;
     }
 
     void change_blk_status(cache_block_state blk_stat,unsigned sc_id)
