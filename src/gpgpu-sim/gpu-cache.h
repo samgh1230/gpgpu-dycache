@@ -67,13 +67,6 @@ enum block_size{
 struct cache_block_t {
     cache_block_t()
     {
-        /*m_tag=0;
-        m_block_addr=0;
-        m_alloc_time=0;
-        m_fill_time=0;
-        m_last_access_time=0;
-        m_status=INVALID;*/
-
         m_block_addrs.resize(4,0);
         m_tags.resize(4,0);
         m_sc_status.resize(4,INVALID);
@@ -84,13 +77,6 @@ struct cache_block_t {
     }
     void allocate( new_addr_type tag, new_addr_type block_addr, unsigned time, unsigned sc_id)
     {
-        /*m_tag=tag;
-        m_block_addr=block_addr;
-        m_alloc_time=time;
-        m_last_access_time=time;
-        m_fill_time=0;
-        m_status=RESERVED;*/
-
         switch(m_blksz_mark)
         {
             case m_32:
@@ -136,12 +122,32 @@ struct cache_block_t {
         m_blksz_mark = blksz;
     }
 
+    void change_blk_status(cache_block_state blk_stat,unsigned sc_id)
+    {
+        switch(m_blksz_mark)
+        {
+            case m_32:
+            m_sc_status[sc_id] = blk_stat;
+            break;
+            case m_64:
+            for(int i=0;i<2;i++)
+                m_sc_status[sc_id+1]=blk_stat;
+            break;
+            case m_128:
+            for(int i=0;i<4;i++)
+            m_sc_status[sc_id+1]=blk_stat;
+            break;
+            default:
+            printf("Error: no such a block size\n");
+            exit(1);
+        }
+    }
+    new_addr_type get_blk_addr(unsigned sc_id)
+    {
+        return m_block_addrs[sc_id];
+    }
     void fill( unsigned time, unsigned sc_id)
     {
-        /*assert( m_status == RESERVED );
-        m_status=VALID;
-        m_fill_time=time;*/
-
         switch(m_blksz_mark)
         {
             case m_32:
@@ -169,14 +175,6 @@ struct cache_block_t {
         }
     }
 
-    /*new_addr_type    m_tag;
-    new_addr_type    m_block_addr;
-    unsigned         m_alloc_time;
-    unsigned         m_last_access_time;
-    unsigned         m_fill_time;
-    cache_block_state    m_status;*/
-
-    
     block_size m_blksz_mark;//indicate block granularity
     std::vector< cache_block_state > m_sc_status;//indicate each sector status
     std::vector< new_addr_type > m_tags;//indicate each sector tag addr
@@ -319,6 +317,11 @@ public:
         assert( m_valid );
         return m_line_sz;
     }
+    void set_line_sz(unsigned line_sz)
+    {
+        assert( m_valid );
+        m_line_sz=line_sz;
+    }
     unsigned get_num_lines() const
     {
         assert( m_valid );
@@ -436,7 +439,7 @@ public:
     tag_array(cache_config &config, int core_id, int type_id );
     ~tag_array();
 
-    enum cache_request_status probe( new_addr_type addr, unsigned &idx ) const;
+    enum cache_request_status probe( new_addr_type addr, unsigned &idx , unsigned &sid) const;
     enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx );
     enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted );
 
@@ -447,6 +450,8 @@ public:
     cache_block_t &get_block(unsigned idx) { return m_lines[idx];}
 
     void flush(); // flash invalidate all entries
+    void change2big_blksz(unsigned blksz);
+    void change2small_blksz(unsigned blksz);
     void new_window();
 
     void print( FILE *stream, unsigned &total_access, unsigned &total_misses ) const;
@@ -703,7 +708,16 @@ public:
     void get_sub_stats(struct cache_sub_stats &css) const {
         m_stats.get_sub_stats(css);
     }
-
+    void change2big_blksz(unsigned blksz)
+    {
+        m_config.set_line_sz(blksz);
+        m_tag_array->change2big_blksz(blksz);
+    }
+    void change2small_blksz(unsigned blksz)
+    {
+        m_config.set_line_sz(blksz);
+        m_tag_array->change2small_blksz(blksz);
+    }
     // accessors for cache bandwidth availability 
     bool data_port_free() const { return m_bandwidth_management.data_port_free(); } 
     bool fill_port_free() const { return m_bandwidth_management.fill_port_free(); } 
