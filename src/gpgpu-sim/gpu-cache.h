@@ -59,7 +59,11 @@ enum cache_event {
 };
 
 const char * cache_request_status_str(enum cache_request_status status); 
-
+enum block_size{
+        m_32,
+        m_64,
+        m_128
+};
 struct cache_block_t {
     cache_block_t()
     {
@@ -173,11 +177,7 @@ struct cache_block_t {
     unsigned         m_fill_time;
     cache_block_state    m_status;*/
 
-    enum block_size{
-        m_32,
-        m_64,
-        m_128
-    };
+    
     block_size m_blksz_mark;//indicate block granularity
     std::vector< cache_block_state > m_sc_status;//indicate each sector status
     std::vector< new_addr_type > m_tags;//indicate each sector tag addr
