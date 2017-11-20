@@ -779,9 +779,9 @@ void baseline_cache::send_read_request(new_addr_type addr, new_addr_type block_a
         do_miss = true;
     } else if ( !mshr_hit && mshr_avail && (m_miss_queue.size() < m_config.m_miss_queue_size) ) {
     	if(read_only)
-    		m_tag_array->access(block_addr,time,cache_index,sid);
+    		m_tag_array->access(block_addr,time,cache_index,sc_id);
     	else
-    		m_tag_array->access(block_addr,time,cache_index,wb,evicted,sid);
+    		m_tag_array->access(block_addr,time,cache_index,wb,evicted,sc_id);
 
         m_mshrs.add(block_addr,mf);
         m_extra_mf_fields[mf] = extra_mf_fields(block_addr,cache_index, mf->get_data_size(),addr);
@@ -809,7 +809,7 @@ void data_cache::send_write_request(mem_fetch *mf, cache_event request, unsigned
 cache_request_status data_cache::wr_hit_wb(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
 	new_addr_type block_addr = m_config.block_addr(addr);
     unsigned sid;
-	m_tag_array->access(block_addr,time,cache_index,sid); // update LRU state
+	m_tag_array->access(block_addr,time,cache_index,sc_id); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	//block.m_sc_status[m_config.sector_id(addr)] = MODIFIED;
     block.change_blk_status(MODIFIED,m_config.sector_id(addr));
@@ -824,7 +824,7 @@ cache_request_status data_cache::wr_hit_wt(new_addr_type addr, unsigned cache_in
 
 	new_addr_type block_addr = m_config.block_addr(addr);
     unsigned sid;
-	m_tag_array->access(block_addr,time,cache_index,sid); // update LRU state
+	m_tag_array->access(block_addr,time,cache_index,sc_id); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	//block.m_status = MODIFIED;
     block.change_blk_status(MODIFIED,m_config.sector_id(addr));
