@@ -180,7 +180,7 @@ void warp_inst_t::broadcast_barrier_reduction(const active_mask_t& access_mask)
     }
 }
 
-void warp_inst_t::generate_mem_accesses(unsigned cache_block_size)
+void warp_inst_t::generate_mem_accesses()
 {
     if( empty() || op == MEMORY_BARRIER_OP || m_mem_accesses_created ) 
         return;
@@ -540,12 +540,12 @@ void warp_inst_t::memory_coalescing_arch_13_reduce_and_send( bool is_write, mem_
            assert(lower_half_used && upper_half_used);
        }
    }
-   if(m_config.gpgpu_cache_data1_linesize<size){
+   if(m_config->gpgpu_cache_data1_linesize<size){
        unsigned sub_size=0;
        while(sub_size<size){
-           m_accessq.push_back( mem_access_t(access_type,addr,m_config.gpgpu_cache_data1_linesize,is_write,info.active,info.bytes));
-           addr = addr+m_config.gpgpu_cache_data1_linesize;
-           sub_size += m_config.gpgpu_cache_data1_linesize;
+           m_accessq.push_back( mem_access_t(access_type,addr,m_config->gpgpu_cache_data1_linesize,is_write,info.active,info.bytes));
+           addr = addr+m_config->gpgpu_cache_data1_linesize;
+           sub_size += m_config->gpgpu_cache_data1_linesize;
        }
    }
    else

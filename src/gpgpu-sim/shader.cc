@@ -2026,7 +2026,7 @@ void gpgpu_sim::shader_print_cache_stats( FILE *fout ) const{
     }
 
     // L1D
-    FILE* f=fopen("blk_stat.txt","a");
+    FILE* f=fopen("origin_64blk_stat.txt","a");
     if(!m_shader_config->m_L1D_config.disabled()){
         total_css.clear();
         css.clear();
