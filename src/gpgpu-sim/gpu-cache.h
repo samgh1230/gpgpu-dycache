@@ -99,7 +99,7 @@ struct cache_block_t {
             break;
             case m_128:
             if(sc_id!=0)
-                sc_id==0;
+                sc_id=0;
             for(int i=0;i<4;i++){
                 m_tags[sc_id+i] = tag;
                 m_block_addrs[sc_id+i] = block_addr;
