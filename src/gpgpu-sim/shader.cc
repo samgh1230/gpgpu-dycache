@@ -2003,7 +2003,7 @@ void gpgpu_sim::shader_print_scheduler_stat( FILE* fout, bool print_dynamic_info
 
 void gpgpu_sim::shader_print_cache_stats( FILE *fout ) const{
 
-    FILE* f=fopen("blk_stats.txt","a");
+    FILE* f=fopen("multi-128blk_stat.txt","a");
     // L1I
     struct cache_sub_stats total_css;
     struct cache_sub_stats css;
@@ -2048,9 +2048,11 @@ void gpgpu_sim::shader_print_cache_stats( FILE *fout ) const{
         fprintf(fout, "\tL1D_total_cache_pending_hits = %u\n", total_css.pending_hits);
         fprintf(fout, "\tL1D_total_cache_reservation_fails = %u\n", total_css.res_fails);
         total_css.print_port_stats(fout, "\tL1D_cache"); 
-        fflush(f);
-        fclose(f);
+        //fflush(f);
+        //fclose(f);
     }
+    fflush(f);
+    fclose(f);
 
     // L1C
     if(!m_shader_config->m_L1C_config.disabled()){
