@@ -1268,7 +1268,7 @@ enum cache_request_status tex_cache::access( new_addr_type addr, mem_fetch *mf,
     new_addr_type block_addr = m_config.block_addr(addr);
     unsigned cache_index = (unsigned)-1;
     unsigned sid;
-    enum cache_request_status status = m_tags.access(block_addr,time,cache_index,sid);
+    enum cache_request_status status = m_tags.access(block_addr,time,cache_index,sid,mf->get_data_size());
     enum cache_request_status cache_status = RESERVATION_FAIL;
     assert( status != RESERVATION_FAIL );
     assert( status != HIT_RESERVED ); // as far as tags are concerned: HIT or MISS
