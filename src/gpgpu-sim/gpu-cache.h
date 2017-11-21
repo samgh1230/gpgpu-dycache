@@ -172,7 +172,6 @@ struct cache_block_t {
             break;
             case m_128:
             for(int i=0;i<4;i++){
-                printf("sc_id:%d\n",sc_id);
                 assert(m_sc_status[sc_id+i]==RESERVED);
                 m_sc_status[sc_id+i]=VALID;
                 m_fill_times[sc_id+i]=time;
@@ -370,8 +369,7 @@ public:
         return addr & ~(m_line_sz-1);
     }
     unsigned sector_id(new_addr_type addr) const{
-        new_addr_type blk = addr & (m_line_sz-1);
-        return blk>>5;
+        return (addr>>5) & 4;
     }
     FuncCache get_cache_status() {return cache_status;}
     char *m_config_string;
