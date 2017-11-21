@@ -393,6 +393,8 @@ protected:
     unsigned m_nset_log2;
     unsigned m_assoc;
 
+    unsigned m_sample_interval;
+
     enum replacement_policy_t m_replacement_policy; // 'L' = LRU, 'F' = FIFO
     enum write_policy_t m_write_policy;             // 'T' = write through, 'B' = write back, 'R' = read only
     enum allocation_policy_t m_alloc_policy;        // 'm' = allocate on miss, 'f' = allocate on fill
@@ -448,8 +450,8 @@ public:
     ~tag_array();
 
     enum cache_request_status probe( new_addr_type addr, unsigned &idx , unsigned &sid) const;
-    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx , unsigned &sid);
-    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted , unsigned &sid);
+    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx , unsigned &sid,unsigned data_size);
+    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted , unsigned &sid, unsigned data_size);
 
     void fill( new_addr_type addr, unsigned time );
     void fill( new_addr_type addr, unsigned idx, unsigned time );
@@ -467,6 +469,7 @@ public:
     void get_stats(unsigned &total_access, unsigned &total_misses, unsigned &total_hit_res, unsigned &total_res_fail) const;
 
 	void update_cache_parameters(cache_config &config);
+    void windowed_cache_blk_stats(unsigned &blksz);
 protected:
     // This constructor is intended for use only from derived classes that wish to
     // avoid unnecessary memory allocation that takes place in the
@@ -492,6 +495,9 @@ protected:
     unsigned m_prev_snapshot_access;
     unsigned m_prev_snapshot_miss;
     unsigned m_prev_snapshot_pending_hit;
+
+    unsigned m_prev_snapshot_blksz_referred[3];
+    unsigned m_blksz_referred[3];
 
     int m_core_id; // which shader core is using this
     int m_type_id; // what kind of cache is this (normal, texture, constant)
@@ -656,6 +662,7 @@ bool was_read_sent( const std::list<cache_event> &events );
 /// Baseline cache
 /// Implements common functions for read_only_cache and data_cache
 /// Each subclass implements its own 'access' function
+#define SAMPLE_INTERVAL 100*100
 class baseline_cache : public cache_t {
 public:
     baseline_cache( const char *name, cache_config &config, int core_id, int type_id, mem_fetch_interface *memport,
@@ -676,6 +683,8 @@ public:
         assert(config.m_mshr_type == ASSOC);
         m_memport=memport;
         m_miss_queue_status = status;
+        m_sample_cycle_cnt = 0;
+        m_block_size = 128;
     }
 
     virtual ~baseline_cache()
@@ -729,6 +738,8 @@ public:
     // accessors for cache bandwidth availability 
     bool data_port_free() const { return m_bandwidth_management.data_port_free(); } 
     bool fill_port_free() const { return m_bandwidth_management.fill_port_free(); } 
+    void set_new_blksz();
+    void windowed_cache_blk_stats(unsigned &blksz);
 
 protected:
     // Constructor that can be used by derived classes with custom tag arrays
@@ -754,7 +765,11 @@ protected:
     mshr_table m_mshrs;
     std::list<mem_fetch*> m_miss_queue;
     enum mem_fetch_status m_miss_queue_status;
-    mem_fetch_interface *m_memport;
+    mem_fetch_interface *m_memport
+
+    //unsigned sample_interval;
+    unsigned m_sample_cycle_cnt;
+    unsigned m_block_size;
 
     struct extra_mf_fields {
         extra_mf_fields()  { m_valid = false;}

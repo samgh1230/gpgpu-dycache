@@ -151,6 +151,7 @@ void tag_array::init( int core_id, int type_id )
     m_prev_snapshot_access = 0;
     m_prev_snapshot_miss = 0;
     m_prev_snapshot_pending_hit = 0;
+    m_prev_snapshot_blksz_referred.resize(3,0);
     m_core_id = core_id; 
     m_type_id = type_id;
 }
@@ -221,7 +222,7 @@ enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx , 
     return MISS;
 }
 
-enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, unsigned &idx, unsigned &sc_id )
+enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, unsigned &idx, unsigned &sc_id,unsigned data_size )
 {
     bool wb=false;
     cache_block_t evicted;
@@ -230,8 +231,22 @@ enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, 
     return result;
 }
 
-enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted , unsigned &sc_id) 
+enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted , unsigned &sc_id, unsigned data_size) 
 {
+    switch(data_size){
+        case 32:
+        m_blksz_referred[0]++;
+        break;
+        case 64:
+        m_blksz_referred[1]++;
+        break;
+        case 128:
+        m_blksz_referred[2]++;
+        break;
+        default:
+        printf("Error: no such a block size\n");
+        exit(1);
+    }
     m_access++;
     shader_cache_access_log(m_core_id, m_type_id, 0); // log accesses to cache
     enum cache_request_status status = probe(addr,idx, sc_id);
@@ -302,7 +317,26 @@ void tag_array::change2small_blksz(unsigned blksz)
     for(unsigned i=0;i<m_config.get_num_lines(); i++)
         m_lines[i].change2small_blksz(blksz);
 }
-
+void tag_array::windowed_cache_blk_stats(unsigned &blksz)
+{
+    unsigned num_referred[3];
+    for(int i=0;i<3;i++)
+        num_referred[i] = m_blksz_referred[i] - m_prev_snapshot_blksz_referred[i];
+    unsigned max = num_referred[0];
+    unsigned id = 0;
+    for(int i=1;i<3;i++)
+        if(num_referred[i]>max)
+        {
+            max = num_referred[i];
+            id = i;
+        }
+    switch(id)
+    {
+        case 0: blksz=32;break;
+        case 1: blksz=64;break;
+        case 2: blksz=128;break;
+    }
+}
 float tag_array::windowed_miss_rate( ) const
 {
     unsigned n_access    = m_access - m_prev_snapshot_access;
@@ -317,9 +351,10 @@ float tag_array::windowed_miss_rate( ) const
 
 void tag_array::new_window()
 {
-    m_prev_snapshot_access = m_access;
-    m_prev_snapshot_miss = m_miss;
-    m_prev_snapshot_pending_hit = m_pending_hit;
+    //m_prev_snapshot_access = m_access;
+    //m_prev_snapshot_miss = m_miss;
+    //m_prev_snapshot_pending_hit = m_pending_hit;
+    m_prev_snapshot_blksz_referred = m_blksz_referred;
 }
 
 void tag_array::print( FILE *stream, unsigned &total_access, unsigned &total_misses ) const
@@ -699,7 +734,24 @@ bool baseline_cache::bandwidth_management::fill_port_free() const
 {
     return (m_fill_port_occupied_cycles == 0); 
 }
+void baseline_cache::set_new_blksz()
+{
+    //read windowed cache stats(the most referred cache blksz)
+    unsigned new_blksz;
+    windowed_cache_blk_stats(new_blksz);
+    //compared with current cache blksz
+    //if the most referred cache blksz is bigger or smaller than the current cache blksz
+    //change the current cache blksz to the bigger or smaller one
+    if(new_blksz>m_block_size)
+        change2big_blksz(new_blksz);
+    else if(new_blksz<m_block_size)
+        change2small_blksz(new_blksz);
+}
 
+void baseline_cache::windowed_cache_blk_sz(unsigned &blksz)
+{
+    m_tag_array->windowed_cache_blk_sz(blksz);
+}
 /// Sends next request to lower level of memory
 void baseline_cache::cycle(){
     if ( !m_miss_queue.empty() ) {
@@ -708,6 +760,11 @@ void baseline_cache::cycle(){
             m_miss_queue.pop_front();
             m_memport->push(mf);
         }
+    }
+    m_sample_cycle_cnt++;
+    if(m_sample_cycle_cnt==SAMPLE_INTERVAL){
+        m_sample_cycle_cnt=0;
+        set_new_blksz();
     }
     bool data_port_busy = !m_bandwidth_management.data_port_free(); 
     bool fill_port_busy = !m_bandwidth_management.fill_port_free(); 
@@ -771,17 +828,17 @@ void baseline_cache::send_read_request(new_addr_type addr, new_addr_type block_a
     bool mshr_avail = !m_mshrs.full(block_addr);
     if ( mshr_hit && mshr_avail ) {
     	if(read_only)
-    		m_tag_array->access(block_addr,time,cache_index,sc_id);
+    		m_tag_array->access(block_addr,time,cache_index,sc_id,mf->get_data_size());
     	else
-    		m_tag_array->access(block_addr,time,cache_index,wb,evicted,sc_id);
+    		m_tag_array->access(block_addr,time,cache_index,wb,evicted,sc_id,mf->get_data_size());
 
         m_mshrs.add(block_addr,mf);
         do_miss = true;
     } else if ( !mshr_hit && mshr_avail && (m_miss_queue.size() < m_config.m_miss_queue_size) ) {
     	if(read_only)
-    		m_tag_array->access(block_addr,time,cache_index,sc_id);
+    		m_tag_array->access(block_addr,time,cache_index,sc_id,mf->get_data_size());
     	else
-    		m_tag_array->access(block_addr,time,cache_index,wb,evicted,sc_id);
+    		m_tag_array->access(block_addr,time,cache_index,wb,evicted,sc_id,mf->get_data_size());
 
         m_mshrs.add(block_addr,mf);
         m_extra_mf_fields[mf] = extra_mf_fields(block_addr,cache_index, mf->get_data_size(),addr);
@@ -809,7 +866,7 @@ void data_cache::send_write_request(mem_fetch *mf, cache_event request, unsigned
 cache_request_status data_cache::wr_hit_wb(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
 	new_addr_type block_addr = m_config.block_addr(addr);
     unsigned sid;
-	m_tag_array->access(block_addr,time,cache_index,sid); // update LRU state
+	m_tag_array->access(block_addr,time,cache_index,sid,mf->get_data_size()); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	//block.m_sc_status[m_config.sector_id(addr)] = MODIFIED;
     block.change_blk_status(MODIFIED,m_config.sector_id(addr));
@@ -824,7 +881,7 @@ cache_request_status data_cache::wr_hit_wt(new_addr_type addr, unsigned cache_in
 
 	new_addr_type block_addr = m_config.block_addr(addr);
     unsigned sid;
-	m_tag_array->access(block_addr,time,cache_index,sid); // update LRU state
+	m_tag_array->access(block_addr,time,cache_index,sid,mf->get_data_size()); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	//block.m_status = MODIFIED;
     block.change_blk_status(MODIFIED,m_config.sector_id(addr));
@@ -985,7 +1042,7 @@ data_cache::rd_hit_base( new_addr_type addr,
 {
     new_addr_type block_addr = m_config.block_addr(addr);
     unsigned sid;
-    m_tag_array->access(block_addr,time,cache_index,sid);
+    m_tag_array->access(block_addr,time,cache_index,sid,mf->get_data_size());
     // Atomics treated as global read/write requests - Perform read, mark line as
     // MODIFIED
     if(mf->isatomic()){ 
