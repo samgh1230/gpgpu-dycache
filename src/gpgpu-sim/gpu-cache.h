@@ -172,6 +172,7 @@ struct cache_block_t {
             break;
             case m_128:
             for(int i=0;i<4;i++){
+                printf("sc_id:%d\n",sc_id);
                 assert(m_sc_status[sc_id+i]==RESERVED);
                 m_sc_status[sc_id+i]=VALID;
                 m_fill_times[sc_id+i]=time;
