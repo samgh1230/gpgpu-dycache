@@ -1221,20 +1221,20 @@ struct shader_core_config : public core_config
         if(ntok != 2) {
            printf("GPGPU-Sim uArch: error while parsing configuration string gpgpu_shader_core_pipeline_opt\n");
            abort();
-	}
+	    }
 
-	char* toks = new char[100];
-	char* tokd = toks;
-	strcpy(toks,pipeline_widths_string);
+        char* toks = new char[100];
+        char* tokd = toks;
+        strcpy(toks,pipeline_widths_string);
 
-	toks = strtok(toks,",");
-	for (unsigned i = 0; i < N_PIPELINE_STAGES; i++) { 
-	    assert(toks);
-	    ntok = sscanf(toks,"%d", &pipe_widths[i]);
-	    assert(ntok == 1); 
-	    toks = strtok(NULL,",");
-	}
-	delete[] tokd;
+        toks = strtok(toks,",");
+        for (unsigned i = 0; i < N_PIPELINE_STAGES; i++) { 
+            assert(toks);
+            ntok = sscanf(toks,"%d", &pipe_widths[i]);
+            assert(ntok == 1); 
+            toks = strtok(NULL,",");
+        }
+        delete[] tokd;
 
         if (n_thread_per_shader > MAX_THREAD_PER_SM) {
            printf("GPGPU-Sim uArch: Error ** increase MAX_THREAD_PER_SM in abstract_hardware_model.h from %u to %u\n", 
