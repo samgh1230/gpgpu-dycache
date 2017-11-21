@@ -749,9 +749,9 @@ void baseline_cache::set_new_blksz()
         change2small_blksz(new_blksz);
 }
 
-void baseline_cache::windowed_cache_blk_sz(unsigned &blksz)
+void baseline_cache::windowed_cache_blk_stats(unsigned &blksz)
 {
-    m_tag_array->windowed_cache_blk_sz(blksz);
+    m_tag_array->windowed_cache_blk_stats(blksz);
 }
 /// Sends next request to lower level of memory
 void baseline_cache::cycle(){
