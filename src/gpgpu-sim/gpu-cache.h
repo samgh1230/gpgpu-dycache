@@ -97,6 +97,7 @@ struct cache_block_t {
             break;
             case m_128:
             for(int i=0;i<4;i++){
+                assert(sc_id==0);
                 m_tags[sc_id+i] = tag;
                 m_block_addrs[sc_id+i] = block_addr;
                 m_alloc_times[sc_id+i]=time;
