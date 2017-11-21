@@ -1251,6 +1251,7 @@ struct shader_core_config : public core_config
         m_L1D_config.init(m_L1D_config.m_config_string,FuncCachePreferNone);
         gpgpu_cache_texl1_linesize = m_L1T_config.get_line_sz();
         gpgpu_cache_constl1_linesize = m_L1C_config.get_line_sz();
+        gpgpu_cache_data1_linesize = m_L1D_config.get_line_sz();
         m_valid = true;
     }
     void reg_options(class OptionParser * opp );
