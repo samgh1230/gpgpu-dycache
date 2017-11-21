@@ -142,10 +142,14 @@ struct cache_block_t {
             m_sc_status[sc_id] = blk_stat;
             break;
             case m_64:
+            if(sc_id!=0||sc_id!=2)
+                sc_id -= 1;
             for(int i=0;i<2;i++)
                 m_sc_status[sc_id+1]=blk_stat;
             break;
             case m_128:
+            if(sc_id!=0)
+                sc_id=0;
             for(int i=0;i<4;i++)
             m_sc_status[sc_id+1]=blk_stat;
             break;
@@ -168,6 +172,8 @@ struct cache_block_t {
             m_fill_times[sc_id]=time;
             break;
             case m_64:
+            if(sc_id!=0||sc_id!=2)
+                sc_id -= 1;
             for(int i=0;i<2;i++){
                 assert(m_sc_status[sc_id+i]==RESERVED);
                 m_sc_status[sc_id+i]=VALID;
@@ -175,6 +181,8 @@ struct cache_block_t {
             }
             break;
             case m_128:
+            if(sc_id!=0)
+                sc_id=0;
             for(int i=0;i<4;i++){
                 assert(m_sc_status[sc_id+i]==RESERVED);
                 m_sc_status[sc_id+i]=VALID;
