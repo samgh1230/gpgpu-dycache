@@ -227,7 +227,7 @@ enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, 
 {
     bool wb=false;
     cache_block_t evicted;
-    enum cache_request_status result = access(addr,time,idx,wb,evicted, sc_id);
+    enum cache_request_status result = access(addr,time,idx,wb,evicted, sc_id,data_size);
     assert(!wb);
     return result;
 }
@@ -1139,7 +1139,7 @@ read_only_cache::access( new_addr_type addr,
     enum cache_request_status cache_status = RESERVATION_FAIL;
 
     if ( status == HIT ) {
-        cache_status = m_tag_array->access(block_addr,time,cache_index,sc_id); // update LRU state
+        cache_status = m_tag_array->access(block_addr,time,cache_index,sc_id,mf->get_data_size()); // update LRU state
     }else if ( status != RESERVATION_FAIL ) {
         if(!miss_queue_full(0)){
             bool do_miss=false;
