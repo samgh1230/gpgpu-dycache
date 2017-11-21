@@ -234,7 +234,7 @@ enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, 
 
 enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted , unsigned &sc_id, unsigned data_size) 
 {
-    switch(data_size){
+    /*switch(data_size){
         case 32:
         m_blksz_referred[0]++;
         break;
@@ -247,7 +247,7 @@ enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, 
         default:
         printf("Error: no such a block size\n");
         exit(1);
-    }
+    }*/
     m_access++;
     shader_cache_access_log(m_core_id, m_type_id, 0); // log accesses to cache
     enum cache_request_status status = probe(addr,idx, sc_id);
@@ -762,11 +762,11 @@ void baseline_cache::cycle(){
             m_memport->push(mf);
         }
     }
-    m_sample_cycle_cnt++;
+    /*m_sample_cycle_cnt++;
     if(m_sample_cycle_cnt==SAMPLE_INTERVAL){
         m_sample_cycle_cnt=0;
         set_new_blksz();
-    }
+    }*/
     bool data_port_busy = !m_bandwidth_management.data_port_free(); 
     bool fill_port_busy = !m_bandwidth_management.fill_port_free(); 
     m_stats.sample_cache_port_utility(data_port_busy, fill_port_busy); 
