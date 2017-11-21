@@ -762,11 +762,11 @@ void baseline_cache::cycle(){
             m_memport->push(mf);
         }
     }
-    /*m_sample_cycle_cnt++;
+    m_sample_cycle_cnt++;
     if(m_sample_cycle_cnt==SAMPLE_INTERVAL){
         m_sample_cycle_cnt=0;
         set_new_blksz();
-    }*/
+    }
     bool data_port_busy = !m_bandwidth_management.data_port_free(); 
     bool fill_port_busy = !m_bandwidth_management.fill_port_free(); 
     m_stats.sample_cache_port_utility(data_port_busy, fill_port_busy); 
