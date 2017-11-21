@@ -738,12 +738,12 @@ public:
     }
     void change2big_blksz(unsigned blksz)
     {
-        m_config.set_line_sz(blksz);
+        //m_config.set_line_sz(blksz);
         m_tag_array->change2big_blksz(blksz);
     }
     void change2small_blksz(unsigned blksz)
     {
-        m_config.set_line_sz(blksz);
+        //m_config.set_line_sz(blksz);
         m_tag_array->change2small_blksz(blksz);
     }
     // accessors for cache bandwidth availability 
