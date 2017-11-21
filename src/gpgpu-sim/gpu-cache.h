@@ -765,7 +765,7 @@ protected:
     mshr_table m_mshrs;
     std::list<mem_fetch*> m_miss_queue;
     enum mem_fetch_status m_miss_queue_status;
-    mem_fetch_interface *m_memport
+    mem_fetch_interface *m_memport;
 
     //unsigned sample_interval;
     unsigned m_sample_cycle_cnt;
