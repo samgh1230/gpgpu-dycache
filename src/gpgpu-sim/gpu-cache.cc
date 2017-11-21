@@ -152,6 +152,7 @@ void tag_array::init( int core_id, int type_id )
     m_prev_snapshot_miss = 0;
     m_prev_snapshot_pending_hit = 0;
     m_prev_snapshot_blksz_referred.resize(3,0);
+    m_blksz_referred.resize(3,0);
     m_core_id = core_id; 
     m_type_id = type_id;
 }

@@ -496,8 +496,8 @@ protected:
     unsigned m_prev_snapshot_miss;
     unsigned m_prev_snapshot_pending_hit;
 
-    unsigned m_prev_snapshot_blksz_referred[3];
-    unsigned m_blksz_referred[3];
+    std::vector< unsigned > m_prev_snapshot_blksz_referred;
+    std::vector<unsigned> m_blksz_referred;
 
     int m_core_id; // which shader core is using this
     int m_type_id; // what kind of cache is this (normal, texture, constant)
