@@ -542,11 +542,13 @@ void warp_inst_t::memory_coalescing_arch_13_reduce_and_send( bool is_write, mem_
    }
    if(m_config->gpgpu_cache_data1_linesize<size){
        unsigned sub_size=0;
-       while(sub_size<size){
+       while(size>0){
            m_accessq.push_back( mem_access_t(access_type,addr,m_config->gpgpu_cache_data1_linesize,is_write,info.active,info.bytes));
            addr = addr+m_config->gpgpu_cache_data1_linesize;
-           sub_size += m_config->gpgpu_cache_data1_linesize;
+           size -= m_config->gpgpu_cache_data1_linesize;
        }
+       size += m_config->gpgpu_cache_data1_linesize;
+       m_accessq.push_back(mem_access_t(access_type,addr,m_config->gpgpu_cache_data1_linesize,is_write,info.active,info.bytes));
    }
    else
         m_accessq.push_back( mem_access_t(access_type,addr,size,is_write,info.active,info.bytes) );
