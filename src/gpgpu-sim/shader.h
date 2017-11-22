@@ -1160,7 +1160,7 @@ protected:
    const memory_config *m_memory_config;
    class mem_fetch_interface *m_icnt;
    shader_core_mem_fetch_allocator *m_mf_allocator;
-   class shader_core_ctx *m_core;
+   //class shader_core_ctx *m_core;
    unsigned m_sid;
    unsigned m_tpc;
 
