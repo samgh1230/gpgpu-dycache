@@ -1588,7 +1588,7 @@ public:
         printf("GPGPU-Sim uArch: Shader %d bind to kernel %u \'%s\'\n", m_sid, m_kernel->get_uid(),
                  m_kernel->name().c_str() );
     }
-   
+    const shader_core_config *m_config;
     // accessors
     bool fetch_unit_response_buffer_full() const;
     bool ldst_unit_response_buffer_full() const;
@@ -1780,7 +1780,7 @@ public:
     // general information
     unsigned m_sid; // shader id
     unsigned m_tpc; // texture processor cluster id (aka, node id when using interconnect concentration)
-    const shader_core_config *m_config;
+    //const shader_core_config *m_config;
     const memory_config *m_memory_config;
     class simt_core_cluster *m_cluster;
 
