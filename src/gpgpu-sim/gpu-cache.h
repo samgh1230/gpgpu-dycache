@@ -547,6 +547,7 @@ bool was_read_sent( const std::list<cache_event> &events );
 /// Baseline cache
 /// Implements common functions for read_only_cache and data_cache
 /// Each subclass implements its own 'access' function
+#define SAMPLE_INTERVAL 100*100
 class baseline_cache : public cache_t {
 public:
     baseline_cache( const char *name, cache_config &config, int core_id, int type_id, mem_fetch_interface *memport,
@@ -652,6 +653,8 @@ protected:
         unsigned m_cache_index;
         unsigned m_data_size;
     };
+
+    unsigned m_sample_cycle_cnt;
 
     typedef std::map<mem_fetch*,extra_mf_fields> extra_mf_fields_lookup;
 
