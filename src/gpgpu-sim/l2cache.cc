@@ -380,8 +380,8 @@ void memory_sub_partition::cache_cycle( unsigned cycle )
             bool port_free = m_L2cache->data_port_free(); 
             if ( !output_full && port_free ) {
                 std::list<cache_event> events;
-                if(mf->get_data_size()>m_L2cache->get_line_sz()){
-                    printf("Error: data_size:%d > L2_line_sz:%d\n",mf->get_data_size(),m_L2cache->get_line_sz());
+                if(mf->get_data_size()>m_L2cache->m_config.get_line_sz()){
+                    printf("Error: data_size:%d > L2_line_sz:%d\n",mf->get_data_size(),m_L2cache->m_config.get_line_sz());
                     exit(1);
                 }
                 enum cache_request_status status = m_L2cache->access(mf->get_addr(),mf,gpu_sim_cycle+gpu_tot_sim_cycle,events);
