@@ -611,7 +611,7 @@ public:
     // accessors for cache bandwidth availability 
     bool data_port_free() const { return m_bandwidth_management.data_port_free(); } 
     bool fill_port_free() const { return m_bandwidth_management.fill_port_free(); } 
-
+    cache_config &m_config;
 protected:
     // Constructor that can be used by derived classes with custom tag arrays
     baseline_cache( const char *name,
@@ -631,7 +631,7 @@ protected:
 
 protected:
     std::string m_name;
-    cache_config &m_config;
+    //cache_config &m_config;
     tag_array*  m_tag_array;
     mshr_table m_mshrs;
     std::list<mem_fetch*> m_miss_queue;
