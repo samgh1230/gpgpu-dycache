@@ -3231,7 +3231,7 @@ void opndcoll_rfu_t::collector_unit_t::dispatch()
 
 simt_core_cluster::simt_core_cluster( class gpgpu_sim *gpu, 
                                       unsigned cluster_id, 
-                                      struct shader_core_config *config, 
+                                      const struct shader_core_config *config, 
                                       const struct memory_config *mem_config,
                                       shader_core_stats *stats, 
                                       class memory_stats_t *mstats )
