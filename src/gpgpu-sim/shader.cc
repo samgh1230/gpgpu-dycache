@@ -674,7 +674,7 @@ void shader_core_ctx::func_exec_inst( warp_inst_t &inst )
     execute_warp_inst_t(inst);
     if( inst.is_load() || inst.is_store() )
         if(inst.space.get_type()==global_space)
-            inst.generate_mem_accesses(m_data_sz_sample);
+            inst.generate_mem_accesses(m_data_sz);
         else 
             inst.generate_mem_accesses();
 }

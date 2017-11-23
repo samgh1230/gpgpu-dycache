@@ -1561,7 +1561,7 @@ private:
     unsigned m_cluster_id;
     const memory_config *m_memory_config;
 };
-
+#define SAMPLE_INTERVAL 100*100
 class shader_core_ctx : public core_t {
 public:
     // creator:
@@ -1591,6 +1591,9 @@ public:
                  m_kernel->name().c_str() );
     }
     const shader_core_config *m_config;
+    void change2big_blksz(unsigned blksz);
+    void change2small_blksz(unsigned blksz);
+    void adjust_cache_blksz();
     // accessors
     bool fetch_unit_response_buffer_full() const;
     bool ldst_unit_response_buffer_full() const;
