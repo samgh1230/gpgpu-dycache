@@ -885,11 +885,16 @@ public:
         }
     };
 
+    void generate_mem_accesses(std::vector<unsigned> &ref_size);
+    void memory_coalescing_arch_13( bool is_write, mem_access_type access_type, std::vector<unsigned> &ref_size);
+    void memory_coalescing_arch_13_atomic( bool is_write, mem_access_type access_type, std::vector<unsigned> &ref_size);
+    void memory_coalescing_arch_13_reduce_and_send( bool is_write, mem_access_type access_type, const transaction_info &info, new_addr_type addr, unsigned segment_size, unsigned &ref_size);
+    
     void generate_mem_accesses();
-    void memory_coalescing_arch_13( bool is_write, mem_access_type access_type );
-    void memory_coalescing_arch_13_atomic( bool is_write, mem_access_type access_type );
-    void memory_coalescing_arch_13_reduce_and_send( bool is_write, mem_access_type access_type, const transaction_info &info, new_addr_type addr, unsigned segment_size );
-
+    void memory_coalescing_arch_13( bool is_write, mem_access_type access_type);
+    void memory_coalescing_arch_13_atomic( bool is_write, mem_access_type access_type);
+    void memory_coalescing_arch_13_reduce_and_send( bool is_write, mem_access_type access_type, const transaction_info &info, new_addr_type addr, unsigned segment_size);
+    
     void add_callback( unsigned lane_id, 
                        void (*function)(const class inst_t*, class ptx_thread_info*),
                        const inst_t *inst, 

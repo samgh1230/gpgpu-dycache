@@ -266,6 +266,8 @@ public:
         return addr & ~(m_line_sz-1);
     }
     FuncCache get_cache_status() {return cache_status;}
+
+    void set_linesz(unsigned blksz) {m_line_sz=blksz;m_line_sz_log2 = LOGB2(m_line_sz);}
     char *m_config_string;
     char *m_config_stringPrefL1;
     char *m_config_stringPrefShared;
@@ -654,8 +656,6 @@ protected:
         unsigned m_data_size;
     };
 
-    unsigned m_sample_cycle_cnt;
-
     typedef std::map<mem_fetch*,extra_mf_fields> extra_mf_fields_lookup;
 
     extra_mf_fields_lookup m_extra_mf_fields;
@@ -775,6 +775,8 @@ public:
                                               mem_fetch *mf,
                                               unsigned time,
                                               std::list<cache_event> &events );
+    void change2big_blksz(unsigned blksz);
+    void change2small_blksz(unsigned blksz);
 protected:
     data_cache( const char *name,
                 cache_config &config,

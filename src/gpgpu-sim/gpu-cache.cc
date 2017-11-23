@@ -774,6 +774,15 @@ void baseline_cache::send_read_request(new_addr_type addr, new_addr_type block_a
     }
 }
 
+void data_cache::change2big_blksz(unsigned blksz)
+{
+
+}
+
+void data_cache::change2small_blksz(unsigned blksz)
+{
+    
+}
 
 /// Sends write request to lower level memory (write or writeback)
 void data_cache::send_write_request(mem_fetch *mf, cache_event request, unsigned time, std::list<cache_event> &events){

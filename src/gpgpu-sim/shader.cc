@@ -673,7 +673,10 @@ void shader_core_ctx::func_exec_inst( warp_inst_t &inst )
 {
     execute_warp_inst_t(inst);
     if( inst.is_load() || inst.is_store() )
-        inst.generate_mem_accesses();
+        if(inst.space.get_type()==global_space)
+            inst.generate_mem_accesses(m_data_sz_sample);
+        else 
+            inst.generate_mem_accesses();
 }
 
 void shader_core_ctx::issue_warp( register_set& pipe_reg_set, const warp_inst_t* next_inst, const active_mask_t &active_mask, unsigned warp_id )
@@ -1170,6 +1173,18 @@ void shader_core_ctx::execute()
             }
         }
     }
+}
+
+void ldst_unit::change2big_blksz(unsigned blksz)
+{
+    m_L1D->m_config.set_linesz(blksz);
+    m_L1D->change2big_blksz(blksz);
+}
+
+void ldst_unit::change2small_blksz(unsigned blksz)
+{
+    m_L1D->m_config.set_linesz(blksz);
+    m_L1D->change2small_blksz(blksz);
 }
 
 void ldst_unit::print_cache_stats( FILE *fp, unsigned& dl1_accesses, unsigned& dl1_misses ) {
@@ -2447,10 +2462,66 @@ unsigned int shader_core_config::max_cta( const kernel_info_t &k ) const
 
     return result;
 }
-
+void shader_core_ctx::change2small_blksz(unsigned blksz)
+{
+    m_ldst_unit->change2small_blksz(blksz);
+    m_config->gpgpu_cache_data1_linesize=blksz;
+}
+void shader_core_ctx::change2big_blksz(unsigned blksz)
+{
+    cache_flush();
+    m_config->gpgpu_cache_data1_linesize=blksz;
+    m_ldst_unit->change2big_blksz(blksz);
+}
+void shader_core_ctx::set_cache_blksz(unsigned blksz)
+{
+    if(blksz < m_config->gpgpu_cache_data1_linesize)
+        change2small_blksz(blksz);
+    if(blksz > m_config->gpgpu_cache_data1_linesize)
+        change2big_blksz(blksz);
+}
+unsigned shader_core_ctx::get_new_blksz()
+{
+    std::vector<unsigned> num_ref;
+    num_ref.resize(3,0);
+    for(int i=0;i<m_data_sz.size();i++)
+        switch(m_data_sz[i])
+        {
+            case 32:num_ref[0]++;break;
+            case 64:num_ref[1]++;break;
+            case 128:num_ref[2]++;break;
+            default:
+            printf("error：wrong data size.\n");
+            exit(1);
+        }
+    unsigned m=0, max=num_ref[0];
+    for(int j=1;j<3;j++)
+    {
+        if(num_ref[j]>max)
+        {
+            m=j;
+            max=num_ref[j];
+        }
+    }
+    if(m==0) return 32;
+    else if(m==1) return 64;
+    else return 128;
+}
+void shader_core_ctx::adjust_cache_blksz()
+{
+    unsigned blksz = get_new_blksz();
+    set_cache_blksz(blksz);
+    m_data_sz.clear();
+}
 void shader_core_ctx::cycle()
 {
 	m_stats->shader_cycles[m_sid]++;
+    m_sample_cycles++;
+    if(m_sample_cycles==SAMPLE_INTERVAL)
+    {
+        adjust_cache_blksz();
+        m_sample_cycles = 0;
+    }
     writeback();
     execute();
     read_operands();

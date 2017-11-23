@@ -1119,6 +1119,8 @@ public:
     void get_L1C_sub_stats(struct cache_sub_stats &css) const;
     void get_L1T_sub_stats(struct cache_sub_stats &css) const;
     
+    void change2big_blksz(unsigned blksz);
+    void change2small_blksz(unsigned blksz);
     class shader_core_ctx *m_core;
 protected:
     ldst_unit( mem_fetch_interface *icnt,
@@ -1770,7 +1772,8 @@ public:
     void execute();
     
     void writeback();
-    
+    void set_cache_blksz(unsigned blksz);
+    unsigned get_new_blksz();
     // used in display_pipeline():
     void dump_warp_state( FILE *fout ) const;
     void print_stage(unsigned int stage, FILE *fout) const;
@@ -1786,7 +1789,8 @@ public:
 
     // statistics 
     shader_core_stats *m_stats;
-
+    std::vector<unsigned> m_data_sz;
+    unsigned m_sample_cycles;
     // CTA scheduling / hardware thread allocation
     unsigned m_n_active_cta; // number of Cooperative Thread Arrays (blocks) currently running on this shader.
     unsigned m_cta_status[MAX_CTA_PER_SHADER]; // CTAs status 
