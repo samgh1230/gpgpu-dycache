@@ -1096,6 +1096,8 @@ public:
     // accessors
     virtual unsigned clock_multiplier() const;
 
+    void re_generate_memory_access(std::vector<unsigned> &ref_size,unsigned blksz);
+
     virtual bool can_issue( const warp_inst_t &inst ) const
     {
         switch(inst.op) {
@@ -1591,6 +1593,7 @@ public:
                  m_kernel->name().c_str() );
     }
     const shader_core_config *m_config;
+    unsigned current_gran;
     void change2big_blksz(unsigned blksz);
     void change2small_blksz(unsigned blksz);
     void adjust_cache_blksz();

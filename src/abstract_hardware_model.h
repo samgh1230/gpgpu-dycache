@@ -885,10 +885,10 @@ public:
         }
     };
 
-    void generate_mem_accesses(std::vector<unsigned> &ref_size);
-    void memory_coalescing_arch_13( bool is_write, mem_access_type access_type, std::vector<unsigned> &ref_size);
-    void memory_coalescing_arch_13_atomic( bool is_write, mem_access_type access_type, std::vector<unsigned> &ref_size);
-    void memory_coalescing_arch_13_reduce_and_send( bool is_write, mem_access_type access_type, const transaction_info &info, new_addr_type addr, unsigned segment_size, unsigned &ref_size);
+    void generate_mem_accesses(std::vector<unsigned> &ref_size, unsigned cur_blksz);
+    void memory_coalescing_arch_13( bool is_write, mem_access_type access_type, std::vector<unsigned> &ref_size,unsigned cur_blksz);
+    void memory_coalescing_arch_13_atomic( bool is_write, mem_access_type access_type, std::vector<unsigned> &ref_size, unsigned cur_blksz);
+    void memory_coalescing_arch_13_reduce_and_send( bool is_write, mem_access_type access_type, const transaction_info &info, new_addr_type addr, unsigned segment_size, unsigned &ref_size,unsigned cur_blksz);
     
     void generate_mem_accesses();
     void memory_coalescing_arch_13( bool is_write, mem_access_type access_type);
@@ -955,6 +955,7 @@ public:
     unsigned accessq_count() const { return m_accessq.size(); }
     const mem_access_t &accessq_back() { return m_accessq.back(); }
     void accessq_pop_back() { m_accessq.pop_back(); }
+    void clear_accessq() {m_accessq.clear();m_mem_accesses_created=false;}
 
     bool dispatch_delay()
     { 

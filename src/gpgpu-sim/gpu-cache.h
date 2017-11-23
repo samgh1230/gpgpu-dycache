@@ -404,7 +404,7 @@ public:
 
     unsigned get_sid(new_addr_type addr)
     {
-        unsigned sid = (addr >> 5) & 4;
+        unsigned sid = (addr >> 5) & 3;
         switch(m_line_sz)
         {
             case 32:return sid;

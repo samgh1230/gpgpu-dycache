@@ -539,7 +539,7 @@ void warp_inst_t::memory_coalescing_arch_13_reduce_and_send( bool is_write, mem_
            assert(lower_half_used && upper_half_used);
        }
    }
-   if(m_config->gpgpu_cache_data1_linesize<size){
+   /*if(m_config->gpgpu_cache_data1_linesize<size){
        unsigned sub_size=0;
        while(size>0){
            m_accessq.push_back( mem_access_t(access_type,addr,m_config->gpgpu_cache_data1_linesize,is_write,info.active,info.bytes));
@@ -549,10 +549,10 @@ void warp_inst_t::memory_coalescing_arch_13_reduce_and_send( bool is_write, mem_
        size += m_config->gpgpu_cache_data1_linesize;
        m_accessq.push_back(mem_access_t(access_type,addr,m_config->gpgpu_cache_data1_linesize,is_write,info.active,info.bytes));
    }
-   else
+   else*/
         m_accessq.push_back( mem_access_t(access_type,addr,size,is_write,info.active,info.bytes) );
 }
-void warp_inst_t::generate_mem_accesses(std::vector<unsigned> &ref_size)
+void warp_inst_t::generate_mem_accesses(std::vector<unsigned> &ref_size,unsigned cur_blksz)
 {
     if( empty() || op == MEMORY_BARRIER_OP || m_mem_accesses_created ) 
         return;
@@ -688,9 +688,9 @@ void warp_inst_t::generate_mem_accesses(std::vector<unsigned> &ref_size)
     case global_space: case local_space: case param_space_local:
         if( m_config->gpgpu_coalesce_arch == 13 ) {
            if(isatomic())
-               memory_coalescing_arch_13_atomic(is_write, access_type, ref_size);
+               memory_coalescing_arch_13_atomic(is_write, access_type, ref_size,cur_blksz);
            else
-               memory_coalescing_arch_13(is_write, access_type, ref_size);
+               memory_coalescing_arch_13(is_write, access_type, ref_size,cur_blksz);
         } else abort();
 
         break;
@@ -724,7 +724,7 @@ void warp_inst_t::generate_mem_accesses(std::vector<unsigned> &ref_size)
     m_mem_accesses_created=true;
 }
 
-void warp_inst_t::memory_coalescing_arch_13( bool is_write, mem_access_type access_type, std::vector<unsigned> &ref_size)
+void warp_inst_t::memory_coalescing_arch_13( bool is_write, mem_access_type access_type, std::vector<unsigned> &ref_size,unsigned cur_blksz)
 {
     // see the CUDA manual where it discusses coalescing rules before reading this
     unsigned segment_size = 0;
@@ -782,14 +782,14 @@ void warp_inst_t::memory_coalescing_arch_13( bool is_write, mem_access_type acce
             new_addr_type addr = t->first;
             const transaction_info &info = t->second;
             unsigned data_size;
-            memory_coalescing_arch_13_reduce_and_send(is_write, access_type, info, addr, segment_size, data_size);
+            memory_coalescing_arch_13_reduce_and_send(is_write, access_type, info, addr, segment_size, data_size,cur_blksz);
             ref_size.push_back(data_size);
 
         }
     }
 }
 
-void warp_inst_t::memory_coalescing_arch_13_atomic( bool is_write, mem_access_type access_type, std::vector<unsigned>& ref_szs)
+void warp_inst_t::memory_coalescing_arch_13_atomic( bool is_write, mem_access_type access_type, std::vector<unsigned>& ref_size,unsigned cur_blksz)
 {
 
    assert(space.get_type() == global_space); // Atomics allowed only for global memory
@@ -859,14 +859,14 @@ void warp_inst_t::memory_coalescing_arch_13_atomic( bool is_write, mem_access_ty
                // For each transaction
                const transaction_info &info = *t;
                unsigned data_size;
-               memory_coalescing_arch_13_reduce_and_send(is_write, access_type, info, addr, segment_size, data_size);
+               memory_coalescing_arch_13_reduce_and_send(is_write, access_type, info, addr, segment_size, data_size,cur_blksz);
                ref_size.push_back(data_size);
            }
        }
    }
 }
 
-void warp_inst_t::memory_coalescing_arch_13_reduce_and_send( bool is_write, mem_access_type access_type, const transaction_info &info, new_addr_type addr, unsigned segment_size, unsigned &data_size)
+void warp_inst_t::memory_coalescing_arch_13_reduce_and_send( bool is_write, mem_access_type access_type, const transaction_info &info, new_addr_type addr, unsigned segment_size, unsigned &data_size,unsigned cur_blksz)
 {
    assert( (addr & (segment_size-1)) == 0 );
 
@@ -916,15 +916,15 @@ void warp_inst_t::memory_coalescing_arch_13_reduce_and_send( bool is_write, mem_
        }
    }
    data_size = size;
-   if(m_config->gpgpu_cache_data1_linesize<size){
+   if(cur_blksz<size){
        unsigned sub_size=0;
        while(size>0){
-           m_accessq.push_back( mem_access_t(access_type,addr,m_config->gpgpu_cache_data1_linesize,is_write,info.active,info.bytes));
-           addr = addr+m_config->gpgpu_cache_data1_linesize;
-           size -= m_config->gpgpu_cache_data1_linesize;
+           m_accessq.push_back( mem_access_t(access_type,addr,cur_blksz,is_write,info.active,info.bytes));
+           addr = addr+cur_blksz;
+           size -= cur_blksz;
        }
-       size += m_config->gpgpu_cache_data1_linesize;
-       m_accessq.push_back(mem_access_t(access_type,addr,m_config->gpgpu_cache_data1_linesize,is_write,info.active,info.bytes));
+       size += cur_blksz;
+       m_accessq.push_back(mem_access_t(access_type,addr,cur_blksz,is_write,info.active,info.bytes));
    }
    else
         m_accessq.push_back( mem_access_t(access_type,addr,size,is_write,info.active,info.bytes) );

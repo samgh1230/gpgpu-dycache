@@ -81,7 +81,7 @@ shader_core_ctx::shader_core_ctx( class gpgpu_sim *gpu,
     m_memory_config = mem_config;
     m_stats = stats;
     unsigned warp_size=config->warp_size;
-    
+    current_gran = m_config->gpgpu_cache_data1_linesize;
     m_sid = shader_id;
     m_tpc = tpc_id;
     
@@ -674,7 +674,7 @@ void shader_core_ctx::func_exec_inst( warp_inst_t &inst )
     execute_warp_inst_t(inst);
     if( inst.is_load() || inst.is_store() )
         if(inst.space.get_type()==global_space)
-            inst.generate_mem_accesses(m_data_sz);
+            inst.generate_mem_accesses(m_data_sz,current_gran);
         else 
             inst.generate_mem_accesses();
 }
@@ -1184,7 +1184,22 @@ void ldst_unit::change2small_blksz(unsigned blksz)
 {
     m_L1D->change2small_blksz(blksz);
 }
-
+void ldst_unit::re_generate_memory_access(std::vector<unsigned> &ref_size,unsigned blksz)
+{
+   if(!m_dispatch_reg->empty()&&(m_dispatch_reg->space.get_type()==global_space)&&m_dispatch_reg->accessq_count()!=0)
+   {
+       m_dispatch_reg->clear_accessq();
+       m_dispatch_reg->generate_mem_accesses(ref_size,blksz);
+   } 
+   for( unsigned stage=0; stage<m_pipeline_depth; stage++ ) 
+   {
+       if(!m_pipeline_reg[stage]->empty()&&m_pipeline_reg[stage]->space.get_type()==global_space&&m_pipeline_reg[stage]->accessq_count()!=0)
+       {
+           m_pipeline_reg[stage]->clear_accessq();
+           m_pipeline_reg[stage]->generate_mem_accesses(ref_size,blksz);
+       }
+   } 
+}
 void ldst_unit::print_cache_stats( FILE *fp, unsigned& dl1_accesses, unsigned& dl1_misses ) {
    if( m_L1D ) {
        m_L1D->print( fp, dl1_accesses, dl1_misses );
@@ -1350,8 +1365,8 @@ mem_stage_stall_type ldst_unit::process_memory_access_queue( cache_t *cache, war
     //const mem_access_t &access = inst.accessq_back();
     mem_fetch *mf = m_mf_allocator->alloc(inst,inst.accessq_back());
     std::list<cache_event> events;
-    if(inst.space.get_type()==global_space && mf->get_data_size()>m_core->m_config->gpgpu_cache_data1_linesize){
-        printf("mem_fetch data size=%d,cache line size=%d\n",mf->get_data_size(),m_core->m_config->gpgpu_cache_data1_linesize);
+    if(inst.space.get_type()==global_space && mf->get_data_size()>m_core->current_gran){
+        printf("mem_fetch data size=%d,cache line size=%d,pc=%x\n",mf->get_data_size(),m_core->current_gran,inst.pc);
         exit(1);
     }
     enum cache_request_status status = cache->access(mf->get_addr(),mf,gpu_sim_cycle+gpu_tot_sim_cycle,events);
@@ -2463,19 +2478,22 @@ unsigned int shader_core_config::max_cta( const kernel_info_t &k ) const
 void shader_core_ctx::change2small_blksz(unsigned blksz)
 {
     m_ldst_unit->change2small_blksz(blksz);
-    m_config->gpgpu_cache_data1_linesize=blksz;
+    m_ldst_unit->re_generate_memory_access(m_data_sz,blksz);
+   // m_config->gpgpu_cache_data1_linesize=blksz;
+    current_gran = blksz;
 }
 void shader_core_ctx::change2big_blksz(unsigned blksz)
 {
     cache_flush();
-    m_config->gpgpu_cache_data1_linesize=blksz;
+    //m_config->gpgpu_cache_data1_linesize=blksz;
+    current_gran = blksz;
     m_ldst_unit->change2big_blksz(blksz);
 }
 void shader_core_ctx::set_cache_blksz(unsigned blksz)
 {
-    if(blksz < m_config->gpgpu_cache_data1_linesize)
+    if(blksz < current_gran)
         change2small_blksz(blksz);
-    if(blksz > m_config->gpgpu_cache_data1_linesize)
+    if(blksz > current_gran)
         change2big_blksz(blksz);
 }
 unsigned shader_core_ctx::get_new_blksz()
