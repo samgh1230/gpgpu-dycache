@@ -1569,7 +1569,7 @@ public:
                      class simt_core_cluster *cluster,
                      unsigned shader_id,
                      unsigned tpc_id,
-                     const struct shader_core_config *config,
+                     struct shader_core_config *config,
                      const struct memory_config *mem_config,
                      shader_core_stats *stats );
 
@@ -1590,7 +1590,7 @@ public:
         printf("GPGPU-Sim uArch: Shader %d bind to kernel %u \'%s\'\n", m_sid, m_kernel->get_uid(),
                  m_kernel->name().c_str() );
     }
-    const shader_core_config *m_config;
+    shader_core_config *m_config;
     void change2big_blksz(unsigned blksz);
     void change2small_blksz(unsigned blksz);
     void adjust_cache_blksz();
