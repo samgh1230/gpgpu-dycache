@@ -1846,7 +1846,7 @@ class simt_core_cluster {
 public:
     simt_core_cluster( class gpgpu_sim *gpu, 
                        unsigned cluster_id, 
-                       const struct shader_core_config *config, 
+                       struct shader_core_config *config, 
                        const struct memory_config *mem_config,
                        shader_core_stats *stats,
                        memory_stats_t *mstats );
