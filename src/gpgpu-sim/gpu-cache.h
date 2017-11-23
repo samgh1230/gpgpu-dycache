@@ -63,35 +63,185 @@ const char * cache_request_status_str(enum cache_request_status status);
 struct cache_block_t {
     cache_block_t()
     {
-        m_tag=0;
-        m_block_addr=0;
-        m_alloc_time=0;
-        m_fill_time=0;
-        m_last_access_time=0;
-        m_status=INVALID;
+       for(int i=0;i<4;i++)
+       {
+        m_tag[i]=0;
+        m_block_addr[i]=0;
+        m_alloc_time[i]=0;
+        m_fill_time[i]=0;
+        m_last_access_time[i]=0;
+        m_status[i]=INVALID;
+       } 
     }
-    void allocate( new_addr_type tag, new_addr_type block_addr, unsigned time )
+    void allocate( new_addr_type tag, new_addr_type block_addr, unsigned time , unsigned sid, unsigned blksz)
     {
-        m_tag=tag;
-        m_block_addr=block_addr;
-        m_alloc_time=time;
-        m_last_access_time=time;
-        m_fill_time=0;
-        m_status=RESERVED;
+        switch(blksz)
+        {
+            case 32:
+                m_tag[sid]=tag;
+                m_block_addr[sid]=block_addr;
+                m_alloc_time[sid]=time;
+                m_last_access_time[sid]=time;
+                m_fill_time[sid]=0;
+                m_status[sid]=RESERVED;
+                break;
+            case 64:
+            sid %= 2;
+            for(int i=0;i<2;i++){
+                m_tag[sid+i]=tag;
+                m_block_addr[sid+i]=block_addr;
+                m_alloc_time[sid+i]=time;
+                m_last_access_time[sid+i]=time;
+                m_fill_time[sid+i]=0;
+                m_status[sid+i]=RESERVED;
+            }
+            break;
+            case 128:
+            for(int i=0;i<4;i++)
+            {
+                m_tag[i]=tag;
+                m_block_addr[i]=block_addr;
+                m_alloc_time[i]=time;
+                m_last_access_time[i]=time;
+                m_fill_time[i]=0;
+                m_status[i]=RESERVED;
+            }
+            break;
+        }
+        // m_tag=tag;
+        // m_block_addr=block_addr;
+        // m_alloc_time=time;
+        // m_last_access_time=time;
+        // m_fill_time=0;
+        // m_status=RESERVED;
     }
-    void fill( unsigned time )
+    void fill( unsigned time , unsigned sid, unsigned blksz)
     {
-        assert( m_status == RESERVED );
-        m_status=VALID;
-        m_fill_time=time;
+        switch(blksz)
+        {
+            case 32:
+            assert( m_status[sid] == RESERVED );
+            m_status[sid]=VALID;
+            m_fill_time[sid]=time;
+            break;
+            case 64:
+            sid %= 2;
+            for(int i=0;i<2;i++)
+            {
+                assert( m_status[sid+i] == RESERVED );
+                m_status[sid+i]=VALID;
+                m_fill_time[sid+i]=time;
+            }
+            break;
+            case 128:
+            for(int i=0;i<4;i++){
+                assert( m_status[i] == RESERVED );
+                m_status[i]=VALID;
+                m_fill_time[i]=time;
+            }
+            break;
+        }
+        // assert( m_status == RESERVED );
+        // m_status=VALID;
+        // m_fill_time=time;
     }
-
-    new_addr_type    m_tag;
-    new_addr_type    m_block_addr;
-    unsigned         m_alloc_time;
-    unsigned         m_last_access_time;
-    unsigned         m_fill_time;
-    cache_block_state    m_status;
+    void set_last_access_time(unsigned time,unsigned sid,unsigned blksz)
+    {
+        switch(blksz)
+        {
+            case 32:
+            m_last_access_time[sid]=time;
+            break;
+            case 64:
+            for(int i=0;i<2;i++)
+            {
+                m_last_access_time[sid+i]=time;
+            }
+            break;
+            case 128:
+            for(int i=0;i<4;i++)
+            {
+                m_last_access_time[i]=time;
+            }
+            break;
+        }
+    }
+    void set_status(cache_block_state state, unsigned sid, unsigned blksz)
+    {
+        switch(blksz)
+        {
+            case 32:
+            m_status[sid]=state;
+            break;
+            case 64:
+            for(int i=0;i<2;i++)
+            {
+                m_status[sid]=state;
+            }
+            break;
+            case 128:
+            for(int i=0;i<4;i++)
+            {
+                m_status[i]=state;
+            }
+            break;
+        }
+    }
+    void flush(){
+       for(int i=0;i<4;i++)
+       {
+        m_tag[i]=0;
+        m_block_addr[i]=0;
+        m_alloc_time[i]=0;
+        m_fill_time[i]=0;
+        m_last_access_time[i]=0;
+        m_status[i]=INVALID;
+       } 
+    }
+    cache_block_t get_evicted(cache_block_t &evicted,unsigned sid,unsigned blksz)
+    {
+        switch(blksz)
+        {
+            case 32:
+            evicted.m_tag[sid]=m_tag[sid];
+            evicted.m_block_addr[sid]=m_block_addr[sid];
+            evicted.m_alloc_time[sid]=m_alloc_time[sid];
+            evicted.m_fill_time[sid]=m_fill_time[sid];
+            evicted.m_last_access_time[sid]=m_last_access_time[sid];
+            evicted.m_status[sid]=m_status[sid];
+            break;
+            case 64:
+            for(int i=0;i<2;i++)
+            {
+                evicted.m_tag[sid+i]=m_tag[sid+i];
+                evicted.m_block_addr[sid+i]=m_block_addr[sid+i];
+                evicted.m_alloc_time[sid+i]=m_alloc_time[sid+i];
+                evicted.m_fill_time[sid+i]=m_fill_time[sid+i];
+                evicted.m_last_access_time[sid+i]=m_last_access_time[sid+i];
+                evicted.m_status[sid+i]=m_status[sid+i];
+             //   break;
+            }
+            break;
+            case 128:
+            for(int i=0;i<4;i++)
+            {
+                evicted.m_tag[i]=m_tag[i];
+                evicted.m_block_addr[i]=m_block_addr[i];
+                evicted.m_alloc_time[i]=m_alloc_time[i];
+                evicted.m_fill_time[i]=m_fill_time[i];
+                evicted.m_last_access_time[i]=m_last_access_time[i];
+                evicted.m_status[i]=m_status[i];
+//            break;
+            }
+            break;
+        }
+    }
+    new_addr_type    m_tag[4];
+    new_addr_type    m_block_addr[4];
+    unsigned         m_alloc_time[4];
+    unsigned         m_last_access_time[4];
+    unsigned         m_fill_time[4];
+    cache_block_state    m_status[4];
 };
 
 enum replacement_policy_t {
@@ -252,6 +402,17 @@ public:
         return(addr >> m_line_sz_log2) & (m_nset-1);
     }
 
+    unsigned get_sid(new_addr_type addr)
+    {
+        unsigned sid = (addr >> 5) & 4;
+        switch(m_line_sz)
+        {
+            case 32:return sid;
+            case 64:return sid % 2;
+            case 128: return 0;
+        }
+    }
+
     new_addr_type tag( new_addr_type addr ) const
     {
         // For generality, the tag includes both index and tag. This allows for more complex set index
@@ -267,7 +428,7 @@ public:
     }
     FuncCache get_cache_status() {return cache_status;}
 
-    void set_linesz(unsigned blksz) {m_line_sz=blksz;m_line_sz_log2 = LOGB2(m_line_sz);}
+    void set_linesz(unsigned blksz) {m_line_sz=blksz;}
     char *m_config_string;
     char *m_config_stringPrefL1;
     char *m_config_stringPrefShared;
@@ -343,11 +504,11 @@ public:
     ~tag_array();
 
     enum cache_request_status probe( new_addr_type addr, unsigned &idx ) const;
-    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx );
-    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted );
+    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, unsigned sid);
+    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted , unsigned sid);
 
-    void fill( new_addr_type addr, unsigned time );
-    void fill( unsigned idx, unsigned time );
+    void fill( new_addr_type addr, unsigned time,unsigned sid );
+    void fill( unsigned idx, unsigned time , unsigned sid);
 
     unsigned size() const { return m_config.get_num_lines();}
     cache_block_t &get_block(unsigned idx) { return m_lines[idx];}
@@ -549,7 +710,7 @@ bool was_read_sent( const std::list<cache_event> &events );
 /// Baseline cache
 /// Implements common functions for read_only_cache and data_cache
 /// Each subclass implements its own 'access' function
-#define SAMPLE_INTERVAL 100*100
+//#define SAMPLE_INTERVAL 100*100
 class baseline_cache : public cache_t {
 public:
     baseline_cache( const char *name, cache_config &config, int core_id, int type_id, mem_fetch_interface *memport,
@@ -643,17 +804,19 @@ protected:
 
     struct extra_mf_fields {
         extra_mf_fields()  { m_valid = false;}
-        extra_mf_fields( new_addr_type a, unsigned i, unsigned d ) 
+        extra_mf_fields( new_addr_type a, unsigned i, unsigned d , new_addr_type addr) 
         {
             m_valid = true;
             m_block_addr = a;
             m_cache_index = i;
             m_data_size = d;
+            m_addr = addr;
         }
         bool m_valid;
         new_addr_type m_block_addr;
         unsigned m_cache_index;
         unsigned m_data_size;
+        new_addr_type m_addr;
     };
 
     typedef std::map<mem_fetch*,extra_mf_fields> extra_mf_fields_lookup;
@@ -693,7 +856,7 @@ protected:
         /// query for fill port availability 
         bool fill_port_free() const; 
     protected: 
-        const cache_config &m_config; 
+        cache_config &m_config; 
 
         int m_data_port_occupied_cycles; //< Number of cycle that the data port remains used 
         int m_fill_port_occupied_cycles; //< Number of cycle that the fill port remains used 

@@ -2,6 +2,7 @@
     "files.associations": {
         "*.cu": "cpp",
         "ios": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "xutility": "cpp"
     }
 }

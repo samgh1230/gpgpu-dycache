@@ -1177,13 +1177,11 @@ void shader_core_ctx::execute()
 
 void ldst_unit::change2big_blksz(unsigned blksz)
 {
-    m_L1D->m_config.set_linesz(blksz);
     m_L1D->change2big_blksz(blksz);
 }
 
 void ldst_unit::change2small_blksz(unsigned blksz)
 {
-    m_L1D->m_config.set_linesz(blksz);
     m_L1D->change2small_blksz(blksz);
 }
 
