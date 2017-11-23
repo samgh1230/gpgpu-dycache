@@ -908,7 +908,7 @@ data_cache::wr_miss_wa( new_addr_type addr,
         // If evicted block is modified and not a write-through
         // (already modified lower level)
         if( wb && (m_config.m_write_policy != WRITE_THROUGH) ) { 
-            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr,
+            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr[sid],
                 m_wrbk_type,m_config.get_line_sz(),true);
             m_miss_queue.push_back(wb);
             wb->set_status(m_miss_queue_status,time);
@@ -957,7 +957,7 @@ data_cache::rd_hit_base( new_addr_type addr,
     if(mf->isatomic()){ 
         assert(mf->get_access_type() == GLOBAL_ACC_R);
         cache_block_t &block = m_tag_array->get_block(cache_index);
-        block.set_status(MODIFIED,sid);  // mark line as dirty
+        block.set_status(MODIFIED,sid,m_config.get_line_sz());  // mark line as dirty
     }
     return HIT;
 }
@@ -992,7 +992,7 @@ data_cache::rd_miss_base( new_addr_type addr,
         // If evicted block is modified and not a write-through
         // (already modified lower level)
         if(wb && (m_config.m_write_policy != WRITE_THROUGH) ){ 
-            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr,
+            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr[sid],
                 m_wrbk_type,m_config.get_line_sz(),true);
         send_write_request(wb, WRITE_BACK_REQUEST_SENT, time, events);
     }
@@ -1014,7 +1014,7 @@ read_only_cache::access( new_addr_type addr,
     assert(!mf->get_is_write());
     new_addr_type block_addr = m_config.block_addr(addr);
     unsigned cache_index = (unsigned)-1;
-    enum cache_request_status status = m_tag_array->probe(block_addr,cache_index);
+    enum cache_request_status status = m_tag_array->probe(block_addr,cache_index,0);
     enum cache_request_status cache_status = RESERVATION_FAIL;
 
     if ( status == HIT ) {

@@ -198,7 +198,7 @@ struct cache_block_t {
         m_status[i]=INVALID;
        } 
     }
-    cache_block_t get_evicted(cache_block_t &evicted,unsigned sid,unsigned blksz)
+    void get_evicted(cache_block_t &evicted,unsigned sid,unsigned blksz)
     {
         switch(blksz)
         {
