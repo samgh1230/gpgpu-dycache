@@ -503,7 +503,7 @@ public:
     tag_array(cache_config &config, int core_id, int type_id );
     ~tag_array();
 
-    enum cache_request_status probe( new_addr_type addr, unsigned &idx ) const;
+    enum cache_request_status probe( new_addr_type addr, unsigned &idx, unsigned sid ) const;
     enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, unsigned sid);
     enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted , unsigned sid);
 

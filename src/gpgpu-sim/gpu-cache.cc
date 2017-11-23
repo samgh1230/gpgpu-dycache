@@ -155,12 +155,12 @@ void tag_array::init( int core_id, int type_id )
     m_type_id = type_id;
 }
 
-enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx ) const {
+enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx, unsigned sid ) const {
     //assert( m_config.m_write_policy == READ_ONLY );
     unsigned set_index = m_config.set_index(addr);
     new_addr_type tag = m_config.tag(addr);
 
-    unsigned sid = m_config.get_sid(addr);
+//    unsigned sid = m_config.get_sid(addr);
 
     unsigned invalid_line = (unsigned)-1;
     unsigned valid_line = (unsigned)-1;
@@ -220,21 +220,20 @@ enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx ) 
     return MISS;
 }
 
-enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, unsigned &idx )
+enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, unsigned &idx,unsigned sid )
 {
     bool wb=false;
     cache_block_t evicted;
-    enum cache_request_status result = access(addr,time,idx,wb,evicted);
+    enum cache_request_status result = access(addr,time,idx,wb,evicted,sid);
     assert(!wb);
     return result;
 }
 
-enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted ) 
+enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted, unsigned sid ) 
 {
     m_access++;
     shader_cache_access_log(m_core_id, m_type_id, 0); // log accesses to cache
-    unsigned sid = m_config.get_sid(addr);
-    enum cache_request_status status = probe(addr,idx);
+    enum cache_request_status status = probe(addr,idx,sid);
     switch (status) {
     case HIT_RESERVED: 
         m_pending_hit++;
