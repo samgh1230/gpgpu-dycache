@@ -547,7 +547,7 @@ gpgpu_sim::gpgpu_sim( const gpgpu_sim_config &config )
     : gpgpu_t(config), m_config(config)
 { 
     m_shader_config = &m_config.m_shader_config;
-    struct shader_core_config m_shader = &m_config.m_shader_config; 
+    struct shader_core_config* m_shader = &m_config.m_shader_config; 
     m_memory_config = &m_config.m_memory_config;
     set_ptx_warp_size(m_shader_config);
     ptx_file_line_stats_create_exposed_latency_tracker(m_config.num_shader());
