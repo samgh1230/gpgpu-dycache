@@ -855,8 +855,9 @@ protected:
         bool data_port_free() const; 
         /// query for fill port availability 
         bool fill_port_free() const; 
-    protected: 
         cache_config &m_config; 
+    protected: 
+        
 
         int m_data_port_occupied_cycles; //< Number of cycle that the data port remains used 
         int m_fill_port_occupied_cycles; //< Number of cycle that the fill port remains used 

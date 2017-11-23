@@ -715,7 +715,7 @@ void baseline_cache::fill(mem_fetch *mf, unsigned time){
     if (has_atomic) {
         assert(m_config.m_alloc_policy == ON_MISS);
         cache_block_t &block = m_tag_array->get_block(e->second.m_cache_index);
-        block.set_status(MODIFIED); // mark line as dirty for atomic operation
+        block.set_status(MODIFIED,sid,m_config.get_line_sz()); // mark line as dirty for atomic operation
     }
     m_extra_mf_fields.erase(mf);
     m_bandwidth_management.use_fill_port(mf); 
@@ -809,7 +809,7 @@ cache_request_status data_cache::wr_hit_wb(new_addr_type addr, unsigned cache_in
     unsigned sid = m_config.get_sid(addr);
 	m_tag_array->access(block_addr,time,cache_index,sid); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
-	block.set_status(MODIFIED,sid);
+	block.set_status(MODIFIED,sid,m_config.get_line_sz());
 
 	return HIT;
 }
@@ -822,7 +822,7 @@ cache_request_status data_cache::wr_hit_wt(new_addr_type addr, unsigned cache_in
 	new_addr_type block_addr = m_config.block_addr(addr);
 	m_tag_array->access(block_addr,time,cache_index,sid); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
-	block.set_status(MODIFIED,sid);
+	block.set_status(MODIFIED,sid,m_config.get_line_sz());
 
 	// generate a write-through
 	send_write_request(mf, WRITE_REQUEST_SENT, time, events);
@@ -840,7 +840,7 @@ cache_request_status data_cache::wr_hit_we(new_addr_type addr, unsigned cache_in
 	send_write_request(mf, WRITE_REQUEST_SENT, time, events);
 
 	// Invalidate block
-	block.set_status(INVALID,sid);
+	block.set_status(INVALID,sid,m_config.get_line_sz());
 
 	return HIT;
 }
