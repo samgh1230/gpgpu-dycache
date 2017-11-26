@@ -916,7 +916,7 @@ void warp_inst_t::memory_coalescing_arch_13_reduce_and_send( bool is_write, mem_
        }
    }
    data_size = size;
-   printf("pc=%x access data size:\t",inst.pc);
+   printf("pc=%x access data size:\t",pc);
    if(cur_blksz<size){
        unsigned sub_size=0;
        while(size>0){
