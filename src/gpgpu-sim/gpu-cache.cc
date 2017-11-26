@@ -1114,12 +1114,12 @@ data_cache::access( new_addr_type addr,
     if(mf->get_data_size()>current_blksz)
     {
         if(mf->get_inst().space.get_type()==global_space)
-            printf("global space.pc=%x\n",mf->get_inst().pc);
+            printf("global space.pc=%x.size=%d\n",mf->get_inst().pc,mf->get_data_size());
         else if(mf->get_inst().space.get_type()==local_space)
-            printf("local space. pc=%x\n",mf->get_inst().pc);
+            printf("local space. pc=%x. size=%d\n",mf->get_inst().pc,mf->get_data_size());
         else if(mf->get_inst().space.get_type()==param_space_local)
-            printf("parama local.pc=%x\n",mf->get_inst().pc);
-        else printf("unknow type.pc=%x\n",mf->get_inst().pc);
+            printf("parama local.pc=%x.size=%d\n",mf->get_inst().pc,mf->get_data_size());
+        else printf("unknow type.pc=%x.size=%d\n",mf->get_inst().pc,mf->get_data_size());
     }
     assert( mf->get_data_size() <= current_blksz);
     bool wr = mf->get_is_write();

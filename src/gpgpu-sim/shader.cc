@@ -1198,7 +1198,7 @@ void ldst_unit::re_generate_memory_access(std::vector<unsigned> &ref_size,unsign
    if(!m_dispatch_reg->empty()&&(type==global_space||type==local_space||type==param_space_local))
    {
        m_dispatch_reg->clear_accessq();
-       printf("pc=%x\t");
+       printf("pc=%x\t",m_dispatch_reg->pc);
        m_dispatch_reg->generate_mem_accesses(ref_size,blksz);
        printf("end\n");
    } 
