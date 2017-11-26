@@ -1123,7 +1123,9 @@ public:
 		}
 		return ready;
 	}
-
+    warp_inst_t** get_inst(unsigned index){
+        return &regs[i];
+    }
 	void print(FILE* fp) const{
 		fprintf(fp, "%s : @%p\n", m_name, this);
 		for( unsigned i = 0; i < regs.size(); i++ ) {
@@ -1142,9 +1144,9 @@ public:
 		assert(0 && "No free registers found");
 		return NULL;
 	}
-
+    std::vector<warp_inst_t*> regs;
 private:
-	std::vector<warp_inst_t*> regs;
+	
 	const char* m_name;
 };
 
