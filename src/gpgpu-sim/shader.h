@@ -1620,7 +1620,7 @@ public:
     kernel_info_t *get_kernel() { return m_kernel; }
     unsigned get_sid() const {return m_sid;}
 
-    void re_generate_memory_access(std::vector<unsigned> &ref,unsigned blksz);
+    void re_generate_mem_access(std::vector<unsigned> &ref,unsigned blksz);
 // used by functional simulation:
     // modifiers
     virtual void warp_exit( unsigned warp_id );
