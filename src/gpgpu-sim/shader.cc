@@ -1186,9 +1186,9 @@ void shader_core_ctx::re_generate_mem_access(std::vector<unsigned> &ref,unsigned
         enum pipeline_stage_name_t issue_port = m_issue_port[n];
         register_set& issue_inst = m_pipeline_reg[issue_port];
         for(int i=0;i<issue_inst.regs.size();i++){
-            warp_inst_t** inst = &regs[i];
+            warp_inst_t** inst = &issue_inst.regs[i];
             memory_space_t type = (*inst)->space.get_type();
-            if(((*inst)->is_load()||(*inst)->is_store())!(*inst)->empty()&&(type==global_space||type==local_space||type==param_space_local))
+            if(((*inst)->is_load()||(*inst)->is_store())&&!(*inst)->empty()&&(type==global_space||type==local_space||type==param_space_local))
             {
                 (*inst)->clear_accessq();
                 (*inst)->generate_mem_accesses(ref,blksz);
@@ -2520,7 +2520,7 @@ void shader_core_ctx::change2small_blksz(unsigned blksz)
     printf("sid %d change from %d to %d\n",m_sid,current_gran,blksz);
     current_gran = blksz;
     m_ldst_unit->re_generate_memory_access(m_data_sz,blksz);
-    re_generate_memory_access(m_data_sz,blksz);
+    re_generate_mem_access(m_data_sz,blksz);
    // m_config->gpgpu_cache_data1_linesize=blksz;
     
 }
