@@ -1188,6 +1188,8 @@ void shader_core_ctx::re_generate_mem_access(std::vector<unsigned> &ref,unsigned
         for(int i=0;i<issue_inst.regs.size();i++){
             warp_inst_t** inst = &issue_inst.regs[i];
             memory_space_t type = (*inst)->space.get_type();
+            if((*inst)->is_load()||(*inst)->is_store())
+                printf("sid %d re-gen pc %x\n",m_sid,(*inst)->pc);
             if(((*inst)->is_load()||(*inst)->is_store())&&!(*inst)->empty()&&(type==global_space||type==local_space||type==param_space_local))
             {
                 (*inst)->clear_accessq();
