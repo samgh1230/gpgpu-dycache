@@ -916,18 +916,27 @@ void warp_inst_t::memory_coalescing_arch_13_reduce_and_send( bool is_write, mem_
        }
    }
    data_size = size;
+   printf("pc=%x access data size:\t",inst.pc);
    if(cur_blksz<size){
        unsigned sub_size=0;
        while(size>0){
            m_accessq.push_back( mem_access_t(access_type,addr,cur_blksz,is_write,info.active,info.bytes));
            addr = addr+cur_blksz;
            size -= cur_blksz;
+           printf("%d\t",current_blksz);
        }
-       size += cur_blksz;
-       m_accessq.push_back(mem_access_t(access_type,addr,cur_blksz,is_write,info.active,info.bytes));
+       if(size<0){
+           size += current_blksz;
+           m_accessq.push_back(mem_access_t(access_type,addr,size,is_write,info.active,info.bytes));
+           printf("%d\t",size);
+       }
    }
    else
+    {
         m_accessq.push_back( mem_access_t(access_type,addr,size,is_write,info.active,info.bytes) );
+        printf("%d\t");
+    }
+    printf("\n");
 }
 
 void warp_inst_t::completed( unsigned long long cycle ) const 

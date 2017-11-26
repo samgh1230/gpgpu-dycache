@@ -673,8 +673,12 @@ void shader_core_ctx::func_exec_inst( warp_inst_t &inst )
 {
     execute_warp_inst_t(inst);
     if( inst.is_load() || inst.is_store() )
-        if(inst.space.get_type()==global_space)
+        if(inst.space.get_type()==global_space||inst.space.get_type()==local_space||inst.space.get_type()==param_space_local)
+        {
+            printf("sid=%d generate_mem_accesses\n",m_sid);
             inst.generate_mem_accesses(m_data_sz,current_gran);
+            printf("end\n");
+        }
         else 
             inst.generate_mem_accesses();
 }
@@ -1186,17 +1190,22 @@ void ldst_unit::change2small_blksz(unsigned blksz)
 }
 void ldst_unit::re_generate_memory_access(std::vector<unsigned> &ref_size,unsigned blksz)
 {
+    printf("sid=%d re-generate memory access:\t",m_core->get_sid());
    if(!m_dispatch_reg->empty()&&(m_dispatch_reg->space.get_type()==global_space)&&m_dispatch_reg->accessq_count()!=0)
    {
        m_dispatch_reg->clear_accessq();
+       printf("pc=%x\t");
        m_dispatch_reg->generate_mem_accesses(ref_size,blksz);
+       printf("end\n");
    } 
    for( unsigned stage=0; stage<m_pipeline_depth; stage++ ) 
    {
        if(!m_pipeline_reg[stage]->empty()&&m_pipeline_reg[stage]->space.get_type()==global_space&&m_pipeline_reg[stage]->accessq_count()!=0)
        {
            m_pipeline_reg[stage]->clear_accessq();
+           printf("pc=%x\t");
            m_pipeline_reg[stage]->generate_mem_accesses(ref_size,blksz);
+           printf("end\n");
        }
    } 
 }
@@ -1361,14 +1370,20 @@ mem_stage_stall_type ldst_unit::process_memory_access_queue( cache_t *cache, war
 
     if( !cache->data_port_free() ) 
         return DATA_PORT_STALL; 
-
+    /*if(inst.space.get_type()==global_space)
+        printf("global space access\n");
+    else if(inst.space.get_type()==local_space)
+        printf("local space access\n");
+    else if (inst.space.get_type()==param_space_local)
+        printf("param_space_local\n");
+    else printf("error: other_space access\n");*/
     //const mem_access_t &access = inst.accessq_back();
     mem_fetch *mf = m_mf_allocator->alloc(inst,inst.accessq_back());
     std::list<cache_event> events;
-    if(inst.space.get_type()==global_space && mf->get_data_size()>m_core->current_gran){
+    /*if(inst.space.get_type()==global_space && mf->get_data_size()>m_core->current_gran){
         printf("mem_fetch data size=%d,cache line size=%d,pc=%x\n",mf->get_data_size(),m_core->current_gran,inst.pc);
         exit(1);
-    }
+    }*/
     enum cache_request_status status = cache->access(mf->get_addr(),mf,gpu_sim_cycle+gpu_tot_sim_cycle,events);
     return process_cache_access( cache, mf->get_addr(), inst, events, mf, status );
 }
@@ -1680,7 +1695,7 @@ ldst_unit::ldst_unit( mem_fetch_interface *icnt,
           tpc );
 }
 
-void ldst_unit:: issue( register_set &reg_set )
+void ldst_unit::issue( register_set &reg_set )
 {
 	warp_inst_t* inst = *(reg_set.get_ready());
 
@@ -2478,9 +2493,10 @@ unsigned int shader_core_config::max_cta( const kernel_info_t &k ) const
 void shader_core_ctx::change2small_blksz(unsigned blksz)
 {
     m_ldst_unit->change2small_blksz(blksz);
+    current_gran = blksz;
     m_ldst_unit->re_generate_memory_access(m_data_sz,blksz);
    // m_config->gpgpu_cache_data1_linesize=blksz;
-    current_gran = blksz;
+    
 }
 void shader_core_ctx::change2big_blksz(unsigned blksz)
 {

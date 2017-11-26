@@ -504,11 +504,11 @@ public:
     ~tag_array();
 
     enum cache_request_status probe( new_addr_type addr, unsigned &idx, unsigned sid ) const;
-    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, unsigned sid);
-    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted , unsigned sid);
+    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, unsigned sid,unsigned line_sz);
+    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted , unsigned sid, unsigned line_sz);
 
-    void fill( new_addr_type addr, unsigned time,unsigned sid );
-    void fill( unsigned idx, unsigned time , unsigned sid);
+    void fill( new_addr_type addr, unsigned time,unsigned sid ,unsigned line_sz);
+    void fill( unsigned idx, unsigned time , unsigned sid,unsigned line_sz);
 
     unsigned size() const { return m_config.get_num_lines();}
     cache_block_t &get_block(unsigned idx) { return m_lines[idx];}
@@ -719,6 +719,7 @@ public:
       m_mshrs(config.m_mshr_entries,config.m_mshr_max_merge), 
       m_bandwidth_management(config) 
     {
+        current_blksz = config.get_line_sz();
         init( name, config, memport, status );
     }
 
@@ -775,6 +776,18 @@ public:
     // accessors for cache bandwidth availability 
     bool data_port_free() const { return m_bandwidth_management.data_port_free(); } 
     bool fill_port_free() const { return m_bandwidth_management.fill_port_free(); } 
+    void set_blksz(unsigned blksz) {current_blksz=blksz;}
+    unsigned get_sid(new_addr_type addr)
+    {
+        unsigned line_sz = (m_config.m_line_sz!=current_blksz)?current_blksz:m_config.m_line_sz;
+        unsigned sid = (addr >> 5) & 3;
+        switch(line_sz)
+        {
+            case 32:return sid;
+            case 64:return sid % 2;
+            case 128: return 0;
+        }
+    }
     cache_config &m_config;
 protected:
     // Constructor that can be used by derived classes with custom tag arrays
@@ -796,6 +809,7 @@ protected:
 protected:
     std::string m_name;
     //cache_config &m_config;
+    unsigned current_blksz;
     tag_array*  m_tag_array;
     mshr_table m_mshrs;
     std::list<mem_fetch*> m_miss_queue;
@@ -855,9 +869,10 @@ protected:
         bool data_port_free() const; 
         /// query for fill port availability 
         bool fill_port_free() const; 
+        void set_blksz(unsigned blksz) {current_blksz=blksz;}
         cache_config &m_config; 
     protected: 
-        
+        unsigned current_blksz;
 
         int m_data_port_occupied_cycles; //< Number of cycle that the data port remains used 
         int m_fill_port_occupied_cycles; //< Number of cycle that the fill port remains used 
