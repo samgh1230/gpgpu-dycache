@@ -1123,9 +1123,6 @@ public:
 		}
 		return ready;
 	}
-    warp_inst_t** get_inst(unsigned index){
-        return &regs[i];
-    }
 	void print(FILE* fp) const{
 		fprintf(fp, "%s : @%p\n", m_name, this);
 		for( unsigned i = 0; i < regs.size(); i++ ) {
