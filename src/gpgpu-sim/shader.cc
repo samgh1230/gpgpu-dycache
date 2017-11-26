@@ -2493,6 +2493,7 @@ unsigned int shader_core_config::max_cta( const kernel_info_t &k ) const
 void shader_core_ctx::change2small_blksz(unsigned blksz)
 {
     m_ldst_unit->change2small_blksz(blksz);
+    printf("sid %d change from %d to %d\n",m_sid,current_gran,blksz);
     current_gran = blksz;
     m_ldst_unit->re_generate_memory_access(m_data_sz,blksz);
    // m_config->gpgpu_cache_data1_linesize=blksz;
@@ -2502,6 +2503,7 @@ void shader_core_ctx::change2big_blksz(unsigned blksz)
 {
     cache_flush();
     //m_config->gpgpu_cache_data1_linesize=blksz;
+    printf("sid %d change from %d to %d\n",m_sid,current_gran,blksz);
     current_gran = blksz;
     m_ldst_unit->change2big_blksz(blksz);
 }
