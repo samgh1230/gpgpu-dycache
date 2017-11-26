@@ -1191,7 +1191,8 @@ void ldst_unit::change2small_blksz(unsigned blksz)
 void ldst_unit::re_generate_memory_access(std::vector<unsigned> &ref_size,unsigned blksz)
 {
     printf("sid=%d re-generate memory access:\t",m_core->get_sid());
-   if(!m_dispatch_reg->empty()&&(m_dispatch_reg->space.get_type()==global_space)&&m_dispatch_reg->accessq_count()!=0)
+    memory_space_t type = m_dispatch_reg->space.get_type();
+   if(!m_dispatch_reg->empty()&&(type==global_space||type==local_space||type==param_space_local))
    {
        m_dispatch_reg->clear_accessq();
        printf("pc=%x\t");
@@ -1200,7 +1201,8 @@ void ldst_unit::re_generate_memory_access(std::vector<unsigned> &ref_size,unsign
    } 
    for( unsigned stage=0; stage<m_pipeline_depth; stage++ ) 
    {
-       if(!m_pipeline_reg[stage]->empty()&&m_pipeline_reg[stage]->space.get_type()==global_space&&m_pipeline_reg[stage]->accessq_count()!=0)
+       memory_space_t type = m_pipeline_reg[stage]->space.get_type();
+       if(!m_pipeline_reg[stage]->empty()&&(type==global_space||type==local_space||type==param_space_local))
        {
            m_pipeline_reg[stage]->clear_accessq();
            printf("pc=%x\t");
