@@ -1465,7 +1465,7 @@ bool ldst_unit::memory_cycle( warp_inst_t &inst, mem_stage_stall_type &stall_rea
        }
    } else {
        assert( CACHE_UNDEFINED != inst.cache_op );
-       printf("sid %d L1D access\n",m_core->get_sid());
+       printf("sid %d L1D access pc %x\n",m_core->get_sid(),inst.pc);
        stall_cond = process_memory_access_queue(m_L1D,inst);
    }
    if( !inst.accessq_empty() ) 
