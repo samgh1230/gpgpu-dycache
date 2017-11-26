@@ -854,6 +854,8 @@ void scheduler_unit::cycle()
                         assert( warp(warp_id).inst_in_pipeline() );
                         if ( (pI->op == LOAD_OP) || (pI->op == STORE_OP) || (pI->op == MEMORY_BARRIER_OP) ) {
                             if( m_mem_out->has_free() ) {
+                                if(pI->pc==0x190&&m_shader->get_sid()==9)
+                                    printf("sid %d issue warp pc %x\n",m_shader->get_sid(),pI->pc);
                                 m_shader->issue_warp(*m_mem_out,pI,active_mask,warp_id);
                                 issued++;
                                 issued_inst=true;
