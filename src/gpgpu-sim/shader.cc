@@ -1190,7 +1190,7 @@ void ldst_unit::change2small_blksz(unsigned blksz)
 }
 void ldst_unit::re_generate_memory_access(std::vector<unsigned> &ref_size,unsigned blksz)
 {
-    printf("sid=%d re-generate memory access:\t",m_core->get_sid());
+    printf("sid=%d re-generate memory access:\n",m_core->get_sid());
     memory_space_t type = m_dispatch_reg->space.get_type();
    if(!m_dispatch_reg->empty()&&(type==global_space||type==local_space||type==param_space_local))
    {
