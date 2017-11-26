@@ -1114,7 +1114,7 @@ data_cache::access( new_addr_type addr,
     if(mf->get_data_size()>current_blksz)
     {
         if(mf->get_inst().space.get_type()==global_space)
-            printf("global space.pc=%x\n",inst.pc);
+            printf("global space.pc=%x\n",mf->get_inst().pc);
         else if(mf->get_inst().space.get_type()==local_space)
             printf("local space. pc=%x\n",mf->get_inst().pc);
         else if(mf->get_inst().space.get_type()==param_space_local)
