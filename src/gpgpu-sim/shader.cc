@@ -1194,6 +1194,7 @@ void ldst_unit::re_generate_memory_access(std::vector<unsigned> &ref_size,unsign
 {
     printf("sid=%d re-generate memory access:\n",m_core->get_sid());
     memory_space_t type = m_dispatch_reg->space.get_type();
+    printf("m_dispatch_reg pc %x\n",m_dispatch_reg->pc);
    if(!m_dispatch_reg->empty()&&(type==global_space||type==local_space||type==param_space_local))
    {
        m_dispatch_reg->clear_accessq();
@@ -1204,6 +1205,7 @@ void ldst_unit::re_generate_memory_access(std::vector<unsigned> &ref_size,unsign
    for( unsigned stage=0; stage<m_pipeline_depth; stage++ ) 
    {
        memory_space_t type = m_pipeline_reg[stage]->space.get_type();
+       printf("m_pipeline_reg[%d] pc %x\n",stage,m_pipeline_reg[stage]->pc);
        if(!m_pipeline_reg[stage]->empty()&&(type==global_space||type==local_space||type==param_space_local))
        {
            m_pipeline_reg[stage]->clear_accessq();
