@@ -1712,7 +1712,9 @@ void ldst_unit::issue( register_set &reg_set )
          }
       }
    }
-
+   memory_space_t type = inst->space.get_type();
+   if(type==global_space||type==local_space||type==param_space_local)
+        printf("sid %d issue pc %x\n",m_core->get_sid(),inst->pc);
 
 	inst->op_pipe=MEM__OP;
 	// stat collection
