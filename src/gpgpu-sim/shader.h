@@ -1613,7 +1613,7 @@ public:
     void change2big_blksz(unsigned blksz);
     void change2small_blksz(unsigned blksz);
     void adjust_cache_blksz();
-    unsigned get_cur_blksz() {return cur_blksz;}
+    unsigned get_cur_blksz() {return current_gran;}
     void set_cache_blksz(unsigned blksz);
     unsigned get_new_blksz();
     void re_generate_mem_access(std::vector<unsigned> &ref,unsigned blksz);
