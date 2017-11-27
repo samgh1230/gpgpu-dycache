@@ -1613,11 +1613,11 @@ public:
     void change2big_blksz(unsigned blksz);
     void change2small_blksz(unsigned blksz);
     void adjust_cache_blksz();
-    unsigned get_cur_blksz() {return current_blksz;}
+    unsigned get_cur_blksz() {return cur_blksz;}
     void set_cache_blksz(unsigned blksz);
     unsigned get_new_blksz();
     void re_generate_mem_access(std::vector<unsigned> &ref,unsigned blksz);
-    std::vector<unsigned>& get_data_size() {return *m_data_sz;}
+    std::vector<unsigned>& get_data_size() {return &m_data_sz;}
     // accessors
     bool fetch_unit_response_buffer_full() const;
     bool ldst_unit_response_buffer_full() const;
