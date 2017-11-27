@@ -363,9 +363,8 @@ public:
             memory_space_t type = inst ->space.get_type();
             if(!inst->empty()&&(type==global_space||type==local_space||type==param_space_local))
             {
-                printf("sid %d scheduler regs re-gen. pc=%x\n",m_shader->get_sid(),inst->pc);
                 inst->clear_accessq();
-                inst->generate_mem_accesses(ref_size,blksz);
+                inst->generate_mem_accesses(ref_sz,blksz);
             }
         } 
     }
