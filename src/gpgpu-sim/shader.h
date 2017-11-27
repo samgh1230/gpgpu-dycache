@@ -1607,10 +1607,17 @@ public:
                  m_kernel->name().c_str() );
     }
     const shader_core_config *m_config;
+
+    //multi gran
     unsigned current_gran;
     void change2big_blksz(unsigned blksz);
     void change2small_blksz(unsigned blksz);
     void adjust_cache_blksz();
+    unsigned get_cur_blksz() {return current_blksz;}
+    void set_cache_blksz(unsigned blksz);
+    unsigned get_new_blksz();
+    void re_generate_mem_access(std::vector<unsigned> &ref,unsigned blksz);
+    std::vector<unsigned>& get_data_size() {return *m_data_sz;}
     // accessors
     bool fetch_unit_response_buffer_full() const;
     bool ldst_unit_response_buffer_full() const;
@@ -1620,7 +1627,7 @@ public:
     kernel_info_t *get_kernel() { return m_kernel; }
     unsigned get_sid() const {return m_sid;}
 
-    void re_generate_mem_access(std::vector<unsigned> &ref,unsigned blksz);
+    
 // used by functional simulation:
     // modifiers
     virtual void warp_exit( unsigned warp_id );
@@ -1793,8 +1800,7 @@ public:
     void execute();
     
     void writeback();
-    void set_cache_blksz(unsigned blksz);
-    unsigned get_new_blksz();
+    
     // used in display_pipeline():
     void dump_warp_state( FILE *fout ) const;
     void print_stage(unsigned int stage, FILE *fout) const;

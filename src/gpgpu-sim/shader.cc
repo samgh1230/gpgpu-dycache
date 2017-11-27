@@ -1401,6 +1401,12 @@ mem_stage_stall_type ldst_unit::process_memory_access_queue( cache_t *cache, war
         printf("param_space_local\n");
     else printf("error: other_space access\n");*/
     //const mem_access_t &access = inst.accessq_back();
+    if(inst.accessq_back().get_size()>m_core->get_cur_blksz())
+    {
+       printf("sid %d process memory access. pc=%x\n",m_core->get_sid(),inst.pc) ;
+       inst.clear_accessq();
+       inst.generate_mem_accesses(m_core->get_data_sz(),m_core->get_cur_blksz());
+    }
     mem_fetch *mf = m_mf_allocator->alloc(inst,inst.accessq_back());
     std::list<cache_event> events;
     /*if(inst.space.get_type()==global_space && mf->get_data_size()>m_core->current_gran){
