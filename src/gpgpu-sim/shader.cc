@@ -1183,8 +1183,8 @@ void shader_core_ctx::execute()
 void shader_core_ctx::re_generate_mem_access(std::vector<unsigned> &ref,unsigned blksz)
 {
     //for(unsigned n=0; n<m_num_function_units;n++){
-        enum pipeline_stage_name_t issue_port = m_issue_port[m_num_function_units-1];
-        register_set& issue_inst = m_pipeline_reg[issue_port];
+        //enum pipeline_stage_name_t issue_port = m_issue_port[m_num_function_units-1];
+        register_set& issue_inst = m_pipeline_reg[ID_OC_MEM];
         for(int i=0;i<issue_inst.regs.size();i++){
             warp_inst_t** inst = &issue_inst.regs[i];
             memory_space_t type = (*inst)->space.get_type();

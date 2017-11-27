@@ -355,19 +355,20 @@ public:
     // m_supervised_warps with their scheduling policies
     virtual void order_warps() = 0;
 
-    /*void re_generate_memory_access(std::vector<unsigned> &ref_sz, unsigned blksz)
+    void re_generate_memory_access(std::vector<unsigned> &ref_sz, unsigned blksz)
     {
-        for( unsigned stage=0; stage<m_shader->m_config.; stage++ ) 
+        for( unsigned i=0; i<m_mem_out->regs.size(); i++ ) 
         {
-            warp_inst_t** inst = m_mem_out->
-            memory_space_t type = m_pipeline_reg[stage]->space.get_type();
-            if(!m_pipeline_reg[stage]->empty()&&(type==global_space||type==local_space||type==param_space_local))
+            warp_inst_t** inst = m_mem_out->regs[i];
+            memory_space_t type = (*inst) ->space.get_type();
+            if(!(*inst)->empty()&&(type==global_space||type==local_space||type==param_space_local))
             {
-                m_pipeline_reg[stage]->clear_accessq();
-                m_pipeline_reg[stage]->generate_mem_accesses(ref_size,blksz);
+                printf("sid %d scheduler regs re-gen. pc=%x\n",m_shader->get_sid(),(*inst)->pc);
+                (*inst)->clear_accessq();
+                (*inst)->generate_mem_accesses(ref_size,blksz);
             }
         } 
-    }*/
+    }
 
 protected:
     virtual void do_on_warp_issued( unsigned warp_id,
