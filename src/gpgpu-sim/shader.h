@@ -359,13 +359,13 @@ public:
     {
         for( unsigned i=0; i<m_mem_out->regs.size(); i++ ) 
         {
-            warp_inst_t** inst = m_mem_out->regs[i];
-            memory_space_t type = (*inst) ->space.get_type();
-            if(!(*inst)->empty()&&(type==global_space||type==local_space||type==param_space_local))
+            warp_inst_t* inst = m_mem_out->regs[i];
+            memory_space_t type = inst ->space.get_type();
+            if(!inst->empty()&&(type==global_space||type==local_space||type==param_space_local))
             {
-                printf("sid %d scheduler regs re-gen. pc=%x\n",m_shader->get_sid(),(*inst)->pc);
-                (*inst)->clear_accessq();
-                (*inst)->generate_mem_accesses(ref_size,blksz);
+                printf("sid %d scheduler regs re-gen. pc=%x\n",m_shader->get_sid(),inst->pc);
+                inst->clear_accessq();
+                inst->generate_mem_accesses(ref_size,blksz);
             }
         } 
     }
