@@ -1405,7 +1405,7 @@ mem_stage_stall_type ldst_unit::process_memory_access_queue( cache_t *cache, war
     {
        printf("sid %d process memory access. pc=%x\n",m_core->get_sid(),inst.pc) ;
        inst.clear_accessq();
-       inst.generate_mem_accesses(&m_core->get_data_sz(),m_core->get_cur_blksz());
+       inst.generate_mem_accesses(&m_core->get_data_size(),m_core->get_cur_blksz());
     }
     mem_fetch *mf = m_mf_allocator->alloc(inst,inst.accessq_back());
     std::list<cache_event> events;
