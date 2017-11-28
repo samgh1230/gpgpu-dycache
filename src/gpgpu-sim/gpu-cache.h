@@ -961,6 +961,7 @@ public:
         assert(config.m_mshr_type == ASSOC);
         m_memport=memport;
         m_miss_queue_status = status;
+        current_blksz = config.get_line_sz();
     }
 
     virtual ~baseline_cache()
