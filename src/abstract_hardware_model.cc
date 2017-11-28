@@ -540,8 +540,8 @@ void warp_inst_t::memory_coalescing_arch_13_reduce_and_send( bool is_write, mem_
            assert(lower_half_used && upper_half_used);
        }
    }
-   printf("linesz:%d, data_size:%d\n",m_config->gpgpu_cache_data1_linesize,size);
-   if(m_config->gpgpu_cache_data1_linesize<size){
+   //printf("linesz:%d, data_size:%d\n",m_config->gpgpu_cache_data1_linesize,size);
+   /*if(m_config->gpgpu_cache_data1_linesize<size){
        unsigned sub_size=0;
        while(size>0){
            m_accessq.push_back( mem_access_t(access_type,addr,m_config->gpgpu_cache_data1_linesize,is_write,info.active,info.bytes));
@@ -551,8 +551,8 @@ void warp_inst_t::memory_coalescing_arch_13_reduce_and_send( bool is_write, mem_
        size += m_config->gpgpu_cache_data1_linesize;
        m_accessq.push_back(mem_access_t(access_type,addr,m_config->gpgpu_cache_data1_linesize,is_write,info.active,info.bytes));
    }
-   else
-        m_accessq.push_back( mem_access_t(access_type,addr,size,is_write,info.active,info.bytes) );
+   else*/
+    m_accessq.push_back( mem_access_t(access_type,addr,size,is_write,info.active,info.bytes) );
 }
 
 void warp_inst_t::completed( unsigned long long cycle ) const 

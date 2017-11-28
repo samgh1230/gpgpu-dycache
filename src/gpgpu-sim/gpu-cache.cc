@@ -155,7 +155,7 @@ void tag_array::init( int core_id, int type_id )
     m_type_id = type_id;
 }
 
-enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx ) const {
+enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx, unsigned sid, unsigned blksz, unsigned data_size ) const {
     //assert( m_config.m_write_policy == READ_ONLY );
     unsigned set_index = m_config.set_index(addr);
     new_addr_type tag = m_config.tag(addr);
@@ -170,38 +170,271 @@ enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx ) 
     for (unsigned way=0; way<m_config.m_assoc; way++) {
         unsigned index = set_index*m_config.m_assoc+way;
         cache_block_t *line = &m_lines[index];
-        if (line->m_tag == tag) {
-            if ( line->m_status == RESERVED ) {
-                idx = index;
-                return HIT_RESERVED;
-            } else if ( line->m_status == VALID ) {
-                idx = index;
-                return HIT;
-            } else if ( line->m_status == MODIFIED ) {
-                idx = index;
-                return HIT;
-            } else {
-                assert( line->m_status == INVALID );
+        switch(blksz){
+            case 128:
+            if(line->m_tag[0]==tag){
+                if(line->m_status[0]==RESERVED){
+                    idx=index;
+                    return HIT_RESERVED;
+                }
+                else if(line->m_status[0]==VALID){
+                    idx=index;
+                    return HIT;
+                } 
+                else if(line->m_status[0]==MODIFIED){
+                    idx=index;
+                    return HIT;
+                }
+                else {
+                    assert(line->m_status[0]==INVALID);
+                }
             }
-        }
-        if (line->m_status != RESERVED) {
-            all_reserved = false;
-            if (line->m_status == INVALID) {
-                invalid_line = index;
-            } else {
-                // valid line : keep track of most appropriate replacement candidate
-                if ( m_config.m_replacement_policy == LRU ) {
-                    if ( line->m_last_access_time < valid_timestamp ) {
-                        valid_timestamp = line->m_last_access_time;
-                        valid_line = index;
-                    }
-                } else if ( m_config.m_replacement_policy == FIFO ) {
-                    if ( line->m_alloc_time < valid_timestamp ) {
-                        valid_timestamp = line->m_alloc_time;
-                        valid_line = index;
+            if(line->m_status[0]!=RESERVED){
+                all_reserved = false;
+                if(line->m_status[0]==INVALID)
+                    invalid_line = index;
+                else{
+                    if(m_config.m_replacement_policy==LRU){
+                        if(line->m_last_access_time[0]<valid_timestamp){
+                             valid_timestamp=line->m_last_access_time[0] ;
+                             valid_line=index;
+                        }
+                        else if(m_config.m_replacement_policy==FIFO){
+                            if(line->m_alloc_time[0]<valid_timestamp){
+                                valid_timestamp = line->m_alloc_time[0];
+                                valid_line = index;
+                            }
+                        }
                     }
                 }
             }
+            break;
+            case 64:
+            switch(data_size){
+                case 128:
+                    if(line->m_tag[0]==tag&&line->m_tag[2]==tag)
+                    {
+                        if ( line->m_status[0] == RESERVED && line->m_status[2]==RESERVED) {
+                            idx = index;
+                            return HIT_RESERVED;
+                        } else if ( (line->m_status[0] == VALID||line->m_status[0] == MODIFIED) && (line->m_status[2]== VALID||line->m_status[2]==MODIFIED)) {
+                            idx = index;
+                            return HIT;
+                        } /*else if ( line->m_status[0] == MODIFIED && line->m_status[2] == MODIFIED ) {
+                            idx = index;
+                            return HIT;
+                        }*/ 
+                    }
+                    if(line->m_status[0] != RESERVED && line->m_status[2] != RESERVED){//NOT ALL LINES ARE RESERVED
+                        all_reserved=false;
+                        if(line->m_status[0]==INVALID && line->m_status[2]==INVALID)//FIND AN INVALID LINE
+                            invalid_line = index;
+                        else{
+                            if(m_config.m_replacement_policy==LRU){
+                                unsigned last_time = (line->m_alloc_time[0]>line->m_alloc_time[2])?line->m_alloc_time[2]:line->m_last_access_time[0];
+                                if(last_time<valid_timestamp){
+                                    valid_timestamp = last_time;
+                                    valid_line = index;
+                                }
+                            }
+                        }
+                    }
+                break;
+                case 64:
+                if(sid==0||sid==2){
+                    if(line->m_status[sid]==RESERVED){
+                        idx=index;
+                        return HIT_RESERVED;
+                    }else if(line->m_status[sid]==VALID){
+                        idx=index;
+                        return HIT;
+                    }else if(line->m_status[sid]==MODIFIED){
+                        idx=index;
+                        return HIT;
+                    }else {
+                        assert(line->m_status[sid]==INVALID);
+                    }
+                    if(line->m_status[sid] != RESERVED){
+                        all_reserved=false;
+                        if(line->m_status[sid]==INVALID){
+                            invalid_line=index;
+                        }else{
+                            if(m_config.m_replacement_policy==LRU){
+                                if(line->m_last_access_time[sid]<valid_timestamp){
+                                    valid_timestamp = line->m_last_access_time[sid];
+                                    valid_line=index;
+                                }
+                            }else if(m_config.m_replacement_policy==FIFO){
+                                if(line->m_alloc_time[sid]<valid_timestamp){
+                                    valid_timestamp = line->m_alloc_time[sid];
+                                    valid_line=index;
+                                }
+                            }
+                        }
+                    }
+                }else if(sid==1){
+                    printf("Exception: sector_id == 1 when blksz==64\n");
+                }
+                break;
+                case 32:
+                    if(sid!=0&&sid!=2)
+                        sid--;
+                    if (line->m_tag[sid] == tag) {
+                        if ( line->m_status[sid] == RESERVED ) {
+                            idx = index;
+                            return HIT_RESERVED;
+                        } else if ( line->m_status[sid] == VALID ) {
+                            idx = index;
+                            return HIT;
+                        } else if ( line->m_status[sid] == MODIFIED ) {
+                            idx = index;
+                            return HIT;
+                        } else {
+                            assert( line->m_status[sid] == INVALID );
+                        }
+                    }
+                    if (line->m_status[sid] != RESERVED) {
+                        all_reserved = false;
+                        if (line->m_status[sid] == INVALID) {
+                            invalid_line = index;
+                        } else {
+                            // valid line : keep track of most appropriate replacement candidate
+                            if ( m_config.m_replacement_policy == LRU ) {
+                                if ( line->m_last_access_time[sid] < valid_timestamp ) {
+                                    valid_timestamp = line->m_last_access_time[sid];
+                                    valid_line = index;
+                                }
+                            } else if ( m_config.m_replacement_policy == FIFO ) {
+                                if ( line->m_alloc_time[sid] < valid_timestamp ) {
+                                    valid_timestamp = line->m_alloc_time[sid];
+                                    valid_line = index;
+                                }
+                            }
+                        }
+                    }
+                break;
+            }
+            break;
+            case 32:
+            switch(data_size){
+                case 128:
+                if (line->m_tag[0] == tag&&line->m_tag[1]==tag&&line->m_tag[2]==tag&&line->m_tag[3]==tag) {
+                    if ( line->m_status[0] == RESERVED&&line->m_status[0]==RESERVED&&line->m_status[1]==RESERVED&&line->m_status[3]==RESERVED ) {
+                        idx = index;
+                        return HIT_RESERVED;
+                    } else if (( line->m_status[0] == VALID||line->m_status[0]==MODIFIED ) && ( line->m_status[1] == VALID||line->m_status[1]==MODIFIED )&&( line->m_status[2] == VALID||line->m_status[2]==MODIFIED )&&( line->m_status[3] == VALID||line->m_status[3]==MODIFIED )){
+                        idx = index;
+                        return HIT;
+                    } /*else if ( line->m_status == MODIFIED ) {
+                        idx = index;
+                        return HIT;
+                    } else {
+                        assert( line->m_status == INVALID );
+                    }*/
+                }
+                if (line->m_status[0] != RESERVED||line->m_status[1] != RESERVED||line->m_status[2] != RESERVED||line->m_status[3] != RESERVED) {
+                    all_reserved = false;
+                    if (line->m_status[0] == INVALID&&line->m_status[1] == INVALID&&line->m_status[2] == INVALID&&line->m_status[3] == INVALID) {
+                        invalid_line = index;
+                    } else {
+                        // valid line : keep track of most appropriate replacement candidate
+                        
+                        if ( m_config.m_replacement_policy == LRU ) {
+                            unsigned last_time=line->m_last_access_time[0];
+                            for(int i=1;i<4;i++)
+                                if(last_time>line->m_last_access_time[i])
+                                    last_time=line->m_last_access_time[i];
+                            if ( last_time < valid_timestamp ) {
+                                valid_timestamp = last_time;
+                                valid_line = index;
+                            }
+                        } else if ( m_config.m_replacement_policy == FIFO ) {
+                            unsigned alloc_time=line->m_alloc_time[0];
+                            for(int i=1;i<4;i++)
+                                if(alloc_time>line->m_alloc_time[i])
+                                    alloc_time = line->m_alloc_time[i];
+                            if ( alloc_time < valid_timestamp ) {
+                                valid_timestamp = alloc_time;
+                                valid_line = index;
+                            }
+                        }
+                    }
+                }
+                break;
+                case 64:
+                if (line->m_tag[sid] == tag&&line->m_tag[sid+1]==tag) {
+                    if ( line->m_status[sid] == RESERVED && line->m_status[sid+1]==RESERVED) {
+                        idx = index;
+                        return HIT_RESERVED;
+                    } else if ( line->m_status[sid] == VALID||line->m_status[sid]==MODIFIED)&&(line->m_status[sid+1]==VALID||line->m_status[sid+1]==MODIFIED ) {
+                        idx = index;
+                        return HIT;
+                    } /*else if ( line->m_status == MODIFIED ) {
+                        idx = index;
+                        return HIT;
+                    } else {
+                        assert( line->m_status == INVALID );
+                    }*/
+                }
+                if (line->m_status[sid] != RESERVED||line->m_status[sid+1]!=RESERVED) {
+                    all_reserved = false;
+                    if (line->m_status[sid] == INVALID&&line->m_status[sid+1]==INVALID) {
+                        invalid_line = index;
+                    } else {
+                        // valid line : keep track of most appropriate replacement candidate
+                        if ( m_config.m_replacement_policy == LRU ) {
+                            unsigned last_time=(line->m_last_access_time[sid]>line->m_last_access_time[sid+1])?line->m_last_access_time[sid+1]:line->m_last_access_time[sid];
+                            if ( last_time < valid_timestamp ) {
+                                valid_timestamp = last_time;
+                                valid_line = index;
+                            }
+                        } else if ( m_config.m_replacement_policy == FIFO ) {
+                            unsigned alloc_time=(line->m_alloc_time[sid]>line->m_alloc_time[sid+1])?line->m_alloc_time[sid+1]:line->m_alloc_time[sid];
+                            if ( alloc_time < valid_timestamp ) {
+                                valid_timestamp = alloc_time;
+                                valid_line = index;
+                            }
+                        }
+                    }
+                }
+                break;
+                case 32:
+                if (line->m_tag[sid] == tag) {
+                    if ( line->m_status[sid] == RESERVED ) {
+                        idx = index;
+                        return HIT_RESERVED;
+                    } else if ( line->m_status[sid] == VALID ) {
+                        idx = index;
+                        return HIT;
+                    } else if ( line->m_status[sid] == MODIFIED ) {
+                        idx = index;
+                        return HIT;
+                    } else {
+                        assert( line->m_status[sid] == INVALID );
+                    }
+                }
+                if (line->m_status[sid] != RESERVED) {
+                    all_reserved = false;
+                    if (line->m_status[sid] == INVALID) {
+                        invalid_line = index;
+                    } else {
+                        // valid line : keep track of most appropriate replacement candidate
+                        if ( m_config.m_replacement_policy == LRU ) {
+                            if ( line->m_last_access_time[sid] < valid_timestamp ) {
+                                valid_timestamp = line->m_last_access_time[sid];
+                                valid_line = index;
+                            }
+                        } else if ( m_config.m_replacement_policy == FIFO ) {
+                            if ( line->m_alloc_time[sid] < valid_timestamp ) {
+                                valid_timestamp = line->m_alloc_time[sid];
+                                valid_line = index;
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+            break;
         }
     }
     if ( all_reserved ) {
@@ -218,35 +451,36 @@ enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx ) 
     return MISS;
 }
 
-enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, unsigned &idx )
+enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, unsigned &idx ,unsigned sid,unsigned blksz,unsigned data_size)
 {
     bool wb=false;
     cache_block_t evicted;
-    enum cache_request_status result = access(addr,time,idx,wb,evicted);
+    enum cache_request_status result = access(addr,time,idx,wb,evicted,sid,blksz,data_size);
     assert(!wb);
     return result;
 }
 
-enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted ) 
+enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted,unsigned sid,unsigned blksz,unsigned data_size ) 
 {
     m_access++;
     shader_cache_access_log(m_core_id, m_type_id, 0); // log accesses to cache
-    enum cache_request_status status = probe(addr,idx);
+    enum cache_request_status status = probe(addr,idx,sid,blksz,data_size);
     switch (status) {
     case HIT_RESERVED: 
         m_pending_hit++;
     case HIT: 
-        m_lines[idx].m_last_access_time=time; 
+        //m_lines[idx].m_last_access_time=time; 
+        m_lines[idx].set_last_access_time(time,sid,blksz,data_size);
         break;
     case MISS:
         m_miss++;
         shader_cache_access_log(m_core_id, m_type_id, 1); // log cache misses
         if ( m_config.m_alloc_policy == ON_MISS ) {
-            if( m_lines[idx].m_status == MODIFIED ) {
+            if( m_lines[idx].is_modified(sid,blksz,data_size)){//m_lines[idx].m_status == MODIFIED ) {
                 wb = true;
                 evicted = m_lines[idx];
             }
-            m_lines[idx].allocate( m_config.tag(addr), m_config.block_addr(addr), time );
+            m_lines[idx].allocate( m_config.tag(addr), m_config.block_addr(addr), time ,sid,blksz,data_size);
         }
         break;
     case RESERVATION_FAIL:
@@ -261,26 +495,27 @@ enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, 
     return status;
 }
 
-void tag_array::fill( new_addr_type addr, unsigned time )
+void tag_array::fill( new_addr_type addr, unsigned time, unsigned sid, unsigned blksz, unsigned data_size )
 {
     assert( m_config.m_alloc_policy == ON_FILL );
     unsigned idx;
-    enum cache_request_status status = probe(addr,idx);
+    enum cache_request_status status = probe(addr,idx,sid,blksz,data_size);
     assert(status==MISS); // MSHR should have prevented redundant memory request
-    m_lines[idx].allocate( m_config.tag(addr), m_config.block_addr(addr), time );
-    m_lines[idx].fill(time);
+    m_lines[idx].allocate( m_config.tag(addr), m_config.block_addr(addr), time ,sid,blksz,data_size);
+    m_lines[idx].fill(time,sid,blksz,data_size);
 }
 
-void tag_array::fill( unsigned index, unsigned time ) 
+void tag_array::fill( unsigned index, unsigned time , unsigned sid, unsigned blksz, unsigned data_size) 
 {
     assert( m_config.m_alloc_policy == ON_MISS );
-    m_lines[index].fill(time);
+    m_lines[index].fill(time,sid,blksz,data_size);
 }
 
 void tag_array::flush() 
 {
     for (unsigned i=0; i < m_config.get_num_lines(); i++)
-        m_lines[i].m_status = INVALID;
+        for(int j=0;j<4;j++)
+            m_lines[i].m_status[j] = INVALID;
 }
 
 float tag_array::windowed_miss_rate( ) const
@@ -698,20 +933,23 @@ void baseline_cache::cycle(){
 /// Interface for response from lower memory level (model bandwidth restictions in caller)
 void baseline_cache::fill(mem_fetch *mf, unsigned time){
     extra_mf_fields_lookup::iterator e = m_extra_mf_fields.find(mf);
-    assert( e != m_extra_mf_fields.end() );
-    assert( e->second.m_valid );
+    assert( e != m_extra_mf_fields.end() )
+    assert( e->second.m_valid );;
     mf->set_data_size( e->second.m_data_size );
+    unsigned sid = m_config.get_sid(mf->get_addr());
+    unsigned data_size = mf->get_data_size();
     if ( m_config.m_alloc_policy == ON_MISS )
-        m_tag_array->fill(e->second.m_cache_index,time);
+        m_tag_array->fill(e->second.m_cache_index,time,sid,current_blksz,data_size);
     else if ( m_config.m_alloc_policy == ON_FILL )
-        m_tag_array->fill(e->second.m_block_addr,time);
+        m_tag_array->fill(e->second.m_block_addr,time,sid,current_blksz,data_size);
     else abort();
     bool has_atomic = false;
     m_mshrs.mark_ready(e->second.m_block_addr, has_atomic);
     if (has_atomic) {
         assert(m_config.m_alloc_policy == ON_MISS);
         cache_block_t &block = m_tag_array->get_block(e->second.m_cache_index);
-        block.m_status = MODIFIED; // mark line as dirty for atomic operation
+        //block.m_status = MODIFIED; // mark line as dirty for atomic operation
+        block.set_blk_status(MODIFIED,sid,current_blksz,data_size);
     }
     m_extra_mf_fields.erase(mf);
     m_bandwidth_management.use_fill_port(mf); 
@@ -749,19 +987,23 @@ void baseline_cache::send_read_request(new_addr_type addr, new_addr_type block_a
 
     bool mshr_hit = m_mshrs.probe(block_addr);
     bool mshr_avail = !m_mshrs.full(block_addr);
+
+    unsigned sid = m_config.get_sid(addr);
+    unsigned data_size = mf->get_data_size();
+
     if ( mshr_hit && mshr_avail ) {
     	if(read_only)
-    		m_tag_array->access(block_addr,time,cache_index);
+    		m_tag_array->access(block_addr,time,cache_index,sid,current_blksz,data_size);
     	else
-    		m_tag_array->access(block_addr,time,cache_index,wb,evicted);
+    		m_tag_array->access(block_addr,time,cache_index,wb,evicted,sid,current_blksz,data_size);
 
         m_mshrs.add(block_addr,mf);
         do_miss = true;
     } else if ( !mshr_hit && mshr_avail && (m_miss_queue.size() < m_config.m_miss_queue_size) ) {
     	if(read_only)
-    		m_tag_array->access(block_addr,time,cache_index);
+    		m_tag_array->access(block_addr,time,cache_index,sid,current_blksz,data_size);
     	else
-    		m_tag_array->access(block_addr,time,cache_index,wb,evicted);
+    		m_tag_array->access(block_addr,time,cache_index,wb,evicted,sid,current_blksz,data_size);
 
         m_mshrs.add(block_addr,mf);
         m_extra_mf_fields[mf] = extra_mf_fields(block_addr,cache_index, mf->get_data_size());
@@ -788,9 +1030,12 @@ void data_cache::send_write_request(mem_fetch *mf, cache_event request, unsigned
 /// Write-back hit: Mark block as modified
 cache_request_status data_cache::wr_hit_wb(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
 	new_addr_type block_addr = m_config.block_addr(addr);
-	m_tag_array->access(block_addr,time,cache_index); // update LRU state
+    unsigned data_size = mf->get_data_size();
+    unsigned sid = m_config.get_sid(addr);
+	m_tag_array->access(block_addr,time,cache_index,sid,current_blksz,data_size); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
-	block.m_status = MODIFIED;
+	//block.m_status = MODIFIED;
+    block.set_blk_status(MODIFIED,sid,current_blksz,data_size);
 
 	return HIT;
 }
@@ -801,9 +1046,12 @@ cache_request_status data_cache::wr_hit_wt(new_addr_type addr, unsigned cache_in
 		return RESERVATION_FAIL; // cannot handle request this cycle
 
 	new_addr_type block_addr = m_config.block_addr(addr);
-	m_tag_array->access(block_addr,time,cache_index); // update LRU state
+    unsigned sid = m_config.get_sid(addr);
+    unsigned data_size = mf->get_data_size();
+	m_tag_array->access(block_addr,time,cache_index,sid,current_blksz,data_size); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
-	block.m_status = MODIFIED;
+	//block.m_status = MODIFIED;
+    block.set_blk_status(MODIFIED,sid,current_blksz,data_size);
 
 	// generate a write-through
 	send_write_request(mf, WRITE_REQUEST_SENT, time, events);
@@ -816,12 +1064,15 @@ cache_request_status data_cache::wr_hit_we(new_addr_type addr, unsigned cache_in
 	if(miss_queue_full(0))
 		return RESERVATION_FAIL; // cannot handle request this cycle
 
+    unsigned data_size=mf->get_data_size();
+    unsigned sid = m_config.get_sid(addr);
 	// generate a write-through/evict
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	send_write_request(mf, WRITE_REQUEST_SENT, time, events);
 
 	// Invalidate block
-	block.m_status = INVALID;
+	//block.m_status = INVALID;
+    block.set_blk_status(INVALID,sid,current_blksz,data_size);
 
 	return HIT;
 }
@@ -846,6 +1097,8 @@ data_cache::wr_miss_wa( new_addr_type addr,
                         enum cache_request_status status )
 {
     new_addr_type block_addr = m_config.block_addr(addr);
+    unsigned sid=m_config.get_sid(addr);
+    unsigned data_size=mf->get_data_size();
 
     // Write allocate, maximum 3 requests (write miss, read request, write back request)
     // Conservatively ensure the worst-case request can be handled this cycle
@@ -931,13 +1184,16 @@ data_cache::rd_hit_base( new_addr_type addr,
                          enum cache_request_status status )
 {
     new_addr_type block_addr = m_config.block_addr(addr);
-    m_tag_array->access(block_addr,time,cache_index);
+    unsigned sid=m_config.get_sid(addr);
+    unsigned data_size=mf->get_data_size();
+    m_tag_array->access(block_addr,time,cache_index,sid,current_blksz,data_size);
     // Atomics treated as global read/write requests - Perform read, mark line as
     // MODIFIED
     if(mf->isatomic()){ 
         assert(mf->get_access_type() == GLOBAL_ACC_R);
         cache_block_t &block = m_tag_array->get_block(cache_index);
-        block.m_status = MODIFIED;  // mark line as dirty
+       // block.m_status = MODIFIED;  // mark line as dirty
+        block.set_blk_status(MODIFIED,sid,current_blksz,data_size);
     }
     return HIT;
 }
@@ -959,6 +1215,8 @@ data_cache::rd_miss_base( new_addr_type addr,
         return RESERVATION_FAIL; 
 
     new_addr_type block_addr = m_config.block_addr(addr);
+    unsigned sid=m_config.get_sid(addr);
+    unsigned data_size=mf->get_data_size();
     bool do_miss = false;
     bool wb = false;
     cache_block_t evicted;
@@ -1073,9 +1331,11 @@ data_cache::access( new_addr_type addr,
     assert( mf->get_data_size() <= m_config.get_line_sz());
     bool wr = mf->get_is_write();
     new_addr_type block_addr = m_config.block_addr(addr);
+    unsigned sid=m_config.get_sid(addr);
+    unsigned data_size=mf->get_data_size();
     unsigned cache_index = (unsigned)-1;
     enum cache_request_status probe_status
-        = m_tag_array->probe( block_addr, cache_index );
+        = m_tag_array->probe( block_addr, cache_index,sid,current_blksz,data_size );
     enum cache_request_status access_status
         = process_tag_probe( wr, probe_status, addr, cache_index, mf, time, events );
     m_stats.inc_stats(mf->get_access_type(),

@@ -63,35 +63,425 @@ const char * cache_request_status_str(enum cache_request_status status);
 struct cache_block_t {
     cache_block_t()
     {
-        m_tag=0;
-        m_block_addr=0;
-        m_alloc_time=0;
-        m_fill_time=0;
-        m_last_access_time=0;
-        m_status=INVALID;
+        for(int i=0;i<4;i++)
+        {
+            m_tag[4]=0;
+            m_block_addr[4]=0;
+            m_alloc_time[4]=0;
+            m_fill_time[4]=0;
+            m_last_access_time[4]=0;
+            m_status[4]=INVALID;
+        }
     }
-    void allocate( new_addr_type tag, new_addr_type block_addr, unsigned time )
+    void allocate( new_addr_type tag, new_addr_type block_addr, unsigned time , unsigned sid, unsigned blksz,unsigned data_size)
     {
-        m_tag=tag;
-        m_block_addr=block_addr;
-        m_alloc_time=time;
-        m_last_access_time=time;
-        m_fill_time=0;
-        m_status=RESERVED;
+        switch(blksz){
+            case 128:
+            assert(sid==0);
+            for(int i=0;i<4;i++){
+                m_tag[i]=tag;
+                m_block_addr[i]=block_addr;
+                m_alloc_time[i]=time;
+                m_last_access_time[i]=time;
+                m_fill_time[i]=0;
+                m_status[i]=RESERVED;
+            }
+            break;
+            case 64:
+            switch(sid){
+                case 0:  case 2:
+                for(int i=0;i<2;i++){
+                    m_tag[sid+i]=tag;
+                    m_block_addr[sid+i]=block_addr;
+                    m_alloc_time[sid+i]=time;
+                    m_last_access_time[sid+i]=time;
+                    m_fill_time[sid+i]=0;
+                    m_status[sid+i]=RESERVED;
+                }
+                break;
+                case 1:
+                for(int i=0;i<4;i++){
+                    m_tag[i]=tag;
+                    m_block_addr[i]=block_addr;
+                    m_alloc_time[i]=time;
+                    m_last_access_time[i]=time;
+                    m_fill_time[i]=0;
+                    m_status[i]=RESERVED;
+                }
+                break;
+                case 3:
+                for(int i=0;i<2;i++){
+                    m_tag[sid-i]=tag;
+                    m_block_addr[sid-i]=block_addr;
+                    m_alloc_time[sid-i]=time;
+                    m_last_access_time[sid-i]=time;
+                    m_fill_time[sid-i]=0;
+                    m_status[sid-i]=RESERVED;
+                }
+                break;
+            }
+            break;
+            case 32:
+            switch(data_size){
+                case 128:
+                for(int i=0;i<4;i++){
+                    m_tag[i]=tag;
+                    m_block_addr[i]=block_addr;
+                    m_alloc_time[i]=time;
+                    m_last_access_time[i]=time;
+                    m_fill_time[i]=0;
+                    m_status[i]=RESERVED;
+                }
+                break;
+                case 64:
+                for(int i=0;i<2;i++){
+                    m_tag[sid+i]=tag;
+                    m_block_addr[sid+i]=block_addr;
+                    m_alloc_time[sid+i]=time;
+                    m_last_access_time[sid+i]=time;
+                    m_fill_time[sid+i]=0;
+                    m_status[sid+i]=RESERVED;
+                }
+                break;
+                case 32:
+                    m_tag[sid]=tag;
+                    m_block_addr[sid]=block_addr;
+                    m_alloc_time[sid]=time;
+                    m_last_access_time[sid]=time;
+                    m_fill_time[sid]=0;
+                    m_status[sid]=RESERVED;
+                break;
+            }
+            break;
+        }
     }
-    void fill( unsigned time )
+    void fill( unsigned time , unsigned sid, unsigned blksz, unsigned data_size)
     {
-        assert( m_status == RESERVED );
-        m_status=VALID;
-        m_fill_time=time;
+        switch(blksz){
+            case 128:
+            assert(sid==0);
+            for(int i=0;i<4;i++){
+                assert( m_status[i] == RESERVED );
+                m_status[i]=valid;
+                m_fill_time[i]=time;
+            }
+            break;
+            case 64:
+            switch(data_size)
+            {
+                case 128:
+                    for(int i=0;i<4;i++)
+                    {
+                        assert(m_status[i]==RESERVED);
+                        m_status[i] = valid;
+                        m_fill_time[i]=time;
+                    }
+                break;
+                case 64:
+                    for(int i=0;i<2;i++)
+                    {
+                        assert(sid==0||sid==2);
+                        assert(m_status[sid+i]==RESERVED);
+                        m_status[sid+i]=valid;
+                        m_fill_time[sid+i]=time;
+                    }
+                break;
+                case 32:
+                    if(sid!=0||sid!=2)
+                        sid--;
+                    for(int i=0;i<2;i++)
+                    {
+                        assert(sid==0||sid==2);
+                        assert(m_status[sid+i]==RESERVED);
+                        m_status[sid+i]=valid;
+                        m_fill_time[sid+i]=time;
+                    }
+                break;
+
+                /*case 0:  case 2:
+                for(int i=0;i<2;i++){
+                    assert( m_status[sid+i] == RESERVED );
+                    m_status[sid+i]=valid;
+                    m_fill_time[sid+i]=time;
+                }
+                break;
+                case 1:
+                printf("blksz 64 sector id 1\n");*/
+                /*for(int i=0;i<4;i++){
+                    assert( m_status[i] == RESERVED );
+                    m_status[i]=valid;
+                    m_fill_time[i]=time;
+                }*/
+                break;
+                case 3:
+                printf("blksz 64 sector id 3\n");
+                /*for(int i=0;i<2;i++){
+                    assert( m_status[sid-i] == RESERVED );
+                    m_status[sid-i]=valid;
+                    m_fill_time[sid-i]=time;
+                }*/
+                break;
+            }
+            break;
+            case 32:
+            switch(data_size){
+                case 128:
+                for(int i=0;i<4;i++){
+                    assert( m_status[i] == RESERVED );
+                    m_status[i]=valid;
+                    m_fill_time[i]=time;
+                }
+                break;
+                case 64:
+                for(int i=0;i<2;i++){
+                    assert( m_status[sid+i] == RESERVED );
+                    m_status[sid+i]=valid;
+                    m_fill_time[sid+i]=time;
+                }
+                break;
+                case 32:
+                    assert( m_status[sid] == RESERVED );
+                    m_status[sid]=valid;
+                    m_fill_time[sid]=time;
+                break;
+            }
+            break;
+        }
+        
     }
 
-    new_addr_type    m_tag;
-    new_addr_type    m_block_addr;
-    unsigned         m_alloc_time;
-    unsigned         m_last_access_time;
-    unsigned         m_fill_time;
-    cache_block_state    m_status;
+    void set_last_access_time(unsigned time, unsigned sid, unsigned blksz, unsigned data_size)
+    {
+        switch(blksz)
+        {
+            case 128:
+                for(int i=0;i<4;i++)
+                    m_last_access_time[i]=state;
+            break;
+            case 64:
+                switch(data_size)
+                {
+                    case 128:
+                        for(int i=0;i<4;i++)
+                            m_last_access_time[i]=state;
+                    break;
+                    case 64:
+                        assert(sid==0||sid==2);
+                        for(int i=0;i<2;i++)
+                            m_last_access_time[sid+i]=state;
+                    break;
+                    case 32:
+                        if(sid!=0||sid!=2)
+                            sid--;
+                        for(int i=0;i<2;i++)
+                            m_last_access_time[sid+i]=state;
+                    break;
+                }
+            break;
+            case 32:
+                switch(data_size)
+                {
+                    case 128:
+                        for(int i=0;i<4;i++)
+                            m_last_access_time[i]=state;
+                    break;
+                    case 64:
+                        for(int i=0;i<2;i++)
+                            m_last_access_time[sid+i]=state;
+                    break;
+                    case 32:
+                        m_last_access_time[sid]=state;
+                    break;
+                }
+            break;
+        }
+
+    }
+    void set_alloc_time(unsigned time,unsigned sid,unsigned blksz,unsigned data_size)
+    {
+        switch(blksz)
+        {
+            case 128:
+                for(int i=0;i<4;i++)
+                    m_alloc_time[i]=state;
+            break;
+            case 64:
+                switch(data_size)
+                {
+                    case 128:
+                        for(int i=0;i<4;i++)
+                            m_alloc_time[i]=state;
+                    break;
+                    case 64:
+                        assert(sid==0||sid==2);
+                        for(int i=0;i<2;i++)
+                            m_alloc_time[sid+i]=state;
+                    break;
+                    case 32:
+                        if(sid!=0||sid!=2)
+                            sid--;
+                        for(int i=0;i<2;i++)
+                            m_alloc_time[sid+i]=state;
+                    break;
+                }
+            break;
+            case 32:
+                switch(data_size)
+                {
+                    case 128:
+                        for(int i=0;i<4;i++)
+                            m_alloc_time[i]=state;
+                    break;
+                    case 64:
+                        for(int i=0;i<2;i++)
+                            m_alloc_time[sid+i]=state;
+                    break;
+                    case 32:
+                        m_alloc_time[sid]=state;
+                    break;
+                }
+            break;
+        }
+    }
+    void set_fill_time(unsigned time,unsigned sid,unsigned blksz,unsigned data_size)
+    {
+        switch(blksz)
+        {
+            case 128:
+                for(int i=0;i<4;i++)
+                    m_fill_time[i]=state;
+            break;
+            case 64:
+                switch(data_size)
+                {
+                    case 128:
+                        for(int i=0;i<4;i++)
+                            m_fill_time[i]=state;
+                    break;
+                    case 64:
+                        assert(sid==0||sid==2);
+                        for(int i=0;i<2;i++)
+                            m_fill_time[sid+i]=state;
+                    break;
+                    case 32:
+                        if(sid!=0||sid!=2)
+                            sid--;
+                        for(int i=0;i<2;i++)
+                            m_fill_time[sid+i]=state;
+                    break;
+                }
+            break;
+            case 32:
+                switch(data_size)
+                {
+                    case 128:
+                        for(int i=0;i<4;i++)
+                            m_fill_time[i]=state;
+                    break;
+                    case 64:
+                        for(int i=0;i<2;i++)
+                            m_fill_time[sid+i]=state;
+                    break;
+                    case 32:
+                        m_fill_time[sid]=state;
+                    break;
+                }
+            break;
+        }
+    }
+    void set_blk_status(cache_block_state state,unsigned sid,unsigned blksz,unsigned data_size)
+    {
+        switch(blksz)
+        {
+            case 128:
+                for(int i=0;i<4;i++)
+                    m_status[i]=state;
+            break;
+            case 64:
+                switch(data_size)
+                {
+                    case 128:
+                        for(int i=0;i<4;i++)
+                            m_status[i]=state;
+                    break;
+                    case 64:
+                        assert(sid==0||sid==2);
+                        for(int i=0;i<2;i++)
+                            m_status[sid+i]=state;
+                    break;
+                    case 32:
+                        if(sid!=0||sid!=2)
+                            sid--;
+                        for(int i=0;i<2;i++)
+                            m_status[sid+i]=state;
+                    break;
+                }
+            break;
+            case 32:
+                switch(data_size)
+                {
+                    case 128:
+                        for(int i=0;i<4;i++)
+                            m_status[i]=state;
+                    break;
+                    case 64:
+                        for(int i=0;i<2;i++)
+                            m_status[sid+i]=state;
+                    break;
+                    case 32:
+                        m_status[sid]=state;
+                    break;
+                }
+            break;
+        }
+    }
+    bool is_modified(unsigned sid,unsigned blksz,unsigned data_size)
+    {
+        switch(blksz)
+        {
+            case 128:
+            return (m_status[0]==MODIFIED)||(m_status[1]==MODIFIED)||(m_status[2]==MODIFIED)||(m_status[3]==MODIFIED);
+            break;
+            case 64:
+            assert(sid==0||sid==2);
+                switch(data_size)
+                {
+                    case 128:
+                        return (m_status[0]==MODIFIED)||(m_status[1]==MODIFIED)||(m_status[2]==MODIFIED)||(m_status[3]==MODIFIED);
+                    break;
+                    case 64:
+                        return (m_status[sid]==MODIFIED)||(m_status[sid+1]==MODIFIED);
+                    break;
+                    case 32:
+                        if(sid!=0||sid!=2)
+                            sid--;
+                        return (m_status[sid]==MODIFIED)||(m_status[sid+1]==MODIFIED);
+                    break;
+                }
+            break;
+            case 32:
+                switch(data_size)
+                {
+                    case 128:
+                        return (m_status[0]==MODIFIED)||(m_status[1]==MODIFIED)||(m_status[2]==MODIFIED)||(m_status[3]==MODIFIED);
+                    break;
+                    case 64:
+                        return (m_status[sid]==MODIFIED)||(m_status[sid+1]==MODIFIED);
+                    break;
+                    case 32:
+                        return m_status[sid];
+                    break;
+                }
+            break;
+        }
+    }
+
+    new_addr_type    m_tag[4];
+    new_addr_type    m_block_addr[4];
+    unsigned         m_alloc_time[4];
+    unsigned         m_last_access_time[4];
+    unsigned         m_fill_time[4];
+    cache_block_state    m_status[4];
 };
 
 enum replacement_policy_t {
@@ -227,6 +617,10 @@ public:
         assert( m_valid );
         return m_line_sz;
     }
+    unsigned get_sid(new_addr_type addr)
+    {
+        return (addr>>5) & 3;
+    }
     unsigned get_num_lines() const
     {
         assert( m_valid );
@@ -340,12 +734,12 @@ public:
     tag_array(cache_config &config, int core_id, int type_id );
     ~tag_array();
 
-    enum cache_request_status probe( new_addr_type addr, unsigned &idx ) const;
-    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx );
-    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted );
+    enum cache_request_status probe( new_addr_type addr, unsigned &idx,unsigned sid,unsigned blksz,unsigned data_size ) const;
+    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx , unsigned sid,unsigned blksz,unsigned data_size);
+    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted,unsigned sid, unsigned blksz, unsigned data_size );
 
-    void fill( new_addr_type addr, unsigned time );
-    void fill( unsigned idx, unsigned time );
+    void fill( new_addr_type addr, unsigned time, unsigned sid,unsigned blksz,unsigned data_size );
+    void fill( unsigned idx, unsigned time ,unsigned sid,unsigned blksz, unsigned data_size);
 
     unsigned size() const { return m_config.get_num_lines();}
     cache_block_t &get_block(unsigned idx) { return m_lines[idx];}
@@ -631,6 +1025,7 @@ protected:
 
 protected:
     std::string m_name;
+    unsigned current_blksz;
     //cache_config &m_config;
     tag_array*  m_tag_array;
     mshr_table m_mshrs;
