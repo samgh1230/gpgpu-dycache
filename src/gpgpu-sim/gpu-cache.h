@@ -65,12 +65,12 @@ struct cache_block_t {
     {
         for(int i=0;i<4;i++)
         {
-            m_tag[4]=0;
-            m_block_addr[4]=0;
-            m_alloc_time[4]=0;
-            m_fill_time[4]=0;
-            m_last_access_time[4]=0;
-            m_status[4]=INVALID;
+            m_tag[i]=0;
+            m_block_addr[i]=0;
+            m_alloc_time[i]=0;
+            m_fill_time[i]=0;
+            m_last_access_time[i]=0;
+            m_status[i]=INVALID;
         }
     }
     void allocate( new_addr_type tag, new_addr_type block_addr, unsigned time , unsigned sid, unsigned blksz,unsigned data_size)
