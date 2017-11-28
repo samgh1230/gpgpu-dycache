@@ -77,7 +77,7 @@ struct cache_block_t {
     {
         switch(blksz){
             case 128:
-            assert(sid==0);
+//            assert(sid==0);
             for(int i=0;i<4;i++){
                 m_tag[i]=tag;
                 m_block_addr[i]=block_addr;
@@ -159,7 +159,7 @@ struct cache_block_t {
     {
         switch(blksz){
             case 128:
-            assert(sid==0);
+           // assert(sid==0);
             for(int i=0;i<4;i++){
                 assert( m_status[i] == RESERVED );
                 m_status[i]=VALID;
