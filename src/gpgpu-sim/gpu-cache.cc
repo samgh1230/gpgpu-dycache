@@ -1386,9 +1386,9 @@ enum cache_request_status tex_cache::access( new_addr_type addr, mem_fetch *mf,
     // at this point, we will accept the request : access tags and immediately allocate line
     new_addr_type block_addr = m_config.block_addr(addr);
     unsigned cache_index = (unsigned)-1;
-    unsigned sid = m_config.get_sid(addr);
+//    unsigned sid = m_config.get_sid(addr);
     unsigned data_size = mf->get_data_size();
-    enum cache_request_status status = m_tags.access(block_addr,time,cache_index,sid,current_blksz,data_size);
+    enum cache_request_status status = m_tags.access(block_addr,time,cache_index,0,128,data_size);
     enum cache_request_status cache_status = RESERVATION_FAIL;
     assert( status != RESERVATION_FAIL );
     assert( status != HIT_RESERVED ); // as far as tags are concerned: HIT or MISS
@@ -1398,7 +1398,7 @@ enum cache_request_status tex_cache::access( new_addr_type addr, mem_fetch *mf,
         unsigned rob_index = m_rob.push( rob_entry(cache_index, mf, block_addr) );
         m_extra_mf_fields[mf] = extra_mf_fields(rob_index);
         mf->set_data_size(m_config.get_line_sz());
-        m_tags.fill(cache_index,time,sid,current_blksz,data_size); // mark block as valid
+        m_tags.fill(cache_index,time,0,128,data_size); // mark block as valid
         m_request_fifo.push(mf);
         mf->set_status(m_request_queue_status,time);
         events.push_back(READ_REQUEST_SENT);
