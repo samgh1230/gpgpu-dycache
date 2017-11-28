@@ -366,7 +366,7 @@ enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx, u
                     if ( line->m_status[sid] == RESERVED && line->m_status[sid+1]==RESERVED) {
                         idx = index;
                         return HIT_RESERVED;
-                    } else if ( line->m_status[sid] == VALID||line->m_status[sid]==MODIFIED)&&(line->m_status[sid+1]==VALID||line->m_status[sid+1]==MODIFIED ) {
+                    } else if (( line->m_status[sid] == VALID||line->m_status[sid]==MODIFIED)&&(line->m_status[sid+1]==VALID||line->m_status[sid+1]==MODIFIED )) {
                         idx = index;
                         return HIT;
                     } /*else if ( line->m_status == MODIFIED ) {
@@ -933,8 +933,8 @@ void baseline_cache::cycle(){
 /// Interface for response from lower memory level (model bandwidth restictions in caller)
 void baseline_cache::fill(mem_fetch *mf, unsigned time){
     extra_mf_fields_lookup::iterator e = m_extra_mf_fields.find(mf);
-    assert( e != m_extra_mf_fields.end() )
-    assert( e->second.m_valid );;
+    assert( e != m_extra_mf_fields.end() );
+    assert( e->second.m_valid );
     mf->set_data_size( e->second.m_data_size );
     unsigned sid = m_config.get_sid(mf->get_addr());
     unsigned data_size = mf->get_data_size();
@@ -1142,7 +1142,7 @@ data_cache::wr_miss_wa( new_addr_type addr,
         // If evicted block is modified and not a write-through
         // (already modified lower level)
         if( wb && (m_config.m_write_policy != WRITE_THROUGH) ) { 
-            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr,
+            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr[0],//not correct, but easy to inplement
                 m_wrbk_type,m_config.get_line_sz(),true);
             m_miss_queue.push_back(wb);
             wb->set_status(m_miss_queue_status,time);
@@ -1229,7 +1229,7 @@ data_cache::rd_miss_base( new_addr_type addr,
         // If evicted block is modified and not a write-through
         // (already modified lower level)
         if(wb && (m_config.m_write_policy != WRITE_THROUGH) ){ 
-            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr,
+            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr[0],
                 m_wrbk_type,m_config.get_line_sz(),true);
         send_write_request(wb, WRITE_BACK_REQUEST_SENT, time, events);
     }
@@ -1251,11 +1251,13 @@ read_only_cache::access( new_addr_type addr,
     assert(!mf->get_is_write());
     new_addr_type block_addr = m_config.block_addr(addr);
     unsigned cache_index = (unsigned)-1;
-    enum cache_request_status status = m_tag_array->probe(block_addr,cache_index);
+    unsigned sid = m_config.get_sid(addr);
+    unsigned data_size = mf->get_data_size();
+    enum cache_request_status status = m_tag_array->probe(block_addr,cache_index,sid,current_blksz,data_size);
     enum cache_request_status cache_status = RESERVATION_FAIL;
 
     if ( status == HIT ) {
-        cache_status = m_tag_array->access(block_addr,time,cache_index); // update LRU state
+        cache_status = m_tag_array->access(block_addr,time,cache_index,sid,current_blksz,data_size); // update LRU state
     }else if ( status != RESERVATION_FAIL ) {
         if(!miss_queue_full(0)){
             bool do_miss=false;
@@ -1384,7 +1386,9 @@ enum cache_request_status tex_cache::access( new_addr_type addr, mem_fetch *mf,
     // at this point, we will accept the request : access tags and immediately allocate line
     new_addr_type block_addr = m_config.block_addr(addr);
     unsigned cache_index = (unsigned)-1;
-    enum cache_request_status status = m_tags.access(block_addr,time,cache_index);
+    unsigned sid = m_config.get_sid(addr);
+    unsigned data_size = mf->get_data_size();
+    enum cache_request_status status = m_tags.access(block_addr,time,cache_index,sid,current_blksz,data_size);
     enum cache_request_status cache_status = RESERVATION_FAIL;
     assert( status != RESERVATION_FAIL );
     assert( status != HIT_RESERVED ); // as far as tags are concerned: HIT or MISS
@@ -1394,7 +1398,7 @@ enum cache_request_status tex_cache::access( new_addr_type addr, mem_fetch *mf,
         unsigned rob_index = m_rob.push( rob_entry(cache_index, mf, block_addr) );
         m_extra_mf_fields[mf] = extra_mf_fields(rob_index);
         mf->set_data_size(m_config.get_line_sz());
-        m_tags.fill(cache_index,time); // mark block as valid
+        m_tags.fill(cache_index,time,sid,current_blksz,data_size); // mark block as valid
         m_request_fifo.push(mf);
         mf->set_status(m_request_queue_status,time);
         events.push_back(READ_REQUEST_SENT);
