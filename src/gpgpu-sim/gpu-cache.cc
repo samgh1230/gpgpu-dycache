@@ -172,6 +172,7 @@ enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx, u
         cache_block_t *line = &m_lines[index];
         switch(blksz){
             case 128:
+            assert(sid==0);
             if(line->m_tag[0]==tag){
                 if(line->m_status[0]==RESERVED){
                     idx=index;
