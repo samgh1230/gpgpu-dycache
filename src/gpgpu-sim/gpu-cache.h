@@ -162,7 +162,7 @@ struct cache_block_t {
             assert(sid==0);
             for(int i=0;i<4;i++){
                 assert( m_status[i] == RESERVED );
-                m_status[i]=valid;
+                m_status[i]=VALID;
                 m_fill_time[i]=time;
             }
             break;
@@ -173,7 +173,7 @@ struct cache_block_t {
                     for(int i=0;i<4;i++)
                     {
                         assert(m_status[i]==RESERVED);
-                        m_status[i] = valid;
+                        m_status[i] = VALID;
                         m_fill_time[i]=time;
                     }
                 break;
@@ -182,7 +182,7 @@ struct cache_block_t {
                     {
                         assert(sid==0||sid==2);
                         assert(m_status[sid+i]==RESERVED);
-                        m_status[sid+i]=valid;
+                        m_status[sid+i]=VALID;
                         m_fill_time[sid+i]=time;
                     }
                 break;
@@ -193,7 +193,7 @@ struct cache_block_t {
                     {
                         assert(sid==0||sid==2);
                         assert(m_status[sid+i]==RESERVED);
-                        m_status[sid+i]=valid;
+                        m_status[sid+i]=VALID;
                         m_fill_time[sid+i]=time;
                     }
                 break;
@@ -228,20 +228,20 @@ struct cache_block_t {
                 case 128:
                 for(int i=0;i<4;i++){
                     assert( m_status[i] == RESERVED );
-                    m_status[i]=valid;
+                    m_status[i]=VALID;
                     m_fill_time[i]=time;
                 }
                 break;
                 case 64:
                 for(int i=0;i<2;i++){
                     assert( m_status[sid+i] == RESERVED );
-                    m_status[sid+i]=valid;
+                    m_status[sid+i]=VALID;
                     m_fill_time[sid+i]=time;
                 }
                 break;
                 case 32:
                     assert( m_status[sid] == RESERVED );
-                    m_status[sid]=valid;
+                    m_status[sid]=VALID;
                     m_fill_time[sid]=time;
                 break;
             }
@@ -256,25 +256,25 @@ struct cache_block_t {
         {
             case 128:
                 for(int i=0;i<4;i++)
-                    m_last_access_time[i]=state;
+                    m_last_access_time[i]=time;
             break;
             case 64:
                 switch(data_size)
                 {
                     case 128:
                         for(int i=0;i<4;i++)
-                            m_last_access_time[i]=state;
+                            m_last_access_time[i]=time;
                     break;
                     case 64:
                         assert(sid==0||sid==2);
                         for(int i=0;i<2;i++)
-                            m_last_access_time[sid+i]=state;
+                            m_last_access_time[sid+i]=time;
                     break;
                     case 32:
                         if(sid!=0||sid!=2)
                             sid--;
                         for(int i=0;i<2;i++)
-                            m_last_access_time[sid+i]=state;
+                            m_last_access_time[sid+i]=time;
                     break;
                 }
             break;
@@ -283,14 +283,14 @@ struct cache_block_t {
                 {
                     case 128:
                         for(int i=0;i<4;i++)
-                            m_last_access_time[i]=state;
+                            m_last_access_time[i]=time;
                     break;
                     case 64:
                         for(int i=0;i<2;i++)
-                            m_last_access_time[sid+i]=state;
+                            m_last_access_time[sid+i]=time;
                     break;
                     case 32:
-                        m_last_access_time[sid]=state;
+                        m_last_access_time[sid]=time;
                     break;
                 }
             break;
@@ -303,25 +303,25 @@ struct cache_block_t {
         {
             case 128:
                 for(int i=0;i<4;i++)
-                    m_alloc_time[i]=state;
+                    m_alloc_time[i]=time;
             break;
             case 64:
                 switch(data_size)
                 {
                     case 128:
                         for(int i=0;i<4;i++)
-                            m_alloc_time[i]=state;
+                            m_alloc_time[i]=time;
                     break;
                     case 64:
                         assert(sid==0||sid==2);
                         for(int i=0;i<2;i++)
-                            m_alloc_time[sid+i]=state;
+                            m_alloc_time[sid+i]=time;
                     break;
                     case 32:
                         if(sid!=0||sid!=2)
                             sid--;
                         for(int i=0;i<2;i++)
-                            m_alloc_time[sid+i]=state;
+                            m_alloc_time[sid+i]=time;
                     break;
                 }
             break;
@@ -330,14 +330,14 @@ struct cache_block_t {
                 {
                     case 128:
                         for(int i=0;i<4;i++)
-                            m_alloc_time[i]=state;
+                            m_alloc_time[i]=time;
                     break;
                     case 64:
                         for(int i=0;i<2;i++)
-                            m_alloc_time[sid+i]=state;
+                            m_alloc_time[sid+i]=time;
                     break;
                     case 32:
-                        m_alloc_time[sid]=state;
+                        m_alloc_time[sid]=time;
                     break;
                 }
             break;
@@ -349,25 +349,25 @@ struct cache_block_t {
         {
             case 128:
                 for(int i=0;i<4;i++)
-                    m_fill_time[i]=state;
+                    m_fill_time[i]=time;
             break;
             case 64:
                 switch(data_size)
                 {
                     case 128:
                         for(int i=0;i<4;i++)
-                            m_fill_time[i]=state;
+                            m_fill_time[i]=time;
                     break;
                     case 64:
                         assert(sid==0||sid==2);
                         for(int i=0;i<2;i++)
-                            m_fill_time[sid+i]=state;
+                            m_fill_time[sid+i]=time;
                     break;
                     case 32:
                         if(sid!=0||sid!=2)
                             sid--;
                         for(int i=0;i<2;i++)
-                            m_fill_time[sid+i]=state;
+                            m_fill_time[sid+i]=time;
                     break;
                 }
             break;
@@ -376,14 +376,14 @@ struct cache_block_t {
                 {
                     case 128:
                         for(int i=0;i<4;i++)
-                            m_fill_time[i]=state;
+                            m_fill_time[i]=time;
                     break;
                     case 64:
                         for(int i=0;i<2;i++)
-                            m_fill_time[sid+i]=state;
+                            m_fill_time[sid+i]=time;
                     break;
                     case 32:
-                        m_fill_time[sid]=state;
+                        m_fill_time[sid]=time;
                     break;
                 }
             break;
