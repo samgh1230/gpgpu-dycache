@@ -2049,7 +2049,7 @@ void gpgpu_sim::shader_print_cache_stats( FILE *fout ) const{
             fprintf(fout, "\tL1D_total_cache_miss_rate = %.4lf\n", (double)total_css.misses / (double)total_css.accesses);
             //fprintf(f,"%.4f\n",(double)total_css.misses/(double)total_css.accesses);
         }
-        else fprintf(f,"0.0\n");
+//        else fprintf(f,"0.0\n");
         fprintf(fout, "\tL1D_total_cache_pending_hits = %u\n", total_css.pending_hits);
         fprintf(fout, "\tL1D_total_cache_reservation_fails = %u\n", total_css.res_fails);
         total_css.print_port_stats(fout, "\tL1D_cache"); 
