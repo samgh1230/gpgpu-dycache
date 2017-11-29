@@ -1346,12 +1346,18 @@ data_cache::access( new_addr_type addr,
     unsigned sid=m_config.get_sid(addr);
     unsigned data_size=mf->get_data_size();
     unsigned cache_index = (unsigned)-1;
+    if(current_blksz==32)
+        printf("cache access. tag(%x),sid(%d),data_size(%d)\n",m_config.tag(addr),sid,data_size);
     enum cache_request_status probe_status
         = m_tag_array->probe( block_addr, cache_index,sid,current_blksz,data_size );
     enum cache_request_status access_status
         = process_tag_probe( wr, probe_status, addr, cache_index, mf, time, events );
     m_stats.inc_stats(mf->get_access_type(),
         m_stats.select_stats_status(probe_status, access_status));
+    if(access_status==MISS)
+        printf("miss\n");
+    else if(access_status==RESERVATION_FAIL)    
+        printf("reservation failed\n");
     return access_status;
 }
 
