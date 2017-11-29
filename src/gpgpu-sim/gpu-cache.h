@@ -128,11 +128,11 @@ struct cache_block_t {
                 }
             break;
             case 32:
-                printf("reserved sid:\t");
+                // printf("reserved sid:\t");
                 switch(data_size){
                     case 128:
                         for(int i=0;i<4;i++){
-                            printf("%d\t",i);
+                            // printf("%d\t",i);
                             m_tag[i]=tag;
                             m_block_addr[i]=block_addr;
                             m_alloc_time[i]=time;
@@ -144,7 +144,7 @@ struct cache_block_t {
                     case 64:
                         assert(sid==0||sid==2);
                         for(int i=0;i<2;i++){
-                            printf("%d\t",sid+i);
+                            // printf("%d\t",sid+i);
                             m_tag[sid+i]=tag;
                             m_block_addr[sid+i]=block_addr;
                             m_alloc_time[sid+i]=time;
@@ -154,7 +154,7 @@ struct cache_block_t {
                         }
                     break;
                     case 32:
-                        printf("%d\t",sid);
+                        // printf("%d\t",sid);
                         m_tag[sid]=tag;
                         m_block_addr[sid]=block_addr;
                         m_alloc_time[sid]=time;
@@ -165,7 +165,7 @@ struct cache_block_t {
                 }
             break;
         }
-        printf("\n");
+        // printf("\n");
     }
     void fill( unsigned time , unsigned sid, unsigned blksz, unsigned data_size)
     {
@@ -173,7 +173,7 @@ struct cache_block_t {
             case 128:
            // assert(sid==0);
                 for(int i=0;i<4;i++){
-                    assert( m_status[i] == RESERVED );
+                    // assert( m_status[i] == RESERVED );
                     m_status[i]=VALID;
                     m_fill_time[i]=time;
                 }
@@ -184,7 +184,7 @@ struct cache_block_t {
                 case 128:
                     for(int i=0;i<4;i++)
                     {
-                        assert(m_status[i]==RESERVED);
+                        // assert(m_status[i]==RESERVED);
                         m_status[i] = VALID;
                         m_fill_time[i]=time;
                     }
@@ -193,7 +193,7 @@ struct cache_block_t {
                     for(int i=0;i<2;i++)
                     {
                         assert(sid==0||sid==2);
-                        assert(m_status[sid+i]==RESERVED);
+                        // assert(m_status[sid+i]==RESERVED);
                         m_status[sid+i]=VALID;
                         m_fill_time[sid+i]=time;
                     }
@@ -204,7 +204,7 @@ struct cache_block_t {
                     for(int i=0;i<2;i++)
                     {
                         assert(sid==0||sid==2);
-                        assert(m_status[sid+i]==RESERVED);
+                        // assert(m_status[sid+i]==RESERVED);
                         m_status[sid+i]=VALID;
                         m_fill_time[sid+i]=time;
                     }
@@ -212,34 +212,34 @@ struct cache_block_t {
             }
             break;
             case 32:
-                printf("fill sid:\t");
+                // printf("fill sid:\t");
                 switch(data_size){
                     case 128:
                     for(int i=0;i<4;i++){
-                        printf("%d\t",i);
-                        assert( m_status[i] == RESERVED );
+                        // printf("%d\t",i);
+//                        assert( m_status[i] == RESERVED );
                         m_status[i]=VALID;
                         m_fill_time[i]=time;
                     }
                     break;
                     case 64:
                     for(int i=0;i<2;i++){
-                        printf("%d\t",sid+i);
-                        assert( m_status[sid+i] == RESERVED );
+                        // printf("%d\t",sid+i);
+  //                      assert( m_status[sid+i] == RESERVED );
                         m_status[sid+i]=VALID;
                         m_fill_time[sid+i]=time;
                     }
                     break;
                     case 32:
-                        printf("%d\t",sid);
-                        assert( m_status[sid] == RESERVED );
+                        // printf("%d\t",sid);
+  //                      assert( m_status[sid] == RESERVED );
                         m_status[sid]=VALID;
                         m_fill_time[sid]=time;
                     break;
                 }
             break;
         }
-        printf("\n");
+        // printf("\n");
     }
 
     void set_last_access_time(unsigned time, unsigned sid, unsigned blksz, unsigned data_size)

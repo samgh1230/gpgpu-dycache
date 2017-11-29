@@ -481,8 +481,8 @@ enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, 
                 wb = true;
                 evicted = m_lines[idx];
             }
-            if(blksz==32)
-                printf("allocate block %d tag(%x),data_sz(%d)\n",idx,m_config.tag(addr),data_size);
+            // if(blksz==32)
+                // printf("allocate block %d tag(%x),data_sz(%d)\n",idx,m_config.tag(addr),data_size);
             m_lines[idx].allocate( m_config.tag(addr), m_config.block_addr(addr), time ,sid,blksz,data_size);
         }
         break;
@@ -504,20 +504,20 @@ void tag_array::fill( new_addr_type addr, unsigned time, unsigned sid, unsigned 
     unsigned idx;
     enum cache_request_status status = probe(addr,idx,sid,blksz,data_size);
     assert(status==MISS); // MSHR should have prevented redundant memory request
-    if(blksz==32)
-        printf("allocate block %d tag(%x),data_size(%d)\n",idx,m_config.tag(addr),data_size);
+    // if(blksz==32)
+        // printf("allocate block %d tag(%x),data_size(%d)\n",idx,m_config.tag(addr),data_size);
     m_lines[idx].allocate( m_config.tag(addr), m_config.block_addr(addr), time ,sid,blksz,data_size);
     
-    if(blksz==32)
-        printf("fill block(on fill) %d tag(%x), data_size(%d)\n",idx,m_config.tag(addr),data_size);
+    // if(blksz==32)
+        // printf("fill block(on fill) %d tag(%x), data_size(%d)\n",idx,m_config.tag(addr),data_size);
     m_lines[idx].fill(time,sid,blksz,data_size);
 }
 
 void tag_array::fill( unsigned index, unsigned time , unsigned sid, unsigned blksz, unsigned data_size) 
 {
     assert( m_config.m_alloc_policy == ON_MISS );
-    if(blksz==32)
-        printf("fill block(on miss) %d data_size(%d)\n",index,data_size);
+    // if(blksz==32)
+        // printf("fill block(on miss) %d data_size(%d)\n",index,data_size);
     m_lines[index].fill(time,sid,blksz,data_size);
 }
 
@@ -1346,8 +1346,8 @@ data_cache::access( new_addr_type addr,
     unsigned sid=m_config.get_sid(addr);
     unsigned data_size=mf->get_data_size();
     unsigned cache_index = (unsigned)-1;
-    if(current_blksz==32)
-        printf("cache access. tag(%x),sid(%d),data_size(%d)\n",m_config.tag(addr),sid,data_size);
+    // if(current_blksz==32)
+        // printf("cache access. tag(%x),sid(%d),data_size(%d)\n",m_config.tag(addr),sid,data_size);
     enum cache_request_status probe_status
         = m_tag_array->probe( block_addr, cache_index,sid,current_blksz,data_size );
     enum cache_request_status access_status
@@ -1355,7 +1355,7 @@ data_cache::access( new_addr_type addr,
     m_stats.inc_stats(mf->get_access_type(),
         m_stats.select_stats_status(probe_status, access_status));
     if(access_status==MISS)
-        printf("miss\n");
+        // printf("miss\n");
     else if(access_status==RESERVATION_FAIL)    
         printf("reservation failed\n");
     return access_status;
