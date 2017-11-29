@@ -2498,6 +2498,22 @@ unsigned shader_core_ctx::get_new_blksz()
             exit(1);
         }
     }
+    unsigned max_id = 0;
+    unsigned max_ref = num_ref[0];
+    for(int i=1;i<3;i++)
+    {
+        if(max_ref<num_ref[i])
+        {
+            max_id = i;
+            max_ref = num_ref[i];
+        }
+    }
+    switch(max_id)
+    {
+        case 0: return 32;
+        case 1: return 64;
+        case 2: return 128;
+    }
 }
 void shader_core_ctx::adjust_cache_blk()
 {
