@@ -1792,7 +1792,7 @@ public:
 
     unsigned m_sample_cycles;
     std::vector<unsigned> m_data_sz;
-    ///unsigned current_blksz;
+    unsigned current_blksz;
 
     // general information
     unsigned m_sid; // shader id

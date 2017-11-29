@@ -81,6 +81,8 @@ shader_core_ctx::shader_core_ctx( class gpgpu_sim *gpu,
     m_memory_config = mem_config;
     m_stats = stats;
     unsigned warp_size=config->warp_size;
+
+    current_blksz=m_config->gpgpu_cache_data1_linesize;
     
     m_sid = shader_id;
     m_tpc = tpc_id;
@@ -2465,12 +2467,12 @@ unsigned int shader_core_config::max_cta( const kernel_info_t &k ) const
 void shader_core_ctx::change2small_blksz(unsigned blksz)
 {
     m_ldst_unit->change2small_blksz(blksz);
-    // current_blksz = blksz;
+    current_blksz = blksz;
 }
 void shader_core_ctx::change2big_blksz(unsigned blksz)
 {
     cache_flush();
-    // current_blksz = blksz;
+    current_blksz = blksz;
     m_ldst_unit->change2big_blksz(blksz);
 }
 void shader_core_ctx::set_cache_blksz(unsigned blksz)
