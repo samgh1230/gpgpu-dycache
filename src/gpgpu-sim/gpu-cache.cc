@@ -481,6 +481,8 @@ enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, 
                 wb = true;
                 evicted = m_lines[idx];
             }
+            if(blksz==32)
+                printf("allocate block %d tag(%x),data_sz(%d)\n",idx,m_config.tag(addr),data_size);
             m_lines[idx].allocate( m_config.tag(addr), m_config.block_addr(addr), time ,sid,blksz,data_size);
         }
         break;
@@ -502,13 +504,20 @@ void tag_array::fill( new_addr_type addr, unsigned time, unsigned sid, unsigned 
     unsigned idx;
     enum cache_request_status status = probe(addr,idx,sid,blksz,data_size);
     assert(status==MISS); // MSHR should have prevented redundant memory request
+    if(blksz==32)
+        printf("allocate block %d tag(%x),data_size(%d)\n",idx,m_config.tag(addr),data_size);
     m_lines[idx].allocate( m_config.tag(addr), m_config.block_addr(addr), time ,sid,blksz,data_size);
+    
+    if(blksz==32)
+        printf("fill block %d tag(%x), data_size(%d)\n",idx,m_config.tag(addr),data_size);
     m_lines[idx].fill(time,sid,blksz,data_size);
 }
 
 void tag_array::fill( unsigned index, unsigned time , unsigned sid, unsigned blksz, unsigned data_size) 
 {
     assert( m_config.m_alloc_policy == ON_MISS );
+    if(blksz==32)
+        printf("fill block %d tag(%x),data_size(%d)\n",index,m_config.tag(addr),data_size);
     m_lines[index].fill(time,sid,blksz,data_size);
 }
 
@@ -864,8 +873,8 @@ void baseline_cache::bandwidth_management::use_data_port(mem_fetch *mf, enum cac
     case HIT: {
         unsigned data_cycles = data_size / port_width + ((data_size % port_width > 0)? 1 : 0); 
         m_data_port_occupied_cycles += data_cycles; 
-        } break; 
-    case HIT_RESERVED: 
+        } break;
+    case HIT_RESERVED:  
     case MISS: {
         // the data array is accessed to read out the entire line for write-back 
         if (was_writeback_sent(events)) {
