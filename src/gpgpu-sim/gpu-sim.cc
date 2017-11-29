@@ -894,10 +894,10 @@ void gpgpu_sim::gpu_print_stat()
    printf("gpu_tot_ipc = %12.4f\n", (float)(gpu_tot_sim_insn+gpu_sim_insn) / (gpu_tot_sim_cycle+gpu_sim_cycle));
    printf("gpu_tot_issued_cta = %lld\n", gpu_tot_issued_cta);
 
-   /*FILE* fout=fopen("origin_64blk_stat.txt","a");
+   FILE* fout=fopen("multi_stat.txt","a");
    fprintf(fout,"%lld\t%12.4f\t",gpu_tot_sim_cycle+gpu_sim_cycle,(float)(gpu_tot_sim_insn+gpu_sim_insn)/(gpu_tot_sim_cycle+gpu_sim_cycle));
    fflush(fout);
-   fclose(fout);*/
+   fclose(fout);
    
 
    // performance counter for stalls due to congestion.
