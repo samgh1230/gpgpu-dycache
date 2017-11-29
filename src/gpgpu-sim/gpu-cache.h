@@ -223,6 +223,7 @@ struct cache_block_t {
                     }
                     break;
                     case 64:
+                    for(int i=0;i<2;i++){
                         printf("%d\t",sid+i);
                         assert( m_status[sid+i] == RESERVED );
                         m_status[sid+i]=VALID;
