@@ -1119,9 +1119,7 @@ public:
     void get_L1C_sub_stats(struct cache_sub_stats &css) const;
     void get_L1T_sub_stats(struct cache_sub_stats &css) const;
 
-    void adjust_cache_blksz();
-    void set_new_blksz(unsigned blksz);
-    unsigned get_new_blksz();
+    
     void change2big_blksz(unsigned blksz);
     void change2small_blksz(unsigned blksz);
     
@@ -1170,7 +1168,7 @@ protected:
    unsigned m_sid;
    unsigned m_tpc;
 
-   unsigned current_blksz;
+//    unsigned current_blksz;
 
    tex_cache *m_L1T; // texture cache
    read_only_cache *m_L1C; // constant cache
@@ -1794,6 +1792,7 @@ public:
 
     unsigned m_sample_cycles;
     std::vector<unsigned> m_data_sz;
+    ///unsigned current_blksz;
 
     // general information
     unsigned m_sid; // shader id
