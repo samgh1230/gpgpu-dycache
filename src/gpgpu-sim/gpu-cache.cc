@@ -509,7 +509,7 @@ void tag_array::fill( new_addr_type addr, unsigned time, unsigned sid, unsigned 
     m_lines[idx].allocate( m_config.tag(addr), m_config.block_addr(addr), time ,sid,blksz,data_size);
     
     if(blksz==32)
-        printf("fill block %d tag(%x), data_size(%d)\n",idx,m_config.tag(addr),data_size);
+        printf("fill block(on fill) %d tag(%x), data_size(%d)\n",idx,m_config.tag(addr),data_size);
     m_lines[idx].fill(time,sid,blksz,data_size);
 }
 
@@ -517,7 +517,7 @@ void tag_array::fill( unsigned index, unsigned time , unsigned sid, unsigned blk
 {
     assert( m_config.m_alloc_policy == ON_MISS );
     if(blksz==32)
-        printf("fill block %d tag(%x),data_size(%d)\n",index,m_config.tag(addr),data_size);
+        printf("fill block(on miss) %d data_size(%d)\n",index,data_size);
     m_lines[index].fill(time,sid,blksz,data_size);
 }
 
