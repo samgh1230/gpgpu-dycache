@@ -1354,10 +1354,10 @@ data_cache::access( new_addr_type addr,
         = process_tag_probe( wr, probe_status, addr, cache_index, mf, time, events );
     m_stats.inc_stats(mf->get_access_type(),
         m_stats.select_stats_status(probe_status, access_status));
-    if(access_status==MISS)
+    // if(access_status==MISS)
         // printf("miss\n");
-    else if(access_status==RESERVATION_FAIL)    
-        printf("reservation failed\n");
+    // else if(access_status==RESERVATION_FAIL)    
+        // printf("reservation failed\n");
     return access_status;
 }
 
