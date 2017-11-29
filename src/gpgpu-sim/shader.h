@@ -1584,7 +1584,7 @@ public:
     void change2big_blksz(unsigned blksz);
     void set_cache_blksz(unsigned blksz);
     unsigned get_new_blksz();
-    void adjust_cache_blksz();
+    void adjust_cache_blk();
     // modifiers
     void cycle();
     void reinit(unsigned start_thread, unsigned end_thread, bool reset_not_completed );
