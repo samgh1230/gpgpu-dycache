@@ -673,7 +673,12 @@ void shader_core_ctx::func_exec_inst( warp_inst_t &inst )
 {
     execute_warp_inst_t(inst);
     if( inst.is_load() || inst.is_store() )
-        inst.generate_mem_accesses();
+        if(inst.space.get_type()==global_space||inst.space.get_type()==local_space||inst.space.get_type()==param_space_local)
+        {
+            inst.generate_mem_accesses(m_data_sz);
+        }
+        else 
+            inst.generate_mem_accesses();
 }
 
 void shader_core_ctx::issue_warp( register_set& pipe_reg_set, const warp_inst_t* next_inst, const active_mask_t &active_mask, unsigned warp_id )
@@ -1200,6 +1205,15 @@ void ldst_unit::get_L1C_sub_stats(struct cache_sub_stats &css) const{
 void ldst_unit::get_L1T_sub_stats(struct cache_sub_stats &css) const{
     if(m_L1T)
         m_L1T->get_sub_stats(css);
+}
+
+void ldst_unit::change2big_blksz(unsigned blksz)
+{
+    m_L1D->change2big_blksz(blksz);
+}
+void ldst_unit::change2small_blksz(unsigned blksz)
+{
+    m_L1D->change2small_blksz(blksz);
 }
 
 void shader_core_ctx::warp_inst_complete(const warp_inst_t &inst)
@@ -2447,9 +2461,60 @@ unsigned int shader_core_config::max_cta( const kernel_info_t &k ) const
 
     return result;
 }
+void shader_core_ctx::cache_flush()
+{
+    m_ldst_unit->flush();
+}
+void shader_core_ctx::change2small_blksz(unsigned blksz)
+{
+    m_ldst_unit->change2small_blksz(blksz);
+    current_blksz = blksz;
+}
+void shader_core_ctx::change2big_blksz(unsigned blksz)
+{
+    cache_flush();
+    current_blksz = bllksz;
+    m_ldst_unit->change2big_blksz(blksz);
+}
+void shader_core_ctx::set_cache_blksz(unsigned blksz)
+{
+    if(blksz<current_blksz)
+        change2small_blksz(blksz);
+    if(blksz>current_blksz)
+        change2big_blksz(blksz);
+}
+unsigned shader_core_ctx::get_new_blksz()
+{
+    std::vector<unsigned> num_ref;
+    num_ref.resize(3,0);
+    for(int i=0;i<m_data_sz.size();i++)
+    {
+        switch(m_data_sz[i])
+        {
+            case 32:num_ref[0]++;break;
+            case 64:num_ref[1]++;break;
+            case 128:num_ref[2]++;break;
+            default:
+            printf("error: wrong data size.\n");
+            exit(1);
+        }
+    }
+}
+void shader_core_ctx::adjust_cache_blk()
+{
+    unsigned new_blksz = get_new_blksz();
+    set_cache_blksz(new_blksz);
+    m_data_sz.clear();
+}
 
 void shader_core_ctx::cycle()
 {
+    m_sample_cycles++;
+    if(m_sample_cycles==SAMPLE_INTERVAL)
+    {
+        adjust_cache_blk();
+        m_sample_cycles=0;
+    }
 	m_stats->shader_cycles[m_sid]++;
     writeback();
     execute();

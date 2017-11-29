@@ -1003,6 +1003,15 @@ public:
         m_stats.get_sub_stats(css);
     }
 
+    void change2big_blksz(unsigned blksz)
+    {
+        current_blksz=blksz;
+    }
+    void change2small_blksz(unsigned blksz)
+    {
+        current_blksz=blksz;
+    }
+
     // accessors for cache bandwidth availability 
     bool data_port_free() const { return m_bandwidth_management.data_port_free(); } 
     bool fill_port_free() const { return m_bandwidth_management.fill_port_free(); } 

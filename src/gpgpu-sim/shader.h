@@ -1118,6 +1118,9 @@ public:
     void get_L1D_sub_stats(struct cache_sub_stats &css) const;
     void get_L1C_sub_stats(struct cache_sub_stats &css) const;
     void get_L1T_sub_stats(struct cache_sub_stats &css) const;
+
+    void change2big_blksz(unsigned blksz);
+    void change2small_blksz(unsigned blksz);
     
     class shader_core_ctx *m_core;
 protected:
@@ -1560,6 +1563,7 @@ private:
     const memory_config *m_memory_config;
 };
 
+#define SAMPLE_INTERVAL 100*100
 class shader_core_ctx : public core_t {
 public:
     // creator:
@@ -1572,6 +1576,12 @@ public:
                      shader_core_stats *stats );
 
 // used by simt_core_cluster:
+
+    void change2small_blksz(unsigned blksz);
+    void change2big_blksz(unsigned blksz);
+    void set_cache_blksz(unsigned blksz);
+    unsigned get_new_blksz();
+    void adjust_cache_blksz();
     // modifiers
     void cycle();
     void reinit(unsigned start_thread, unsigned end_thread, bool reset_not_completed );
@@ -1776,6 +1786,9 @@ public:
     void print_stage(unsigned int stage, FILE *fout) const;
     unsigned long long m_last_inst_gpu_sim_cycle;
     unsigned long long m_last_inst_gpu_tot_sim_cycle;
+
+    unsigned m_sample_cycles;
+    std::vector<unsigned> m_data_sz;
 
     // general information
     unsigned m_sid; // shader id
