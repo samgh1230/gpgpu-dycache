@@ -503,7 +503,7 @@ void tag_array::fill( new_addr_type addr, unsigned time, unsigned sid, unsigned 
     assert( m_config.m_alloc_policy == ON_FILL );
     unsigned idx;
     enum cache_request_status status = probe(addr,idx,sid,blksz,data_size);
-    assert(status==MISS); // MSHR should have prevented redundant memory request
+    //assert(status==MISS); // MSHR should have prevented redundant memory request
     // if(blksz==32)
         // printf("allocate block %d tag(%x),data_size(%d)\n",idx,m_config.tag(addr),data_size);
     m_lines[idx].allocate( m_config.tag(addr), m_config.block_addr(addr), time ,sid,blksz,data_size);
@@ -1017,7 +1017,13 @@ void baseline_cache::send_read_request(new_addr_type addr, new_addr_type block_a
 
         m_mshrs.add(block_addr,mf);
         m_extra_mf_fields[mf] = extra_mf_fields(block_addr,cache_index, mf->get_data_size());
-        mf->set_data_size( m_config.get_line_sz() );
+
+        unsigned rd_data_size;
+        if(mf->get_data_size()>current_blksz)
+            rd_data_size = mf->get_data_size();
+        else rd_data_size = current_blksz;
+
+        mf->set_data_size( /*m_config.get_line_sz()*/rd_data_size);
         m_miss_queue.push_back(mf);
         mf->set_status(m_miss_queue_status,time);
         if(!wa)
@@ -1140,6 +1146,8 @@ data_cache::wr_miss_wa( new_addr_type addr,
                     mf->get_tpc(),
                     mf->get_mem_config());
 
+    n_mf->set_data_size(mf->get_data_size());
+
     bool do_miss = false;
     bool wb = false;
     cache_block_t evicted;
@@ -1153,7 +1161,7 @@ data_cache::wr_miss_wa( new_addr_type addr,
         // (already modified lower level)
         if( wb && (m_config.m_write_policy != WRITE_THROUGH) ) { 
             mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr[0],//not correct, but easy to inplement
-                m_wrbk_type,m_config.get_line_sz(),true);
+                m_wrbk_type,/*m_config.get_line_sz()*/current_blksz,true);
             m_miss_queue.push_back(wb);
             wb->set_status(m_miss_queue_status,time);
         }
@@ -1240,7 +1248,7 @@ data_cache::rd_miss_base( new_addr_type addr,
         // (already modified lower level)
         if(wb && (m_config.m_write_policy != WRITE_THROUGH) ){ 
             mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr[0],
-                m_wrbk_type,m_config.get_line_sz(),true);
+                m_wrbk_type,current_blksz/*m_config.get_line_sz()*/,true);
         send_write_request(wb, WRITE_BACK_REQUEST_SENT, time, events);
     }
         return MISS;

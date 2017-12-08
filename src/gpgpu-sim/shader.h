@@ -1213,7 +1213,10 @@ const char* const pipeline_stage_name_decode[] = {
     "EX_WB",
     "N_PIPELINE_STAGES" 
 };
-
+enum blk_metrics{
+    MEM_ACC,
+    DATASZ_DISTRO
+};
 struct shader_core_config : public core_config
 {
     shader_core_config(){
@@ -1333,7 +1336,7 @@ struct shader_core_config : public core_config
     unsigned ldst_unit_response_queue_size;
 
     int simt_core_sim_order; 
-    
+
     unsigned mem2device(unsigned memid) const { return memid + n_simt_clusters; }
 };
 
@@ -1793,6 +1796,8 @@ public:
     unsigned m_sample_cycles;
     std::vector<unsigned> m_data_sz;
     unsigned current_blksz;
+
+    std::vector<float> m_num_reqs;
 
     // general information
     unsigned m_sid; // shader id

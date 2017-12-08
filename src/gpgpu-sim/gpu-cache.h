@@ -75,6 +75,7 @@ struct cache_block_t {
     }
     void allocate( new_addr_type tag, new_addr_type block_addr, unsigned time , unsigned sid, unsigned blksz,unsigned data_size)
     {
+        // printf("block allocate: blksz(%d), sid(%d), data_size(%d)\n",blksz,sid,data_size);
         switch(blksz){
             case 128:
 //            assert(sid==0);
@@ -113,7 +114,7 @@ struct cache_block_t {
                         }
                     break;
                     case 32:
-                        if(sid!=0||sid!=2)
+                        if(sid!=0&&sid!=2)
                             sid--;
                         for(int i=0;i<2;i++)
                         {
@@ -169,6 +170,7 @@ struct cache_block_t {
     }
     void fill( unsigned time , unsigned sid, unsigned blksz, unsigned data_size)
     {
+        // printf("blk fill: blksz(%d), sid(%d), data_size(%d)\n",blksz,sid,data_size);
         switch(blksz){
             case 128:
            // assert(sid==0);
@@ -190,6 +192,8 @@ struct cache_block_t {
                     }
                 break;
                 case 64:
+                    if(sid!=0&&sid!=2)
+                        sid--;
                     for(int i=0;i<2;i++)
                     {
                         assert(sid==0||sid==2);
@@ -199,7 +203,7 @@ struct cache_block_t {
                     }
                 break;
                 case 32:
-                    if(sid!=0||sid!=2)
+                    if(sid!=0&&sid!=2)
                         sid--;
                     for(int i=0;i<2;i++)
                     {
@@ -244,6 +248,7 @@ struct cache_block_t {
 
     void set_last_access_time(unsigned time, unsigned sid, unsigned blksz, unsigned data_size)
     {
+        // printf("set last access time: blksz(%d), sid(%d), data_size(%d)\n",blksz,sid,data_size);
         switch(blksz)
         {
             case 128:
@@ -263,7 +268,7 @@ struct cache_block_t {
                             m_last_access_time[sid+i]=time;
                     break;
                     case 32:
-                        if(sid!=0||sid!=2)
+                        if(sid!=0&&sid!=2)
                             sid--;
                         for(int i=0;i<2;i++)
                             m_last_access_time[sid+i]=time;
@@ -291,6 +296,7 @@ struct cache_block_t {
     }
     void set_alloc_time(unsigned time,unsigned sid,unsigned blksz,unsigned data_size)
     {
+        // printf("set alloc time: blksz(%d), sid(%d), data_size(%d)\n",blksz,sid,data_size);
         switch(blksz)
         {
             case 128:
@@ -310,7 +316,7 @@ struct cache_block_t {
                             m_alloc_time[sid+i]=time;
                     break;
                     case 32:
-                        if(sid!=0||sid!=2)
+                        if(sid!=0&&sid!=2)
                             sid--;
                         for(int i=0;i<2;i++)
                             m_alloc_time[sid+i]=time;
@@ -337,6 +343,7 @@ struct cache_block_t {
     }
     void set_fill_time(unsigned time,unsigned sid,unsigned blksz,unsigned data_size)
     {
+        // printf("set fill time: blksz(%d), sid(%d), data_size(%d)\n",blksz,sid,data_size);
         switch(blksz)
         {
             case 128:
@@ -356,7 +363,7 @@ struct cache_block_t {
                             m_fill_time[sid+i]=time;
                     break;
                     case 32:
-                        if(sid!=0||sid!=2)
+                        if(sid!=0&&sid!=2)
                             sid--;
                         for(int i=0;i<2;i++)
                             m_fill_time[sid+i]=time;
@@ -383,6 +390,7 @@ struct cache_block_t {
     }
     void set_blk_status(cache_block_state state,unsigned sid,unsigned blksz,unsigned data_size)
     {
+        // printf("set blk status: blksz(%d), sid(%d), data_size(%d)\n",blksz,sid,data_size);
         switch(blksz)
         {
             case 128:
@@ -402,7 +410,7 @@ struct cache_block_t {
                             m_status[sid+i]=state;
                     break;
                     case 32:
-                        if(sid!=0||sid!=2)
+                        if(sid!=0&&sid!=2)
                             sid--;
                         for(int i=0;i<2;i++)
                             m_status[sid+i]=state;
@@ -429,6 +437,7 @@ struct cache_block_t {
     }
     bool is_modified(unsigned sid,unsigned blksz,unsigned data_size)
     {
+        // printf("is modified: blksz(%d), sid(%d), data_size(%d)\n",blksz,sid,data_size);
         switch(blksz)
         {
             case 128:
@@ -445,7 +454,7 @@ struct cache_block_t {
                         return (m_status[sid]==MODIFIED)||(m_status[sid+1]==MODIFIED);
                     break;
                     case 32:
-                        if(sid!=0||sid!=2)
+                        if(sid!=0&&sid!=2)
                             sid--;
                         return (m_status[sid]==MODIFIED)||(m_status[sid+1]==MODIFIED);
                     break;

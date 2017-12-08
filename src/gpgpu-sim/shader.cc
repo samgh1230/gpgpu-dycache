@@ -27,6 +27,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <float.h>
+#include <vector>
+#include <numeric>
 #include "shader.h"
 #include "gpu-sim.h"
 #include "addrdec.h"
@@ -82,6 +84,9 @@ shader_core_ctx::shader_core_ctx( class gpgpu_sim *gpu,
     m_stats = stats;
     unsigned warp_size=config->warp_size;
 
+
+    m_data_sz.clear();
+    m_num_reqs.clear();
     current_blksz=m_config->gpgpu_cache_data1_linesize;
     
     m_sid = shader_id;
@@ -678,6 +683,7 @@ void shader_core_ctx::func_exec_inst( warp_inst_t &inst )
         if(inst.space.get_type()==global_space||inst.space.get_type()==local_space||inst.space.get_type()==param_space_local)
         {
             inst.generate_mem_accesses(m_data_sz);
+            m_num_reqs.push_back((float)inst.active_count()/inst.accessq_count());
         }
         else 
             inst.generate_mem_accesses();
@@ -2046,7 +2052,7 @@ void gpgpu_sim::shader_print_cache_stats( FILE *fout ) const{
     }
 
     // L1D
-    FILE* f=fopen("multi_stat.txt","a");
+    FILE* f=fopen("multi_test.txt","a");
     if(!m_shader_config->m_L1D_config.disabled()){
         total_css.clear();
         css.clear();
@@ -2490,36 +2496,55 @@ unsigned shader_core_ctx::get_new_blksz()
     {
         switch(m_data_sz[i])
         {
-            case 32:num_ref[0]++;break;
-            case 64:num_ref[1]++;break;
-            case 128:num_ref[2]++;break;
+            case 32:num_ref[0]+=1;break;
+            case 64:num_ref[1]+=1;break;
+            case 128:num_ref[2]+=1;break;
             default:
             printf("error: wrong data size.\n");
             exit(1);
         }
     }
-    unsigned max_id = 0;
-    unsigned max_ref = num_ref[0];
-    for(int i=1;i<3;i++)
+
+    /*float avg_reqs = 32;
+    if(m_num_reqs.size())
+        avg_reqs = accumulate(m_num_reqs.begin(),m_num_reqs.end(),0.0)/m_num_reqs.size();
+    if(avg_reqs<=8)
+        return 32;
+    else if(avg_reqs>8 && avg_reqs<=16)
+        return 64;
+    else if(avg_reqs>16)
     {
-        if(max_ref<num_ref[i])
-        {
-            max_id = i;
-            max_ref = num_ref[i];
-        }
+        return 128;
+    }*/
+    float avg_reqs = 1;
+    if(m_num_reqs.size())
+        avg_reqs = accumulate(m_num_reqs.begin(),m_num_reqs.end(),0.0)/m_num_reqs.size();
+    if(avg_reqs>=4)
+        return 32;
+    else if(avg_reqs>2 && avg_reqs<4)
+        return 64;
+    else{
+        assert(avg_reqs>0);
+        return 128;
     }
-    switch(max_id)
-    {
-        case 0: return 32;
-        case 1: return 64;
-        case 2: return 128;
-    }
+    
+    //how to define the threshold
+    //128x+64y+32z=cache volume
+    /*if(128*num_ref[2]>64*num_ref[1]+32*num_ref[0])
+        return 128;
+    if(64*num_ref[1]>128*num_ref[2]+32*num_ref[0])
+        return 64;
+    if(32*num_ref[0]>128*num_ref[2]+64*num_ref[1])
+        return 32;
+    return current_blksz;*/
+
 }
 void shader_core_ctx::adjust_cache_blk()
 {
     unsigned new_blksz = get_new_blksz();
     set_cache_blksz(new_blksz);
     m_data_sz.clear();
+    m_num_reqs.clear();
 }
 
 void shader_core_ctx::cycle()
