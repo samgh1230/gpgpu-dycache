@@ -2052,7 +2052,7 @@ void gpgpu_sim::shader_print_cache_stats( FILE *fout ) const{
     }
 
     // L1D
-    FILE* f=fopen("multi_test.txt","a");
+    FILE* f=fopen("small-only-ex-32.txt","a");
     if(!m_shader_config->m_L1D_config.disabled()){
         total_css.clear();
         css.clear();
@@ -2472,6 +2472,10 @@ unsigned int shader_core_config::max_cta( const kernel_info_t &k ) const
 
 void shader_core_ctx::change2small_blksz(unsigned blksz)
 {
+    FILE* f = fopen("small-only-ex-32.txt","a");
+    fprintf(f,"%lld\tchange to %u\n",gpu_tot_sim_cycle+gpu_sim_cycle,blksz);
+    fflush(f);
+    fclose(f);
     m_ldst_unit->change2small_blksz(blksz);
     current_blksz = blksz;
 }
@@ -2485,13 +2489,13 @@ void shader_core_ctx::set_cache_blksz(unsigned blksz)
 {
     if(blksz<current_blksz)
         change2small_blksz(blksz);
-    if(blksz>current_blksz)
-        change2big_blksz(blksz);
+    /*if(blksz>current_blksz)
+        change2big_blksz(blksz);*/
 }
 unsigned shader_core_ctx::get_new_blksz()
 {
-    std::vector<unsigned> num_ref;
-    num_ref.resize(3,0);
+    std::vector<float> num_ref;
+    num_ref.resize(3,0.0);
     for(int i=0;i<m_data_sz.size();i++)
     {
         switch(m_data_sz[i])
@@ -2503,7 +2507,36 @@ unsigned shader_core_ctx::get_new_blksz()
             printf("error: wrong data size.\n");
             exit(1);
         }
+    
     }
+
+    float avg_data_sz = accumulate(m_data_sz.begin(),m_data_sz.end(),0.0)/m_data_sz.size();
+    for(int i=0;i<3;i++)
+    {
+        num_ref[i] /= m_data_sz.size();
+    }
+
+    /*if(avg_data_sz<48)
+        return 32;
+    else if(avg_data_sz>=48&&avg_data_sz<64&&num_ref[0]>=0.4)
+        return 32;
+    else if(avg_data_sz>=48&&avg_data_sz<64&&num_ref[0]<0.4)
+        return 64;
+    else if(avg_data_sz>=64&&avg_data_sz<80)
+        return 64;
+    else if(avg_data_sz>=80&&avg_data_sz<96&&num_ref[1]>=0.4)
+        return 64;
+    else if(avg_data_sz>=80&&avg_data_sz<96&&num_ref[1]<0.4)
+        return 128;
+    else return 128;*/
+
+
+    if(avg_data_sz<128)
+        return 32;
+    else if(avg_data_sz>64&&avg_data_sz<64)
+        return 64;
+    else return 128;
+
 
     /*float avg_reqs = 32;
     if(m_num_reqs.size())
@@ -2516,7 +2549,8 @@ unsigned shader_core_ctx::get_new_blksz()
     {
         return 128;
     }*/
-    float avg_reqs = 1;
+    
+    /*float avg_reqs = 1;
     if(m_num_reqs.size())
         avg_reqs = accumulate(m_num_reqs.begin(),m_num_reqs.end(),0.0)/m_num_reqs.size();
     if(avg_reqs>=4)
@@ -2526,7 +2560,7 @@ unsigned shader_core_ctx::get_new_blksz()
     else{
         assert(avg_reqs>0);
         return 128;
-    }
+    }*/
     
     //how to define the threshold
     //128x+64y+32z=cache volume
