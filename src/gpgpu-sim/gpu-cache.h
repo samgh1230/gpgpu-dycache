@@ -487,7 +487,7 @@ struct cache_block_t {
                 e.m_evicted_addr = m_block_addr[0];
                 e.m_evicted_size = 128;
                 evicted.push_back(e);
-                break;
+            break;
             case 64:
                 switch(data_size)
                 {
@@ -518,7 +518,7 @@ struct cache_block_t {
                         evicted.push_back(e);
                     break;
                 }
-                break;
+            break;
             case 32:
                 switch(data_size)
                 {
