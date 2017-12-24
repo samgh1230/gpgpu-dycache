@@ -1161,7 +1161,7 @@ protected:
     		unsigned time, bool &do_miss, std::list<cache_event> &events, bool read_only, bool wa);
     /// Read miss handler. Check MSHR hit or MSHR available
     void send_read_request(new_addr_type addr, new_addr_type block_addr, unsigned cache_index, mem_fetch *mf,
-    		unsigned time, bool &do_miss, bool &wb, cache_block_t &evicted, std::list<cache_event> &events, bool read_only, bool wa);
+    		unsigned time, bool &do_miss, bool &wb, std::vector<cache_block_t> &evicted, std::list<cache_event> &events, bool read_only, bool wa);
 
     /// Sub-class containing all metadata for port bandwidth management 
     class bandwidth_management 
