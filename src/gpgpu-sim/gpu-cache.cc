@@ -1163,8 +1163,8 @@ data_cache::wr_miss_wa( new_addr_type addr,
         if( wb && (m_config.m_write_policy != WRITE_THROUGH) ) { 
             for(int i=0; i<evicted.size(); i++)
             {
-                mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_evicted_addr,
-                    m_wrbk_type, evicted.m_evicted_addr, true);
+                mem_fetch *wb = m_memfetch_creator->alloc(evicted[i].m_evicted_addr,
+                    m_wrbk_type, evicted[i].m_evicted_addr, true);
                 m_miss_queue.push_back(wb);
                 wb->set_status(m_miss_queue_status,time);
             }
@@ -1257,8 +1257,8 @@ data_cache::rd_miss_base( new_addr_type addr,
         if(wb && (m_config.m_write_policy != WRITE_THROUGH) ){
             for(int i=0; i<evicted.size(); i++)
             {
-                mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_evicted_addr,
-                    m_wrbk_type, evicted.m_evicted_size,true);
+                mem_fetch *wb = m_memfetch_creator->alloc(evicted[i].m_evicted_addr,
+                    m_wrbk_type, evicted[i].m_evicted_size,true);
                 send_write_request(wb, WRITE_BACK_REQUEST_SENT, time, events);
             }
       //      mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr[0],
