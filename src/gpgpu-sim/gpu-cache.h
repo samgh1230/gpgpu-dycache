@@ -482,11 +482,12 @@ struct cache_block_t {
         //evicted.m_evicted_size = data_size;
         switch(blksz)
         {
-            case 128:
+            case 128:{
                 cache_block_t e;
                 e.m_evicted_addr = m_block_addr[0];
                 e.m_evicted_size = 128;
                 evicted.push_back(e);
+            }
             break;
             case 64:
                 switch(data_size)
@@ -503,19 +504,21 @@ struct cache_block_t {
                             }
                         }
                     break;
-                    case 64:
+                    case 64:{
                         cache_block_t e;
                         e.m_evicted_addr = m_block_addr[sid];
                         e.m_evicted_size = 64;
                         evicted.push_back(e);
+                    }
                     break;
-                    case 32:
+                    case 32:{
                         if(sid!=0||sid!=2)
                             sid--;
                         cache_block_t e;
                         e.m_evicted_addr = m_block_addr[sid];
                         e.m_evicted_size = 64;
                         evicted.push_back(e);
+                    }
                     break;
                 }
             break;
@@ -546,11 +549,12 @@ struct cache_block_t {
                             }
                         }
                     break;
-                    case 32:
+                    case 32:{
                         cache_block_t e;
                         e.m_evicted_addr = m_block_addr[sid];
                         e.m_evicted_size = 32;
                         evicted.push_back(e);
+                    }
                     break;
                 }
             break;
