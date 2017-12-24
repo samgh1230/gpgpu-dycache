@@ -1170,8 +1170,8 @@ data_cache::wr_miss_wa( new_addr_type addr,
             }
  //           mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr[0],//
    //             m_wrbk_type,/*m_config.get_line_sz()*/current_blksz,true);
-            m_miss_queue.push_back(wb);
-            wb->set_status(m_miss_queue_status,time);
+  //          m_miss_queue.push_back(wb);
+//            wb->set_status(m_miss_queue_status,time);
         }
         return MISS;
     }
