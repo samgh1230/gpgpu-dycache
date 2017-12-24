@@ -477,12 +477,95 @@ struct cache_block_t {
         }
     }
 
+    void set_evicted_blk(unsigned sid, unsigned blksz, unsigned data_size, std::vector<cache_block_t> &evicted)
+    {
+        //evicted.m_evicted_size = data_size;
+        switch(blksz)
+        {
+            case 128:
+                cache_block_t e;
+                e.m_evicted_addr = m_block_addr[0];
+                e.m_evicted_size = 128;
+                evicted.push_back(e);
+                break;
+            case 64:
+                switch(data_size)
+                {
+                    case 128:
+                        for(int i=0;i<2;i++)
+                        {
+                            if(m_status[i*2]==MODIFIED)
+                            {
+                                cache_block_t e;
+                                e.m_evicted_addr = m_block_addr[i*2];
+                                e.m_evicted_size = 64;
+                                evicted.push_back(e);
+                            }
+                        }
+                    break;
+                    case 64:
+                        cache_block_t e;
+                        e.m_evicted_addr = m_block_addr[sid];
+                        e.m_evicted_size = 64;
+                        evicted.push_back(e);
+                    break;
+                    case 32:
+                        if(sid!=0||sid!=2)
+                            sid--;
+                        cache_block_t e;
+                        e.m_evicted_addr = m_block_addr[sid];
+                        e.m_evicted_size = 64;
+                        evicted.push_back(e);
+                    break;
+                }
+                break;
+            case 32:
+                switch(data_size)
+                {
+                    case 128:
+                    for(int i=0;i<4;i++)
+                    {
+                        if(m_status[i]==MODIFIED)
+                        {
+                            cache_block_t e;
+                            e.m_evicted_addr = m_block_addr[i];
+                            e.m_evicted_size = 32;
+                            evicted.push_back(e);
+                        }
+                    }
+                    break;
+                    case 64:
+                        for(int i=0;i<2;i++)
+                        {
+                            if(m_status[i+sid]==MODIFIED)
+                            {
+                                cache_block_t e;
+                                e.m_evicted_addr = m_block_addr[i+sid];
+                                e.m_evicted_size = 32;
+                                evicted.push_back(e);
+                            }
+                        }
+                    break;
+                    case 32:
+                        cache_block_t e;
+                        e.m_evicted_addr = m_block_addr[sid];
+                        e.m_evicted_size = 32;
+                        evicted.push_back(e);
+                    break;
+                }
+            break;
+        }
+    }
+
     new_addr_type    m_tag[4];
     new_addr_type    m_block_addr[4];
     unsigned         m_alloc_time[4];
     unsigned         m_last_access_time[4];
     unsigned         m_fill_time[4];
     cache_block_state    m_status[4];
+
+    new_addr_type   m_evicted_addr;
+    unsigned        m_evicted_size;
 };
 
 enum replacement_policy_t {

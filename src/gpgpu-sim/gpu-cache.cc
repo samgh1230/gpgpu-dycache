@@ -455,13 +455,13 @@ enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx, u
 enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, unsigned &idx ,unsigned sid,unsigned blksz,unsigned data_size)
 {
     bool wb=false;
-    cache_block_t evicted;
+    std::vector<cache_block_t> evicted;
     enum cache_request_status result = access(addr,time,idx,wb,evicted,sid,blksz,data_size);
     assert(!wb);
     return result;
 }
 
-enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted,unsigned sid,unsigned blksz,unsigned data_size ) 
+enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, std::vector<cache_block_t> &evicted,unsigned sid,unsigned blksz,unsigned data_size ) 
 {
     m_access++;
     shader_cache_access_log(m_core_id, m_type_id, 0); // log accesses to cache
@@ -479,7 +479,8 @@ enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, 
         if ( m_config.m_alloc_policy == ON_MISS ) {
             if( m_lines[idx].is_modified(sid,blksz,data_size)){//m_lines[idx].m_status == MODIFIED ) {
                 wb = true;
-                evicted = m_lines[idx];
+                //evicted = m_lines[idx];
+                m_lines[idx].set_evicted_blk(sid,blksz,data_size, evicted);
             }
             // if(blksz==32)
                 // printf("allocate block %d tag(%x),data_sz(%d)\n",idx,m_config.tag(addr),data_size);
@@ -987,13 +988,13 @@ void baseline_cache::send_read_request(new_addr_type addr, new_addr_type block_a
 		unsigned time, bool &do_miss, std::list<cache_event> &events, bool read_only, bool wa){
 
 	bool wb=false;
-	cache_block_t e;
+	std::vector<cache_block_t> e;
 	send_read_request(addr, block_addr, cache_index, mf, time, do_miss, wb, e, events, read_only, wa);
 }
 
 /// Read miss handler. Check MSHR hit or MSHR available
 void baseline_cache::send_read_request(new_addr_type addr, new_addr_type block_addr, unsigned cache_index, mem_fetch *mf,
-		unsigned time, bool &do_miss, bool &wb, cache_block_t &evicted, std::list<cache_event> &events, bool read_only, bool wa){
+		unsigned time, bool &do_miss, bool &wb, std::vector<cache_block_t> &evicted, std::list<cache_event> &events, bool read_only, bool wa){
 
     bool mshr_hit = m_mshrs.probe(block_addr);
     bool mshr_avail = !m_mshrs.full(block_addr);
@@ -1150,7 +1151,7 @@ data_cache::wr_miss_wa( new_addr_type addr,
 
     bool do_miss = false;
     bool wb = false;
-    cache_block_t evicted;
+    std::vector<cache_block_t> evicted;
 
     // Send read request resulting from write miss
     send_read_request(addr, block_addr, cache_index, n_mf, time, do_miss, wb,
@@ -1160,8 +1161,15 @@ data_cache::wr_miss_wa( new_addr_type addr,
         // If evicted block is modified and not a write-through
         // (already modified lower level)
         if( wb && (m_config.m_write_policy != WRITE_THROUGH) ) { 
-            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr[0],//not correct, but easy to inplement
-                m_wrbk_type,/*m_config.get_line_sz()*/current_blksz,true);
+            for(int i=0; i<evicted.size(); i++)
+            {
+                mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_evicted_addr,
+                    m_wrbk_type, evicted.m_evicted_addr, true);
+                m_miss_queue.push_back(wb);
+                wb->set_status(m_miss_queue_status,time);
+            }
+ //           mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr[0],//
+   //             m_wrbk_type,/*m_config.get_line_sz()*/current_blksz,true);
             m_miss_queue.push_back(wb);
             wb->set_status(m_miss_queue_status,time);
         }
@@ -1237,7 +1245,7 @@ data_cache::rd_miss_base( new_addr_type addr,
     unsigned data_size=mf->get_data_size();
     bool do_miss = false;
     bool wb = false;
-    cache_block_t evicted;
+    std::vector<cache_block_t> evicted;
     send_read_request( addr,
                        block_addr,
                        cache_index,
@@ -1246,10 +1254,16 @@ data_cache::rd_miss_base( new_addr_type addr,
     if( do_miss ){
         // If evicted block is modified and not a write-through
         // (already modified lower level)
-        if(wb && (m_config.m_write_policy != WRITE_THROUGH) ){ 
-            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr[0],
-                m_wrbk_type,current_blksz/*m_config.get_line_sz()*/,true);
-        send_write_request(wb, WRITE_BACK_REQUEST_SENT, time, events);
+        if(wb && (m_config.m_write_policy != WRITE_THROUGH) ){
+            for(int i=0; i<evicted.size(); i++)
+            {
+                mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_evicted_addr,
+                    m_wrbk_type, evicted.m_evicted_size,true);
+                send_write_request(wb, WRITE_BACK_REQUEST_SENT, time, events);
+            }
+      //      mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr[0],
+       //         m_wrbk_type,current_blksz/*m_config.get_line_sz()*/,true);
+        //send_write_request(wb, WRITE_BACK_REQUEST_SENT, time, events);
     }
         return MISS;
     }
