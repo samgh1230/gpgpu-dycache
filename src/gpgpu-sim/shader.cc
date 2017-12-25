@@ -2052,7 +2052,7 @@ void gpgpu_sim::shader_print_cache_stats( FILE *fout ) const{
     }
 
     // L1D
-    FILE* f=fopen("small-only-ex-32.txt","a");
+    FILE* f=fopen("ex-32.txt","a");
     if(!m_shader_config->m_L1D_config.disabled()){
         total_css.clear();
         css.clear();
@@ -2472,10 +2472,10 @@ unsigned int shader_core_config::max_cta( const kernel_info_t &k ) const
 
 void shader_core_ctx::change2small_blksz(unsigned blksz)
 {
-    FILE* f = fopen("small-only-ex-32.txt","a");
-    fprintf(f,"%lld\tchange to %u\n",gpu_tot_sim_cycle+gpu_sim_cycle,blksz);
-    fflush(f);
-    fclose(f);
+    // FILE* f = fopen("small-only-ex-32.txt","a");
+    // fprintf(f,"%lld\tchange to %u\n",gpu_tot_sim_cycle+gpu_sim_cycle,blksz);
+    // fflush(f);
+    // fclose(f);
     m_ldst_unit->change2small_blksz(blksz);
     current_blksz = blksz;
 }

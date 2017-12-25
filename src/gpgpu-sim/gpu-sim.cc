@@ -894,7 +894,7 @@ void gpgpu_sim::gpu_print_stat()
    printf("gpu_tot_ipc = %12.4f\n", (float)(gpu_tot_sim_insn+gpu_sim_insn) / (gpu_tot_sim_cycle+gpu_sim_cycle));
    printf("gpu_tot_issued_cta = %lld\n", gpu_tot_issued_cta);
 
-   FILE* fout=fopen("small-only-ex-32.txt","a");
+   FILE* fout=fopen("ex-32.txt","a");
    fprintf(fout,"%lld\t%12.4f\t",gpu_tot_sim_cycle+gpu_sim_cycle,(float)(gpu_tot_sim_insn+gpu_sim_insn)/(gpu_tot_sim_cycle+gpu_sim_cycle));
    fflush(fout);
    fclose(fout);
