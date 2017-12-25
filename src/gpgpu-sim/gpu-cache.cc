@@ -215,7 +215,7 @@ enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx, u
                 case 128:
                     if(line->m_tag[0]==tag&&line->m_tag[2]==tag)
                     {
-                        if ( line->m_status[0] == RESERVED && line->m_status[2]==RESERVED) {
+                        if ( line->m_status[0] == RESERVED || line->m_status[2]==RESERVED) {//change hit reserved 
                             idx = index;
                             return HIT_RESERVED;
                         } else if ( (line->m_status[0] == VALID||line->m_status[0] == MODIFIED) && (line->m_status[2]== VALID||line->m_status[2]==MODIFIED)) {
@@ -243,17 +243,19 @@ enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx, u
                 break;
                 case 64:
                 if(sid==0||sid==2){
-                    if(line->m_status[sid]==RESERVED){
-                        idx=index;
-                        return HIT_RESERVED;
-                    }else if(line->m_status[sid]==VALID){
-                        idx=index;
-                        return HIT;
-                    }else if(line->m_status[sid]==MODIFIED){
-                        idx=index;
-                        return HIT;
-                    }else {
-                        assert(line->m_status[sid]==INVALID);
+                    if(line->m_tag[sid]==tag){
+                        if(line->m_status[sid]==RESERVED){
+                            idx=index;
+                            return HIT_RESERVED;
+                        }else if(line->m_status[sid]==VALID){
+                            idx=index;
+                            return HIT;
+                        }else if(line->m_status[sid]==MODIFIED){
+                            idx=index;
+                            return HIT;
+                        }else {
+                            assert(line->m_status[sid]==INVALID);
+                        }
                     }
                     if(line->m_status[sid] != RESERVED){
                         all_reserved=false;
@@ -320,7 +322,7 @@ enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx, u
             switch(data_size){
                 case 128:
                 if (line->m_tag[0] == tag&&line->m_tag[1]==tag&&line->m_tag[2]==tag&&line->m_tag[3]==tag) {
-                    if ( line->m_status[0] == RESERVED&&line->m_status[0]==RESERVED&&line->m_status[1]==RESERVED&&line->m_status[3]==RESERVED ) {
+                    if ( line->m_status[0] == RESERVED||line->m_status[0]==RESERVED||line->m_status[1]==RESERVED||line->m_status[3]==RESERVED ) {//change hit reserved
                         idx = index;
                         return HIT_RESERVED;
                     } else if (( line->m_status[0] == VALID||line->m_status[0]==MODIFIED ) && ( line->m_status[1] == VALID||line->m_status[1]==MODIFIED )&&( line->m_status[2] == VALID||line->m_status[2]==MODIFIED )&&( line->m_status[3] == VALID||line->m_status[3]==MODIFIED )){
@@ -333,7 +335,7 @@ enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx, u
                         assert( line->m_status == INVALID );
                     }*/
                 }
-                if (line->m_status[0] != RESERVED||line->m_status[1] != RESERVED||line->m_status[2] != RESERVED||line->m_status[3] != RESERVED) {
+                if (line->m_status[0] != RESERVED&&line->m_status[1] != RESERVED&&line->m_status[2] != RESERVED&&line->m_status[3] != RESERVED) {//change all reserved
                     all_reserved = false;
                     if (line->m_status[0] == INVALID&&line->m_status[1] == INVALID&&line->m_status[2] == INVALID&&line->m_status[3] == INVALID) {
                         invalid_line = index;
@@ -377,7 +379,7 @@ enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx, u
                         assert( line->m_status == INVALID );
                     }*/
                 }
-                if (line->m_status[sid] != RESERVED||line->m_status[sid+1]!=RESERVED) {
+                if (line->m_status[sid] != RESERVED&&line->m_status[sid+1]!=RESERVED) {
                     all_reserved = false;
                     if (line->m_status[sid] == INVALID&&line->m_status[sid+1]==INVALID) {
                         invalid_line = index;
