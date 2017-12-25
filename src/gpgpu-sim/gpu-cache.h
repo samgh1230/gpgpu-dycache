@@ -478,6 +478,7 @@ struct cache_block_t {
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     void set_evicted_blk(unsigned sid, unsigned blksz, unsigned data_size, std::vector<cache_block_t> &evicted)
     {
         //evicted.m_evicted_size = data_size;
@@ -562,6 +563,8 @@ struct cache_block_t {
         }
     }
 
+=======
+>>>>>>> parent of cc81f92... update
 =======
 >>>>>>> parent of cc81f92... update
     new_addr_type    m_tag[4];

@@ -1161,6 +1161,7 @@ data_cache::wr_miss_wa( new_addr_type addr,
         // (already modified lower level)
         if( wb && (m_config.m_write_policy != WRITE_THROUGH) ) { 
 <<<<<<< HEAD
+<<<<<<< HEAD
             for(int i=0; i<evicted.size(); i++)
             {
                 mem_fetch *wb = m_memfetch_creator->alloc(evicted[i].m_evicted_addr,
@@ -1170,6 +1171,10 @@ data_cache::wr_miss_wa( new_addr_type addr,
             }
  //           mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr[0],//
    //             m_wrbk_type,/*m_config.get_line_sz()*/current_blksz,true);
+=======
+            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr[0],//not correct, but easy to inplement
+                m_wrbk_type,/*m_config.get_line_sz()*/current_blksz,true);
+>>>>>>> parent of cc81f92... update
 =======
             mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr[0],//not correct, but easy to inplement
                 m_wrbk_type,/*m_config.get_line_sz()*/current_blksz,true);
@@ -1259,6 +1264,7 @@ data_cache::rd_miss_base( new_addr_type addr,
         // If evicted block is modified and not a write-through
         // (already modified lower level)
 <<<<<<< HEAD
+<<<<<<< HEAD
         if(wb && (m_config.m_write_policy != WRITE_THROUGH) ){
             for(int i=0; i<evicted.size(); i++)
             {
@@ -1270,10 +1276,15 @@ data_cache::rd_miss_base( new_addr_type addr,
        //         m_wrbk_type,current_blksz/*m_config.get_line_sz()*/,true);
         //send_write_request(wb, WRITE_BACK_REQUEST_SENT, time, events);
 =======
+=======
+>>>>>>> parent of cc81f92... update
         if(wb && (m_config.m_write_policy != WRITE_THROUGH) ){ 
             mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr[0],
                 m_wrbk_type,current_blksz/*m_config.get_line_sz()*/,true);
         send_write_request(wb, WRITE_BACK_REQUEST_SENT, time, events);
+<<<<<<< HEAD
+>>>>>>> parent of cc81f92... update
+=======
 >>>>>>> parent of cc81f92... update
     }
         return MISS;
