@@ -1164,7 +1164,7 @@ data_cache::wr_miss_wa( new_addr_type addr,
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
-=======
+=====
 >>>>>>> parent of d35e367... Revert "update"
             for(int i=0; i<evicted.size(); i++)
             {
