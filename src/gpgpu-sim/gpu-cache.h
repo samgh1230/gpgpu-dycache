@@ -477,11 +477,7 @@ struct cache_block_t {
         }
     }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> parent of d35e367... Revert "update"
+
     void set_evicted_blk(unsigned sid, unsigned blksz, unsigned data_size, std::vector<cache_block_t> &evicted)
     {
         //evicted.m_evicted_size = data_size;
@@ -566,13 +562,7 @@ struct cache_block_t {
         }
     }
 
-<<<<<<< HEAD
-=======
->>>>>>> parent of cc81f92... update
-=======
->>>>>>> parent of cc81f92... update
-=======
->>>>>>> parent of d35e367... Revert "update"
+
     new_addr_type    m_tag[4];
     new_addr_type    m_block_addr[4];
     unsigned         m_alloc_time[4];
@@ -836,7 +826,7 @@ public:
 
     enum cache_request_status probe( new_addr_type addr, unsigned &idx,unsigned sid,unsigned blksz,unsigned data_size ) const;
     enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx , unsigned sid,unsigned blksz,unsigned data_size);
-    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, std::vector<cache_block_t> &evicted,unsigned sid, unsigned blksz, unsigned data_size );
+    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted,unsigned sid, unsigned blksz, unsigned data_size );
 
     void fill( new_addr_type addr, unsigned time, unsigned sid,unsigned blksz,unsigned data_size );
     void fill( unsigned idx, unsigned time ,unsigned sid,unsigned blksz, unsigned data_size);
@@ -1173,7 +1163,7 @@ protected:
     		unsigned time, bool &do_miss, std::list<cache_event> &events, bool read_only, bool wa);
     /// Read miss handler. Check MSHR hit or MSHR available
     void send_read_request(new_addr_type addr, new_addr_type block_addr, unsigned cache_index, mem_fetch *mf,
-    		unsigned time, bool &do_miss, bool &wb, std::vector<cache_block_t> &evicted, std::list<cache_event> &events, bool read_only, bool wa);
+    		unsigned time, bool &do_miss, bool &wb, cache_block_t &evicted, std::list<cache_event> &events, bool read_only, bool wa);
 
     /// Sub-class containing all metadata for port bandwidth management 
     class bandwidth_management 
