@@ -479,6 +479,9 @@ struct cache_block_t {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> parent of d35e367... Revert "update"
     void set_evicted_blk(unsigned sid, unsigned blksz, unsigned data_size, std::vector<cache_block_t> &evicted)
     {
         //evicted.m_evicted_size = data_size;
@@ -563,16 +566,22 @@ struct cache_block_t {
         }
     }
 
+<<<<<<< HEAD
 =======
 >>>>>>> parent of cc81f92... update
 =======
 >>>>>>> parent of cc81f92... update
+=======
+>>>>>>> parent of d35e367... Revert "update"
     new_addr_type    m_tag[4];
     new_addr_type    m_block_addr[4];
     unsigned         m_alloc_time[4];
     unsigned         m_last_access_time[4];
     unsigned         m_fill_time[4];
     cache_block_state    m_status[4];
+
+    new_addr_type   m_evicted_addr;
+    unsigned        m_evicted_size;
 };
 
 enum replacement_policy_t {
