@@ -242,6 +242,8 @@ enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx, u
                     }
                 break;
                 case 64:
+                if(sid!=0&&sid!=2)
+                    sid--;
                 if(sid==0||sid==2){
                     if(line->m_tag[sid]==tag){
                         if(line->m_status[sid]==RESERVED){
@@ -275,8 +277,6 @@ enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx, u
                             }
                         }
                     }
-                }else if(sid==1){
-                    printf("Exception: sector_id == 1 when blksz==64\n");
                 }
                 break;
                 case 32:
@@ -366,7 +366,7 @@ enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx, u
                 break;
                 case 64:
                 if (line->m_tag[sid] == tag&&line->m_tag[sid+1]==tag) {
-                    if ( line->m_status[sid] == RESERVED && line->m_status[sid+1]==RESERVED) {
+                    if ( line->m_status[sid] == RESERVED || line->m_status[sid+1]==RESERVED) {
                         idx = index;
                         return HIT_RESERVED;
                     } else if (( line->m_status[sid] == VALID||line->m_status[sid]==MODIFIED)&&(line->m_status[sid+1]==VALID||line->m_status[sid+1]==MODIFIED )) {
