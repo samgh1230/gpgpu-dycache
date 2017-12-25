@@ -455,7 +455,7 @@ enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx, u
 enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, unsigned &idx ,unsigned sid,unsigned blksz,unsigned data_size)
 {
     bool wb=false;
-    std::vector<cache_block_t> evicted;
+    cache_block_t evicted;
     enum cache_request_status result = access(addr,time,idx,wb,evicted,sid,blksz,data_size);
     assert(!wb);
     return result;
