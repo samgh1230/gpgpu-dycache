@@ -65,185 +65,199 @@ struct cache_block_t {
     {
         for(int i=0;i<4;i++)
         {
-            m_tag[i]=0;
-            m_block_addr[i]=0;
-            m_alloc_time[i]=0;
-            m_fill_time[i]=0;
-            m_last_access_time[i]=0;
-            m_status[i]=INVALID;
+            m_blk_tag[i]=0;
+            m_blk_addr[i]=0;
+            m_blk_alloc_time[i]=0;
+            m_blk_fill_time[i]=0;
+            m_blk_last_access_time[i]=0;
+            m_blk_status[i]=INVALID;
+            m_fine_grained = false;
+
+            m_tag = 0;
+            m_block_addr = 0;
+            m_alloc_time = 0;
+            m_fill_time = 0;
+            m_last_access_time = 0;
+            m_status = INVALID;
         }
     }
-    void allocate( new_addr_type tag, new_addr_type block_addr, unsigned time , unsigned sid, unsigned blksz,unsigned data_size)
+    void allocate(new_addr_type tag, new_addr_type blk_addr, unsigned time)
     {
-        // printf("block allocate: blksz(%d), sid(%d), data_size(%d)\n",blksz,sid,data_size);
+        m_tag = tag;
+        m_addr = block_addr;
+        m_alloc_time = time;
+        m_last_access_time = time;
+        m_status = RESERVED; 
+    }
+    void allocate( new_addr_type c_tag, new_addr_type tag, unsigned time , unsigned sid/*index free start chunck*/, unsigned blksz,unsigned data_size)
+    {
+        common_tag = c_tag;
         switch(blksz){
             case 128:
-//            assert(sid==0);
+                assert(sid==0);
                 for(int i=0;i<4;i++){
-                    m_tag[i]=tag;
-                    m_block_addr[i]=block_addr;
-                    m_alloc_time[i]=time;
-                    m_last_access_time[i]=time;
-                    m_fill_time[i]=0;
-                    m_status[i]=RESERVED;
+                    m_blk_tag[i]=tag++;//tag for each chunck
+                    m_blk_addr[i]=tag++;
+                    m_blk_alloc_time[i]=time;
+                    m_blk_last_access_time[i]=time;
+                    m_blk_fill_time[i]=0;
+                    m_blk_status[i]=RESERVED;
                 }
             break;
             case 64:
                 switch(data_size){
                     case 128:
+                        assert(sid==0);
                         for(int i=0;i<4;i++)
                         {
-                            m_tag[i]=tag;
-                            m_block_addr[i]=block_addr;
-                            m_alloc_time[i]=time;
-                            m_last_access_time[i]=time;
-                            m_fill_time[i]=0;
-                            m_status[i]=RESERVED;
+                            m_tag[i]=tag++;
+                            m_blk_addr[i]=tag++;
+                            m_blk_alloc_time[i]=time;
+                            m_blk_last_access_time[i]=time;
+                            m_blk_fill_time[i]=0;
+                            m_blk_status[i]=RESERVED;
                         }
                     break;
                     case 64:
                         assert(sid==0||sid==2);
                         for(int i=0;i<2;i++)
                         {
-                            m_tag[sid+i]=tag;
-                            m_block_addr[sid+i]=block_addr;
-                            m_alloc_time[sid+i]=time;
-                            m_last_access_time[sid+i]=time;
-                            m_fill_time[sid+i]=0;
-                            m_status[sid+i]=RESERVED;
+                            m_blk_tag[sid+i]=tag++;
+                            m_blk_addr[sid+i]=tag++;
+                            m_blk_alloc_time[sid+i]=time;
+                            m_blk_last_access_time[sid+i]=time;
+                            m_blk_fill_time[sid+i]=0;
+                            m_blk_status[sid+i]=RESERVED;
                         }
                     break;
                     case 32:
-                        if(sid!=0&&sid!=2)
-                            sid--;
+                        assert(sid==0||sid==2);
+                        assert(false);
                         for(int i=0;i<2;i++)
                         {
-                            m_tag[sid+i]=tag;
-                            m_block_addr[sid+i]=block_addr;
-                            m_alloc_time[sid+i]=time;
-                            m_last_access_time[sid+i]=time;
-                            m_fill_time[sid+i]=0;
-                            m_status[sid+i]=RESERVED;
+                            m_blk_tag[sid+i]=tag++;
+                            m_blk_addr[sid+i]=tag++;
+                            m_blk_alloc_time[sid+i]=time;
+                            m_blk_last_access_time[sid+i]=time;
+                            m_blk_fill_time[sid+i]=0;
+                            m_blk_status[sid+i]=RESERVED;
                         }
                     break;
                 }
             break;
             case 32:
-                // printf("reserved sid:\t");
                 switch(data_size){
                     case 128:
+                        assert(sid==0);
                         for(int i=0;i<4;i++){
-                            // printf("%d\t",i);
-                            m_tag[i]=tag;
-                            m_block_addr[i]=block_addr;
-                            m_alloc_time[i]=time;
-                            m_last_access_time[i]=time;
-                            m_fill_time[i]=0;
-                            m_status[i]=RESERVED;
+                            m_blk_tag[i]=tag++;
+                            m_blk_block_addr[i]=tag++;
+                            m_blk_alloc_time[i]=time;
+                            m_blk_last_access_time[i]=time;
+                            m_blk_fill_time[i]=0;
+                            m_blk_status[i]=RESERVED;
                         }
                     break;
                     case 64:
                         assert(sid==0||sid==2);
                         for(int i=0;i<2;i++){
-                            // printf("%d\t",sid+i);
-                            m_tag[sid+i]=tag;
-                            m_block_addr[sid+i]=block_addr;
-                            m_alloc_time[sid+i]=time;
-                            m_last_access_time[sid+i]=time;
-                            m_fill_time[sid+i]=0;
-                            m_status[sid+i]=RESERVED;
+                            m_blk_tag[sid+i]=tag++;
+                            m_blk_addr[sid+i]=tag++;
+                            m_blk_alloc_time[sid+i]=time;
+                            m_blk_last_access_time[sid+i]=time;
+                            m_blk_fill_time[sid+i]=0;
+                            m_blk_status[sid+i]=RESERVED;
                         }
                     break;
                     case 32:
-                        // printf("%d\t",sid);
-                        m_tag[sid]=tag;
-                        m_block_addr[sid]=block_addr;
-                        m_alloc_time[sid]=time;
-                        m_last_access_time[sid]=time;
-                        m_fill_time[sid]=0;
-                        m_status[sid]=RESERVED;
+                        assert(sid==0||sid==2);
+                        m_blk_tag[sid]=tag++;
+                        m_blk_addr[sid]=tag++;
+                        m_blk_alloc_time[sid]=time;
+                        m_blk_last_access_time[sid]=time;
+                        m_blk_fill_time[sid]=0;
+                        m_blk_status[sid]=RESERVED;
                     break;
                 }
             break;
         }
-        // printf("\n");
+    }
+    void fill(unsigned time)
+    {
+        m_status = VALID;
+        m_fill_time = time;
     }
     void fill( unsigned time , unsigned sid, unsigned blksz, unsigned data_size)
     {
-        // printf("blk fill: blksz(%d), sid(%d), data_size(%d)\n",blksz,sid,data_size);
         switch(blksz){
             case 128:
-           // assert(sid==0);
+                assert(sid==0);
                 for(int i=0;i<4;i++){
-                    // assert( m_status[i] == RESERVED );
-                    m_status[i]=VALID;
-                    m_fill_time[i]=time;
+                    assert( m_status[i] == RESERVED );
+                    m_blk_status[i]=VALID;
+                    m_blk_fill_time[i]=time;
                 }
             break;
             case 64:
             switch(data_size)
             {
                 case 128:
+                    assert(sid==0);
                     for(int i=0;i<4;i++)
                     {
-                        // assert(m_status[i]==RESERVED);
-                        m_status[i] = VALID;
-                        m_fill_time[i]=time;
+                        assert(m_status[i]==RESERVED);
+                        m_blk_status[i] = VALID;
+                        m_blk_fill_time[i]=time;
                     }
                 break;
                 case 64:
-                    if(sid!=0&&sid!=2)
-                        sid--;
+                    assert(sid==0||sid==2);
                     for(int i=0;i<2;i++)
                     {
-                        assert(sid==0||sid==2);
-                        // assert(m_status[sid+i]==RESERVED);
-                        m_status[sid+i]=VALID;
-                        m_fill_time[sid+i]=time;
+                        assert(m_status[sid+i]==RESERVED);
+                        m_blk_status[sid+i]=VALID;
+                        m_blk_fill_time[sid+i]=time;
                     }
                 break;
-                case 32:
-                    if(sid!=0&&sid!=2)
-                        sid--;
+                case 32://this case shouldn't appear
+                    assert(sid==0||sid==2);
+                    assert(false);
                     for(int i=0;i<2;i++)
                     {
-                        assert(sid==0||sid==2);
-                        // assert(m_status[sid+i]==RESERVED);
-                        m_status[sid+i]=VALID;
-                        m_fill_time[sid+i]=time;
+                        assert(m_status[sid+i]==RESERVED);
+                        m_blk_status[sid+i]=VALID;
+                        m_blk_fill_time[sid+i]=time;
                     }
                 break;
             }
             break;
             case 32:
-                // printf("fill sid:\t");
                 switch(data_size){
                     case 128:
+                    assert(sid==0);
                     for(int i=0;i<4;i++){
-                        // printf("%d\t",i);
-//                        assert( m_status[i] == RESERVED );
-                        m_status[i]=VALID;
-                        m_fill_time[i]=time;
+                       assert( m_status[i] == RESERVED );
+                        m_blk_status[i]=VALID;
+                        m_blk_fill_time[i]=time;
                     }
                     break;
                     case 64:
+                    assert(sid==0||sid==2);
                     for(int i=0;i<2;i++){
-                        // printf("%d\t",sid+i);
-  //                      assert( m_status[sid+i] == RESERVED );
-                        m_status[sid+i]=VALID;
-                        m_fill_time[sid+i]=time;
+                       assert( m_status[sid+i] == RESERVED );
+                        m_blk_status[sid+i]=VALID;
+                        m_blk_fill_time[sid+i]=time;
                     }
                     break;
                     case 32:
-                        // printf("%d\t",sid);
-  //                      assert( m_status[sid] == RESERVED );
-                        m_status[sid]=VALID;
-                        m_fill_time[sid]=time;
+                        assert(sid<4);
+                        assert( m_status[sid] == RESERVED );
+                        m_blk_status[sid]=VALID;
+                        m_blk_fill_time[sid]=time;
                     break;
                 }
             break;
         }
-        // printf("\n");
     }
 
     void set_last_access_time(unsigned time, unsigned sid, unsigned blksz, unsigned data_size)
@@ -252,26 +266,23 @@ struct cache_block_t {
         switch(blksz)
         {
             case 128:
+                assert(sid==0);
                 for(int i=0;i<4;i++)
-                    m_last_access_time[i]=time;
+                    m_blk_last_access_time[i]=time;
             break;
             case 64:
                 switch(data_size)
                 {
                     case 128:
+                        assert(sid==0);
                         for(int i=0;i<4;i++)
-                            m_last_access_time[i]=time;
+                            m_blk_last_access_time[i]=time;
                     break;
                     case 64:
+                    case 32:
                         assert(sid==0||sid==2);
                         for(int i=0;i<2;i++)
-                            m_last_access_time[sid+i]=time;
-                    break;
-                    case 32:
-                        if(sid!=0&&sid!=2)
-                            sid--;
-                        for(int i=0;i<2;i++)
-                            m_last_access_time[sid+i]=time;
+                            m_blk_last_access_time[sid+i]=time;
                     break;
                 }
             break;
@@ -279,15 +290,18 @@ struct cache_block_t {
                 switch(data_size)
                 {
                     case 128:
+                        assert(sid==0);
                         for(int i=0;i<4;i++)
-                            m_last_access_time[i]=time;
+                            m_blk_last_access_time[i]=time;
                     break;
                     case 64:
+                        assert(sid==0||sid==2);
                         for(int i=0;i<2;i++)
-                            m_last_access_time[sid+i]=time;
+                            m_blk_last_access_time[sid+i]=time;
                     break;
                     case 32:
-                        m_last_access_time[sid]=time;
+                        assert(sid<4);
+                        m_blk_last_access_time[sid]=time;
                     break;
                 }
             break;
@@ -296,30 +310,26 @@ struct cache_block_t {
     }
     void set_alloc_time(unsigned time,unsigned sid,unsigned blksz,unsigned data_size)
     {
-        // printf("set alloc time: blksz(%d), sid(%d), data_size(%d)\n",blksz,sid,data_size);
         switch(blksz)
         {
             case 128:
+                assert(sid==0);
                 for(int i=0;i<4;i++)
-                    m_alloc_time[i]=time;
+                    m_blk_alloc_time[i]=time;
             break;
             case 64:
                 switch(data_size)
                 {
                     case 128:
+                        assert(sid==0);
                         for(int i=0;i<4;i++)
-                            m_alloc_time[i]=time;
+                            m_blk_alloc_time[i]=time;
                     break;
                     case 64:
+                    case 32:
                         assert(sid==0||sid==2);
                         for(int i=0;i<2;i++)
-                            m_alloc_time[sid+i]=time;
-                    break;
-                    case 32:
-                        if(sid!=0&&sid!=2)
-                            sid--;
-                        for(int i=0;i<2;i++)
-                            m_alloc_time[sid+i]=time;
+                            m_blk_alloc_time[sid+i]=time;
                     break;
                 }
             break;
@@ -328,14 +338,14 @@ struct cache_block_t {
                 {
                     case 128:
                         for(int i=0;i<4;i++)
-                            m_alloc_time[i]=time;
+                            m_blk_alloc_time[i]=time;
                     break;
                     case 64:
                         for(int i=0;i<2;i++)
-                            m_alloc_time[sid+i]=time;
+                            m_blk_alloc_time[sid+i]=time;
                     break;
                     case 32:
-                        m_alloc_time[sid]=time;
+                        m_blk_alloc_time[sid]=time;
                     break;
                 }
             break;
@@ -343,30 +353,31 @@ struct cache_block_t {
     }
     void set_fill_time(unsigned time,unsigned sid,unsigned blksz,unsigned data_size)
     {
-        // printf("set fill time: blksz(%d), sid(%d), data_size(%d)\n",blksz,sid,data_size);
         switch(blksz)
         {
             case 128:
+                assert(sid==0);
                 for(int i=0;i<4;i++)
-                    m_fill_time[i]=time;
+                    m_blk_fill_time[i]=time;
             break;
             case 64:
                 switch(data_size)
                 {
                     case 128:
+                        assert(sid==0);
                         for(int i=0;i<4;i++)
-                            m_fill_time[i]=time;
+                            m_blk_fill_time[i]=time;
                     break;
                     case 64:
                         assert(sid==0||sid==2);
                         for(int i=0;i<2;i++)
-                            m_fill_time[sid+i]=time;
+                            m_blk_fill_time[sid+i]=time;
                     break;
                     case 32:
-                        if(sid!=0&&sid!=2)
-                            sid--;
+                        assert(sid==0||sid==2);
+                        assert(false);
                         for(int i=0;i<2;i++)
-                            m_fill_time[sid+i]=time;
+                            m_blk_fill_time[sid+i]=time;
                     break;
                 }
             break;
@@ -374,15 +385,18 @@ struct cache_block_t {
                 switch(data_size)
                 {
                     case 128:
+                        assert(sid==0);
                         for(int i=0;i<4;i++)
-                            m_fill_time[i]=time;
+                            m_blk_fill_time[i]=time;
                     break;
                     case 64:
+                        assert(sid==0||sid==2);
                         for(int i=0;i<2;i++)
-                            m_fill_time[sid+i]=time;
+                            m_blk_fill_time[sid+i]=time;
                     break;
                     case 32:
-                        m_fill_time[sid]=time;
+                        assert(sid<4);
+                        m_blk_fill_time[sid]=time;
                     break;
                 }
             break;
@@ -390,30 +404,26 @@ struct cache_block_t {
     }
     void set_blk_status(cache_block_state state,unsigned sid,unsigned blksz,unsigned data_size)
     {
-        // printf("set blk status: blksz(%d), sid(%d), data_size(%d)\n",blksz,sid,data_size);
         switch(blksz)
         {
             case 128:
+                assert(sid==0);
                 for(int i=0;i<4;i++)
-                    m_status[i]=state;
+                    m_blk_status[i]=state;
             break;
             case 64:
                 switch(data_size)
                 {
                     case 128:
+                        assert(sid==0);
                         for(int i=0;i<4;i++)
-                            m_status[i]=state;
+                            m_blk_status[i]=state;
                     break;
                     case 64:
+                    case 32:
                         assert(sid==0||sid==2);
                         for(int i=0;i<2;i++)
-                            m_status[sid+i]=state;
-                    break;
-                    case 32:
-                        if(sid!=0&&sid!=2)
-                            sid--;
-                        for(int i=0;i<2;i++)
-                            m_status[sid+i]=state;
+                            m_blk_status[sid+i]=state;
                     break;
                 }
             break;
@@ -421,15 +431,18 @@ struct cache_block_t {
                 switch(data_size)
                 {
                     case 128:
+                        assert(sid==0);
                         for(int i=0;i<4;i++)
-                            m_status[i]=state;
+                            m_blk_status[i]=state;
                     break;
                     case 64:
+                        assert(sid==0||sid==2)
                         for(int i=0;i<2;i++)
-                            m_status[sid+i]=state;
+                            m_blk_status[sid+i]=state;
                     break;
                     case 32:
-                        m_status[sid]=state;
+                        assert(sid<4);
+                        m_blk_status[sid]=state;
                     break;
                 }
             break;
@@ -437,26 +450,22 @@ struct cache_block_t {
     }
     bool is_modified(unsigned sid,unsigned blksz,unsigned data_size)
     {
-        // printf("is modified: blksz(%d), sid(%d), data_size(%d)\n",blksz,sid,data_size);
         switch(blksz)
         {
             case 128:
-            return (m_status[0]==MODIFIED)||(m_status[1]==MODIFIED)||(m_status[2]==MODIFIED)||(m_status[3]==MODIFIED);
+            assert(sid==0);
+            return (m_blk_status[0]==MODIFIED)||(m_blk_status[1]==MODIFIED)||(m_blk_status[2]==MODIFIED)||(m_blk_status[3]==MODIFIED);
             break;
             case 64:
-            assert(sid==0||sid==2);
+                assert(sid==0||sid==2);
                 switch(data_size)
                 {
                     case 128:
-                        return (m_status[0]==MODIFIED)||(m_status[1]==MODIFIED)||(m_status[2]==MODIFIED)||(m_status[3]==MODIFIED);
+                        return (m_blk_status[0]==MODIFIED)||(m_blk_status[1]==MODIFIED)||(m_blk_status[2]==MODIFIED)||(m_blk_status[3]==MODIFIED);
                     break;
                     case 64:
-                        return (m_status[sid]==MODIFIED)||(m_status[sid+1]==MODIFIED);
-                    break;
                     case 32:
-                        if(sid!=0&&sid!=2)
-                            sid--;
-                        return (m_status[sid]==MODIFIED)||(m_status[sid+1]==MODIFIED);
+                        return (m_blk_status[sid]==MODIFIED)||(m_blk_status[sid+1]==MODIFIED);
                     break;
                 }
             break;
@@ -464,28 +473,127 @@ struct cache_block_t {
                 switch(data_size)
                 {
                     case 128:
-                        return (m_status[0]==MODIFIED)||(m_status[1]==MODIFIED)||(m_status[2]==MODIFIED)||(m_status[3]==MODIFIED);
+                        assert(sid==0);
+                        return (m_blk_status[0]==MODIFIED)||(m_blk_status[1]==MODIFIED)||(m_blk_status[2]==MODIFIED)||(m_blk_status[3]==MODIFIED);
                     break;
                     case 64:
-                        return (m_status[sid]==MODIFIED)||(m_status[sid+1]==MODIFIED);
+                        assert(sid==0||sid==2);
+                        return (m_blk_status[sid]==MODIFIED)||(m_blk_status[sid+1]==MODIFIED);
                     break;
                     case 32:
-                        return m_status[sid];
+                        assert(sid<4);
+                        return m_blk_status[sid];
                     break;
                 }
             break;
         }
     }
 
-
+    bool chunck_tag_match(new_addr_type chunck_tag, unsigned &sid, unsigned blksz, unsigned data_size)
+    {
+        switch(blksz){
+            case 128:
+                new_addr_type ck_tag = (chunck_tag>>2)<<2;
+                for(int i=0; i<4; i++){
+                    if(ck_tag!=m_blk_tag[i]){
+                        sid=(unsigned)-1;
+                        return false;
+                    }
+                    else ck_tag++;
+                }
+                sid=0;
+                return true;
+            break;
+            case 64:
+                switch(data_size){
+                    case 128:
+                        new_addr_type ck_tag=(chunck_tag>>2)<<2;
+                        for(int i=0;i<4;i++)
+                        {
+                            if(ck_tag!=m_blk_tag[i]){
+                                sid=(unsigned)-1;
+                                return false;
+                            }
+                            else ck_tag++;
+                        }
+                        sid=0;
+                        return true;
+                    break;
+                    case 64:
+                    case 32:
+                        new_addr_type ck_tag=(chunck_tag>>1)<<1;
+                        for(int i=0;i<4;i=i+2){
+                            for(int j=0;j<2;j++){
+                                if(ck_tag!=m_blk_tag[i+j])
+                                    break;
+                                else    
+                                    ck_tag++;
+                            }
+                            if(j==2){
+                                sid=i;
+                                return true;
+                            }
+                            ck_tag = (chunck_tag>>1)<<1;
+                        }
+                        sid=(unsigned)-1;
+                        return false;
+                    break;
+                }
+            break;
+            case 32:
+                switch(data_size){
+                    case 128:
+                        new_addr_type ck_tag=(chunck_tag>>2)<<2;
+                        for(int i=0;i<4;i++)
+                        {
+                            if(ck_tag!=m_blk_tag[i]){
+                                sid=(unsigned)-1;
+                                return false;
+                            }
+                            else ck_tag++;
+                        }
+                        sid=0;
+                        return true;
+                    break;
+                    case 64:
+                        new_addr_type ck_tag=(chunck_tag>>1)<<1;
+                        for(int i=0;i<3;i=i+1){
+                            for(int j=0;j<2;j++){
+                                if(ck_tag!=m_blk_tag[i+j])
+                                    break;
+                                else    
+                                    ck_tag++;
+                            }
+                            if(j==2){
+                                sid=i;
+                                return true;
+                            }
+                            ck_tag = (chunck_tag>>1)<<1;
+                        }
+                        sid=(unsigned)-1;
+                        return false;
+                    break;
+                    case 32:
+                        for(int i=0;i<4;i++){
+                            if(chunck_tag==m_blk_tag[i]){
+                                sid=i;
+                                return true;
+                            }
+                        }
+                        sid=(unsigned)-1;
+                        return false;
+                    break;
+                }
+            break;
+        }
+    }
     void set_evicted_blk(unsigned sid, unsigned blksz, unsigned data_size, std::vector<cache_block_t> &evicted)
     {
-        //evicted.m_evicted_size = data_size;
         switch(blksz)
         {
             case 128:{
                 cache_block_t e;
-                e.m_evicted_addr = m_block_addr[0];
+                e.m_evicted_addr = m_blk_addr[0];
                 e.m_evicted_size = 128;
                 evicted.push_back(e);
             }
@@ -496,10 +604,10 @@ struct cache_block_t {
                     case 128:
                         for(int i=0;i<2;i++)
                         {
-                            if(m_status[i*2]==MODIFIED)
+                            if(m_blk_status[i*2]==MODIFIED)
                             {
                                 cache_block_t e;
-                                e.m_evicted_addr = m_block_addr[i*2];
+                                e.m_evicted_addr = m_blk_addr[i*2];
                                 e.m_evicted_size = 64;
                                 evicted.push_back(e);
                             }
@@ -507,7 +615,7 @@ struct cache_block_t {
                     break;
                     case 64:{
                         cache_block_t e;
-                        e.m_evicted_addr = m_block_addr[sid];
+                        e.m_evicted_addr = m_blk_addr[sid];
                         e.m_evicted_size = 64;
                         evicted.push_back(e);
                     }
@@ -516,7 +624,7 @@ struct cache_block_t {
                         if(sid!=0&&sid!=2)
                             sid--;
                         cache_block_t e;
-                        e.m_evicted_addr = m_block_addr[sid];
+                        e.m_evicted_addr = m_blk_addr[sid];
                         e.m_evicted_size = 64;
                         evicted.push_back(e);
                     }
@@ -529,10 +637,10 @@ struct cache_block_t {
                     case 128:
                     for(int i=0;i<4;i++)
                     {
-                        if(m_status[i]==MODIFIED)
+                        if(m_blk_status[i]==MODIFIED)
                         {
                             cache_block_t e;
-                            e.m_evicted_addr = m_block_addr[i];
+                            e.m_evicted_addr = m_blk_addr[i];
                             e.m_evicted_size = 32;
                             evicted.push_back(e);
                         }
@@ -541,10 +649,10 @@ struct cache_block_t {
                     case 64:
                         for(int i=0;i<2;i++)
                         {
-                            if(m_status[i+sid]==MODIFIED)
+                            if(m_blk_status[i+sid]==MODIFIED)
                             {
                                 cache_block_t e;
-                                e.m_evicted_addr = m_block_addr[i+sid];
+                                e.m_evicted_addr = m_blk_addr[i+sid];
                                 e.m_evicted_size = 32;
                                 evicted.push_back(e);
                             }
@@ -552,7 +660,7 @@ struct cache_block_t {
                     break;
                     case 32:{
                         cache_block_t e;
-                        e.m_evicted_addr = m_block_addr[sid];
+                        e.m_evicted_addr = m_blk_addr[sid];
                         e.m_evicted_size = 32;
                         evicted.push_back(e);
                     }
@@ -561,14 +669,23 @@ struct cache_block_t {
             break;
         }
     }
-
-
-    new_addr_type    m_tag[4];
-    new_addr_type    m_block_addr[4];
-    unsigned         m_alloc_time[4];
-    unsigned         m_last_access_time[4];
-    unsigned         m_fill_time[4];
-    cache_block_state    m_status[4];
+    //tags for fine&coarse grained management
+    new_addr_type    m_common_tag;//high 6-bit
+    new_addr_type    m_blk_tag[4];//16-bit
+    new_addr_type    m_blk_addr[4];
+    unsigned         m_blk_alloc_time[4];
+    unsigned         m_blk_last_access_time[4];
+    unsigned         m_blk_fill_time[4];
+    cache_block_state    m_blk_status[4];
+    bool             m_fine_grained;
+    
+    //tags for 128B management
+    new_addr_type   m_tag;
+    new_addr_type   m_addr;
+    unsigned        m_alloc_time;
+    unsigned        m_fill_time;
+    unsigned        m_last_access_time;
+    cache_block_state   m_status;
 
     new_addr_type   m_evicted_addr;
     unsigned        m_evicted_size;
@@ -749,6 +866,17 @@ public:
     {
         return addr & ~(m_line_sz-1);
     }
+    new_addr_type common_tag(new_addr_type addr)
+    {
+        return addr >> 26;
+    }
+    new_addr_type chunck_tag(new_addr_type addr)
+    {
+        new_addr_type first_14 = (addr>>12) & (16*1024-1);
+        new_addr_type last_2 = (addr >> 5) & 3;
+        first_14 <<= 2;
+        return first_14 | last_2;
+    }
     FuncCache get_cache_status() {return cache_status;}
     char *m_config_string;
     char *m_config_stringPrefL1;
@@ -824,12 +952,19 @@ public:
     tag_array(cache_config &config, int core_id, int type_id );
     ~tag_array();
 
-    enum cache_request_status probe( new_addr_type addr, unsigned &idx,unsigned sid,unsigned blksz,unsigned data_size ) const;
-    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx , unsigned sid,unsigned blksz,unsigned data_size);
-    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted,unsigned sid, unsigned blksz, unsigned data_size );
+    enum cache_request_status probe( new_addr_type common_tag, new_addr_type chunck_tag, unsigned &idx,unsigned sid,unsigned blksz,unsigned data_size ) const;
+    enum cache_request_status access( new_addr_type common_tag, new_addr_type chunck_tag, unsigned time, unsigned &idx , unsigned sid,unsigned blksz,unsigned data_size);
+    enum cache_request_status access( new_addr_type common_tag, new_addr_type chunck_tag, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted,unsigned sid, unsigned blksz, unsigned data_size );
 
-    void fill( new_addr_type addr, unsigned time, unsigned sid,unsigned blksz,unsigned data_size );
+    void fill( new_addr_type common_tag, unsigned chunck_tag, unsigned time, unsigned sid,unsigned blksz,unsigned data_size );
     void fill( unsigned idx, unsigned time ,unsigned sid,unsigned blksz, unsigned data_size);
+
+    enum cache_request_status probe( new_addr_type addr, unsigned &idx) const;
+    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx);
+    enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted);  
+
+    void fill( new_addr_type addr, unsigned time);
+    void fill( unsigned idx, unsigned time);
 
     unsigned size() const { return m_config.get_num_lines();}
     cache_block_t &get_block(unsigned idx) { return m_lines[idx];}
@@ -1070,7 +1205,7 @@ public:
     /// Sends next request to lower level of memory
     void cycle();
     /// Interface for response from lower memory level (model bandwidth restictions in caller)
-    void fill( mem_fetch *mf, unsigned time );
+    virtual void fill( mem_fetch *mf, unsigned time );
     /// Checks if mf is waiting to be filled by lower memory level
     bool waiting_for_fill( mem_fetch *mf );
     /// Are any (accepted) accesses that had to wait for memory now ready? (does not include accesses that "HIT")
@@ -1159,10 +1294,10 @@ protected:
     	  return ( (m_miss_queue.size()+num_miss) >= m_config.m_miss_queue_size );
     }
     /// Read miss handler without writeback
-    void send_read_request(new_addr_type addr, new_addr_type block_addr, unsigned cache_index, mem_fetch *mf,
+    virtual void send_read_request(new_addr_type addr, new_addr_type block_addr, unsigned cache_index, mem_fetch *mf,
     		unsigned time, bool &do_miss, std::list<cache_event> &events, bool read_only, bool wa);
     /// Read miss handler. Check MSHR hit or MSHR available
-    void send_read_request(new_addr_type addr, new_addr_type block_addr, unsigned cache_index, mem_fetch *mf,
+    virtual void send_read_request(new_addr_type addr, new_addr_type block_addr, unsigned cache_index, mem_fetch *mf,
     		unsigned time, bool &do_miss, bool &wb, cache_block_t &evicted, std::list<cache_event> &events, bool read_only, bool wa);
 
     /// Sub-class containing all metadata for port bandwidth management 
@@ -1291,7 +1426,7 @@ protected:
     //! A general function that takes the result of a tag_array probe
     //  and performs the correspding functions based on the cache configuration
     //  The access fucntion calls this function
-    enum cache_request_status
+    virtual enum cache_request_status
         process_tag_probe( bool wr,
                            enum cache_request_status status,
                            new_addr_type addr,
@@ -1313,8 +1448,192 @@ protected:
     // Member Function pointers - Set by configuration options
     // to the functions below each grouping
     /******* Write-hit configs *******/
-    enum cache_request_status
+    virtual enum cache_request_status
         (data_cache::*m_wr_hit)( new_addr_type addr,
+                                 unsigned cache_index,
+                                 mem_fetch *mf,
+                                 unsigned time,
+                                 std::list<cache_event> &events,
+                                 enum cache_request_status status );
+    /// Marks block as MODIFIED and updates block LRU
+    virtual enum cache_request_status
+        wr_hit_wb( new_addr_type addr,
+                   unsigned cache_index,
+                   mem_fetch *mf,
+                   unsigned time,
+                   std::list<cache_event> &events,
+                   enum cache_request_status status ); // write-back
+    virtual enum cache_request_status
+        wr_hit_wt( new_addr_type addr,
+                   unsigned cache_index,
+                   mem_fetch *mf,
+                   unsigned time,
+                   std::list<cache_event> &events,
+                   enum cache_request_status status ); // write-through
+
+    /// Marks block as INVALID and sends write request to lower level memory
+    virtual enum cache_request_status
+        wr_hit_we( new_addr_type addr,
+                   unsigned cache_index,
+                   mem_fetch *mf,
+                   unsigned time,
+                   std::list<cache_event> &events,
+                   enum cache_request_status status ); // write-evict
+    virtual enum cache_request_status
+        wr_hit_global_we_local_wb( new_addr_type addr,
+                                   unsigned cache_index,
+                                   mem_fetch *mf,
+                                   unsigned time,
+                                   std::list<cache_event> &events,
+                                   enum cache_request_status status );
+        // global write-evict, local write-back
+
+
+    /******* Write-miss configs *******/
+    virtual enum cache_request_status
+        (data_cache::*m_wr_miss)( new_addr_type addr,
+                                  unsigned cache_index,
+                                  mem_fetch *mf,
+                                  unsigned time,
+                                  std::list<cache_event> &events,
+                                  enum cache_request_status status );
+    /// Sends read request, and possible write-back request,
+    //  to lower level memory for a write miss with write-allocate
+    virtual enum cache_request_status
+        wr_miss_wa( new_addr_type addr,
+                    unsigned cache_index,
+                    mem_fetch *mf,
+                    unsigned time,
+                    std::list<cache_event> &events,
+                    enum cache_request_status status ); // write-allocate
+    virtual enum cache_request_status
+        wr_miss_no_wa( new_addr_type addr,
+                       unsigned cache_index,
+                       mem_fetch *mf,
+                       unsigned time,
+                       std::list<cache_event> &events,
+                       enum cache_request_status status ); // no write-allocate
+
+    // Currently no separate functions for reads
+    /******* Read-hit configs *******/
+    virtual enum cache_request_status
+        (data_cache::*m_rd_hit)( new_addr_type addr,
+                                 unsigned cache_index,
+                                 mem_fetch *mf,
+                                 unsigned time,
+                                 std::list<cache_event> &events,
+                                 enum cache_request_status status );
+    virtual enum cache_request_status
+        rd_hit_base( new_addr_type addr,
+                     unsigned cache_index,
+                     mem_fetch *mf,
+                     unsigned time,
+                     std::list<cache_event> &events,
+                     enum cache_request_status status );
+
+    /******* Read-miss configs *******/
+    virtual enum cache_request_status
+        (data_cache::*m_rd_miss)( new_addr_type addr,
+                                  unsigned cache_index,
+                                  mem_fetch *mf,
+                                  unsigned time,
+                                  std::list<cache_event> &events,
+                                  enum cache_request_status status );
+    virtual enum cache_request_status
+        rd_miss_base( new_addr_type addr,
+                      unsigned cache_index,
+                      mem_fetch*mf,
+                      unsigned time,
+                      std::list<cache_event> &events,
+                      enum cache_request_status status );
+
+};
+
+/// This is meant to model the first level data cache in Fermi.
+/// It is write-evict (global) or write-back (local) at
+/// the granularity of individual blocks
+/// (the policy used in fermi according to the CUDA manual)
+class l1_cache : public data_cache {
+public:
+    l1_cache(const char *name, cache_config &config,
+            int core_id, int type_id, mem_fetch_interface *memport,
+            mem_fetch_allocator *mfcreator, enum mem_fetch_status status )
+            : data_cache(name,config,core_id,type_id,memport,mfcreator,status, L1_WR_ALLOC_R, L1_WRBK_ACC){}
+
+    virtual ~l1_cache(){}
+    void init( mem_fetch_allocator *mfcreator )
+    {
+        m_memfetch_creator=mfcreator;
+
+        // Set read hit function
+        m_rd_hit = &l1_cache::rd_hit_base;
+
+        // Set read miss function
+        m_rd_miss = &l1_cache::rd_miss_base;
+
+        // Set write hit function
+        switch(m_config.m_write_policy){
+        // READ_ONLY is now a separate cache class, config is deprecated
+        case READ_ONLY:
+            assert(0 && "Error: Writable Data_cache set as READ_ONLY\n");
+            break; 
+        case WRITE_BACK: m_wr_hit = &l1_cache::wr_hit_wb; break;
+        case WRITE_THROUGH: m_wr_hit = &l1_cache::wr_hit_wt; break;
+        case WRITE_EVICT: m_wr_hit = &l1_cache::wr_hit_we; break;
+        case LOCAL_WB_GLOBAL_WT:
+            m_wr_hit = &l1_cache::wr_hit_global_we_local_wb;
+            break;
+        default:
+            assert(0 && "Error: Must set valid cache write policy\n");
+            break; // Need to set a write hit function
+        }
+
+        // Set write miss function
+        switch(m_config.m_write_alloc_policy){
+        case WRITE_ALLOCATE: m_wr_miss = &l1_cache::wr_miss_wa; break;
+        case NO_WRITE_ALLOCATE: m_wr_miss = &l1_cache::wr_miss_no_wa; break;
+        default:
+            assert(0 && "Error: Must set valid cache write miss policy\n");
+            break; // Need to set a write miss function
+        }
+    }
+    enum cache_request_status
+        access( new_addr_type addr,
+                mem_fetch *mf,
+                unsigned time,
+                std::list<cache_event> &events );
+protected:
+//! A general function that takes the result of a tag_array probe
+    //  and performs the correspding functions based on the cache configuration
+    //  The access fucntion calls this function
+    enum cache_request_status
+        process_tag_probe( bool wr,
+                           enum cache_request_status status,
+                           new_addr_type addr,
+                           unsigned cache_index,
+                           mem_fetch* mf,
+                           unsigned time,
+                           std::list<cache_event>& events );
+    
+
+protected:
+    l1_cache( const char *name,
+              cache_config &config,
+              int core_id,
+              int type_id,
+              mem_fetch_interface *memport,
+              mem_fetch_allocator *mfcreator,
+              enum mem_fetch_status status,
+              tag_array* new_tag_array )
+    : data_cache( name,
+                  config,
+                  core_id,type_id,memport,mfcreator,status, new_tag_array, L1_WR_ALLOC_R, L1_WRBK_ACC ){}
+
+    // Member Function pointers - Set by configuration options
+    // to the functions below each grouping
+    /******* Write-hit configs *******/
+    enum cache_request_status
+        (l1_cache::*m_wr_hit)( new_addr_type addr,
                                  unsigned cache_index,
                                  mem_fetch *mf,
                                  unsigned time,
@@ -1356,7 +1675,7 @@ protected:
 
     /******* Write-miss configs *******/
     enum cache_request_status
-        (data_cache::*m_wr_miss)( new_addr_type addr,
+        (l1_cache::*m_wr_miss)( new_addr_type addr,
                                   unsigned cache_index,
                                   mem_fetch *mf,
                                   unsigned time,
@@ -1382,7 +1701,7 @@ protected:
     // Currently no separate functions for reads
     /******* Read-hit configs *******/
     enum cache_request_status
-        (data_cache::*m_rd_hit)( new_addr_type addr,
+        (l1_cache::*m_rd_hit)( new_addr_type addr,
                                  unsigned cache_index,
                                  mem_fetch *mf,
                                  unsigned time,
@@ -1398,7 +1717,7 @@ protected:
 
     /******* Read-miss configs *******/
     enum cache_request_status
-        (data_cache::*m_rd_miss)( new_addr_type addr,
+        (l1_cache::*m_rd_miss)( new_addr_type addr,
                                   unsigned cache_index,
                                   mem_fetch *mf,
                                   unsigned time,
@@ -1412,40 +1731,14 @@ protected:
                       std::list<cache_event> &events,
                       enum cache_request_status status );
 
-};
-
-/// This is meant to model the first level data cache in Fermi.
-/// It is write-evict (global) or write-back (local) at
-/// the granularity of individual blocks
-/// (the policy used in fermi according to the CUDA manual)
-class l1_cache : public data_cache {
-public:
-    l1_cache(const char *name, cache_config &config,
-            int core_id, int type_id, mem_fetch_interface *memport,
-            mem_fetch_allocator *mfcreator, enum mem_fetch_status status )
-            : data_cache(name,config,core_id,type_id,memport,mfcreator,status, L1_WR_ALLOC_R, L1_WRBK_ACC){}
-
-    virtual ~l1_cache(){}
-
-    virtual enum cache_request_status
-        access( new_addr_type addr,
-                mem_fetch *mf,
-                unsigned time,
-                std::list<cache_event> &events );
-
-protected:
-    l1_cache( const char *name,
-              cache_config &config,
-              int core_id,
-              int type_id,
-              mem_fetch_interface *memport,
-              mem_fetch_allocator *mfcreator,
-              enum mem_fetch_status status,
-              tag_array* new_tag_array )
-    : data_cache( name,
-                  config,
-                  core_id,type_id,memport,mfcreator,status, new_tag_array, L1_WR_ALLOC_R, L1_WRBK_ACC ){}
-
+    /// Read miss handler without writeback
+    void send_read_request(new_addr_type addr, new_addr_type block_addr, unsigned cache_index, mem_fetch *mf,
+    		unsigned time, bool &do_miss, std::list<cache_event> &events, bool read_only, bool wa);
+    /// Read miss handler. Check MSHR hit or MSHR available
+    void send_read_request(new_addr_type addr, new_addr_type block_addr, unsigned cache_index, mem_fetch *mf,
+    		unsigned time, bool &do_miss, bool &wb, cache_block_t &evicted, std::list<cache_event> &events, bool read_only, bool wa);
+    /// Interface for response from lower memory level (model bandwidth restictions in caller)
+    virtual void fill( mem_fetch *mf, unsigned time );
 };
 
 /// Models second level shared cache with global write-back
