@@ -286,12 +286,9 @@ void tag_array::fill( unsigned index, unsigned time )
     
     m_lines[index].fill(time);
 }
-enum cache_request_status tag_array::probe( new_addr_type common_tag, new_addr_type chunck_tag, unsigned &idx, unsigned &sid, unsigned blksz, unsigned data_size ) const {
+enum cache_request_status tag_array::probe( new_addr_type addr,new_addr_type common_tag, new_addr_type chunck_tag, unsigned &idx, unsigned &sid, unsigned blksz, unsigned data_size ) const {
     //assert( m_config.m_write_policy == READ_ONLY );
     unsigned set_index = m_config.set_index(addr);
-    new_addr_type tag = m_config.tag(addr);
-    new_addr_type common_tag = m_config.common_tag(addr);
-    new_addr_type chunck_tag = m_config.chunck_tag(addr);
 
     unsigned invalid_line = (unsigned)-1;
     unsigned invalid_sid = (unsigned)-1;
@@ -1972,13 +1969,14 @@ l1_cache::access( new_addr_type addr,
 {
     assert( mf->get_data_size() <= m_config.get_line_sz());
     bool wr = mf->get_is_write();
+    new_addr_type block_addr = m_config.block_addr(addr);
     new_addr_type common_tag = m_config.common_tag(addr);
     new_addr_type chunck_tag = m_config.chunck_tag(addr);
     unsigned data_size=mf->get_data_size();
     unsigned cache_index = (unsigned)-1;
     
     enum cache_request_status probe_status
-        = m_tag_array->probe( common_tag, chunck_tag, cache_index,sid,current_blksz,data_size );
+        = m_tag_array->probe( block_addr, common_tag, chunck_tag, cache_index,sid,current_blksz,data_size );
     enum cache_request_status access_status
         = process_tag_probe( wr, probe_status, addr, cache_index, mf, time, events );
     m_stats.inc_stats(mf->get_access_type(),

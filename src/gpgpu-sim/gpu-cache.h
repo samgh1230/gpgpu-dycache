@@ -952,7 +952,7 @@ public:
     tag_array(cache_config &config, int core_id, int type_id );
     ~tag_array();
 
-    enum cache_request_status probe( new_addr_type common_tag, new_addr_type chunck_tag, unsigned &idx,unsigned sid,unsigned blksz,unsigned data_size ) const;
+    enum cache_request_status probe( new_addr_type addr, new_addr_type common_tag, new_addr_type chunck_tag, unsigned &idx,unsigned sid,unsigned blksz,unsigned data_size ) const;
     enum cache_request_status access( new_addr_type common_tag, new_addr_type chunck_tag, unsigned time, unsigned &idx , unsigned sid,unsigned blksz,unsigned data_size);
     enum cache_request_status access( new_addr_type common_tag, new_addr_type chunck_tag, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted,unsigned sid, unsigned blksz, unsigned data_size );
 
