@@ -492,10 +492,11 @@ struct cache_block_t {
     bool chunck_tag_match(new_addr_type chunck_tag, unsigned &sid, unsigned blksz, unsigned data_size)
     {
         new_addr_type ck_tag;
+        int i,j;
         switch(blksz){
             case 128:
                 ck_tag = (chunck_tag>>2)<<2;
-                for(int i=0; i<4; i++){
+                for(i=0; i<4; i++){
                     if(ck_tag!=m_blk_tag[i]){
                         sid=(unsigned)-1;
                         return false;
@@ -509,7 +510,7 @@ struct cache_block_t {
                 switch(data_size){
                     case 128:
                         ck_tag=(chunck_tag>>2)<<2;
-                        for(int i=0;i<4;i++)
+                        for(i=0;i<4;i++)
                         {
                             if(ck_tag!=m_blk_tag[i]){
                                 sid=(unsigned)-1;
@@ -523,8 +524,8 @@ struct cache_block_t {
                     case 64:
                     case 32:
                         ck_tag=(chunck_tag>>1)<<1;
-                        for(int i=0;i<4;i=i+2){
-                            for(int j=0;j<2;j++){
+                        for(i=0;i<4;i=i+2){
+                            for(j=0;j<2;j++){
                                 if(ck_tag!=m_blk_tag[i+j])
                                     break;
                                 else    
@@ -545,7 +546,7 @@ struct cache_block_t {
                 switch(data_size){
                     case 128:
                         ck_tag=(chunck_tag>>2)<<2;
-                        for(int i=0;i<4;i++)
+                        for(i=0;i<4;i++)
                         {
                             if(ck_tag!=m_blk_tag[i]){
                                 sid=(unsigned)-1;
@@ -558,8 +559,8 @@ struct cache_block_t {
                     break;
                     case 64:
                         ck_tag=(chunck_tag>>1)<<1;
-                        for(int i=0;i<3;i=i+1){
-                            for(int j=0;j<2;j++){
+                        for(i=0;i<3;i=i+1){
+                            for(j=0;j<2;j++){
                                 if(ck_tag!=m_blk_tag[i+j])
                                     break;
                                 else    
@@ -575,7 +576,7 @@ struct cache_block_t {
                         return false;
                     break;
                     case 32:
-                        for(int i=0;i<4;i++){
+                        for(i=0;i<4;i++){
                             if(chunck_tag==m_blk_tag[i]){
                                 sid=i;
                                 return true;
@@ -1449,7 +1450,7 @@ protected:
     // Member Function pointers - Set by configuration options
     // to the functions below each grouping
     /******* Write-hit configs *******/
-    virtual enum cache_request_status
+    enum cache_request_status
         (data_cache::*m_wr_hit)( new_addr_type addr,
                                  unsigned cache_index,
                                  mem_fetch *mf,
@@ -1491,7 +1492,7 @@ protected:
 
 
     /******* Write-miss configs *******/
-    virtual enum cache_request_status
+    enum cache_request_status
         (data_cache::*m_wr_miss)( new_addr_type addr,
                                   unsigned cache_index,
                                   mem_fetch *mf,
@@ -1517,7 +1518,7 @@ protected:
 
     // Currently no separate functions for reads
     /******* Read-hit configs *******/
-    virtual enum cache_request_status
+    enum cache_request_status
         (data_cache::*m_rd_hit)( new_addr_type addr,
                                  unsigned cache_index,
                                  mem_fetch *mf,
@@ -1533,7 +1534,7 @@ protected:
                      enum cache_request_status status );
 
     /******* Read-miss configs *******/
-    virtual enum cache_request_status
+    enum cache_request_status
         (data_cache::*m_rd_miss)( new_addr_type addr,
                                   unsigned cache_index,
                                   mem_fetch *mf,
