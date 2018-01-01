@@ -302,7 +302,7 @@ enum cache_request_status tag_array::probe( new_addr_type addr,new_addr_type com
     for (unsigned way=0; way<m_config.m_assoc; way++) {
         unsigned index = set_index*m_config.m_assoc+way;
         cache_block_t *line = &m_lines[index];
-        if(common_tag == line.m_common_tag){
+        if(common_tag == line->m_common_tag){
             switch(blksz)
             {
                 case 128:
@@ -493,14 +493,14 @@ enum cache_request_status tag_array::probe( new_addr_type addr,new_addr_type com
                                     unsigned alloc_time;
                                     unsigned min;
                                     if(line->m_blk_status[0]!=RESERVED){
-                                        last_access_time=line->m_blk_alloc_time[0];
+                                        alloc_time=line->m_blk_alloc_time[0];
                                         min=0;
                                     } else {
-                                        last_access_time=line->m_blk_alloc_time[2];
+                                        alloc_time=line->m_blk_alloc_time[2];
                                         min=2;
                                     }
-                                    if(min==0&&last_access_time>line->m_blk_alloc_time[2]&&line->m_blk_status[2]!=RESERVED){
-                                        last_access_time=line->m_blk_alloc_time[2];
+                                    if(min==0&&alloc_time>line->m_blk_alloc_time[2]&&line->m_blk_status[2]!=RESERVED){
+                                        alloc_time=line->m_blk_alloc_time[2];
                                         min=2;
                                     }
                                     if(alloc_time<valid_timestamp){
@@ -563,7 +563,7 @@ enum cache_request_status tag_array::probe( new_addr_type addr,new_addr_type com
                                 (line->m_blk_status[1]!=RESERVED&&line->m_blk_status[2]!=RESERVED)||
                                 (line->m_blk_status[2]!=RESERVED&&line->m_blk_status[3]!=RESERVED)){
                             all_reserved = false;
-                            if(line->m_blk_status[0]==INVALID&&line->m_blk_status[1]==INVALID)){
+                            if(line->m_blk_status[0]==INVALID&&line->m_blk_status[1]==INVALID){
                                 invalid_line = index;
                                 invalid_sid=0;
                             } else if(line->m_blk_status[1]==INVALID&&line->m_blk_status[2]==INVALID){
@@ -1802,7 +1802,7 @@ l1_cache::rd_miss_base( new_addr_type addr,
         // If evicted block is modified and not a write-through
         // (already modified lower level)
         if(wb && (m_config.m_write_policy != WRITE_THROUGH) ){
-            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_blk_addr,
+            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_blk_addr[0],
                m_wrbk_type,current_blksz/*m_config.get_line_sz()*/,true);
             send_write_request(wb, WRITE_BACK_REQUEST_SENT, time, events);
         }
