@@ -251,7 +251,7 @@ enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, 
             if( m_lines[idx].m_status==MODIFIED){//m_lines[idx].m_status == MODIFIED ) {
                 wb = true;
                 evicted = m_lines[idx];
-                m_lines[idx].set_evicted_blk(sid,blksz,data_size, evicted);
+                //m_lines[idx].set_evicted_blk(sid,blksz,data_size, evicted);
             }
             m_lines[idx].allocate( m_config.tag(addr), m_config.block_addr(addr), time );
         }
@@ -727,16 +727,16 @@ enum cache_request_status tag_array::probe( new_addr_type addr,new_addr_type com
     return MISS;
 }
 
-enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, unsigned &idx ,unsigned sid,unsigned blksz,unsigned data_size)
+enum cache_request_status tag_array::access( new_addr_type addr, new_addr_type common_tag, new_addr_type chunck_tag, unsigned time, unsigned &idx ,unsigned &sid,unsigned blksz,unsigned data_size)
 {
     bool wb=false;
     cache_block_t evicted;
-    enum cache_request_status result = access(addr,time,idx,wb,evicted,sid,blksz,data_size);
+    enum cache_request_status result = access(addr,common_tag,chunck_tag,time,idx,wb,evicted,sid,blksz,data_size);
     assert(!wb);
     return result;
 }
 
-enum cache_request_status tag_array::access( new_addr_type addr, new_addr_type common_tag, new_addr_type chunck_tag, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted,unsigned sid,unsigned blksz,unsigned data_size ) 
+enum cache_request_status tag_array::access( new_addr_type addr, new_addr_type common_tag, new_addr_type chunck_tag, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted,unsigned &sid,unsigned blksz,unsigned data_size ) 
 {
     m_access++;
     shader_cache_access_log(m_core_id, m_type_id, 0); // log accesses to cache
@@ -790,9 +790,11 @@ void tag_array::fill( unsigned index, unsigned time , unsigned sid, unsigned blk
 }
 void tag_array::flush() 
 {
-    for (unsigned i=0; i < m_config.get_num_lines(); i++)
+    for (unsigned i=0; i < m_config.get_num_lines(); i++){
+        m_lines[i].m_status = INVALID;
         for(int j=0;j<4;j++)
-            m_lines[i].m_status[j] = INVALID;
+            m_lines[i].m_blk_status[j] = INVALID;
+    }
 }
 
 float tag_array::windowed_miss_rate( ) const
@@ -1208,7 +1210,7 @@ void baseline_cache::cycle(){
 }
 
 /// Interface for response from lower memory level (model bandwidth restictions in caller)
-virtual void baseline_cache::fill(mem_fetch *mf, unsigned time){
+void baseline_cache::fill(mem_fetch *mf, unsigned time){
     extra_mf_fields_lookup::iterator e = m_extra_mf_fields.find(mf);
     assert( e != m_extra_mf_fields.end() );
     assert( e->second.m_valid );
@@ -1347,7 +1349,7 @@ void l1_cache::send_read_request(new_addr_type addr, new_addr_type block_addr, u
     	if(read_only)
     		m_tag_array->access(block_addr,time,cache_index);
     	else
-    		m_tag_array->access(block_addr,time,cache_index,wb,evicted,sid,current_blksz,data_size);
+    		m_tag_array->access(block_addr,common_tag,chunck_tag,time,cache_index,wb,evicted,sid,current_blksz,data_size);
 
         m_mshrs.add(block_addr,mf);
         m_extra_mf_fields[mf] = extra_mf_fields(block_addr,cache_index, mf->get_data_size());
@@ -1492,7 +1494,7 @@ data_cache::wr_miss_wa( new_addr_type addr,
         // If evicted block is modified and not a write-through
         // (already modified lower level)
         if( wb && (m_config.m_write_policy != WRITE_THROUGH) ) { 
-            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr,//
+            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_addr,//
                 m_wrbk_type,m_config.get_line_sz(),true);
             m_miss_queue.push_back(wb);
             wb->set_status(m_miss_queue_status,time);
@@ -1580,7 +1582,7 @@ data_cache::rd_miss_base( new_addr_type addr,
         // (already modified lower level)
 
         if(wb && (m_config.m_write_policy != WRITE_THROUGH) ){
-            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr[0],
+            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_addr,
                m_wrbk_type,m_config.get_line_sz(),true);
             send_write_request(wb, WRITE_BACK_REQUEST_SENT, time, events);
         }
@@ -1711,7 +1713,7 @@ l1_cache::wr_miss_wa( new_addr_type addr,
         // If evicted block is modified and not a write-through
         // (already modified lower level)
         if( wb && (m_config.m_write_policy != WRITE_THROUGH) ) { 
-            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr[0],//
+            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_blk_addr[0],//
                 m_wrbk_type,/*m_config.get_line_sz()*/current_blksz,true);
             m_miss_queue.push_back(wb);
             wb->set_status(m_miss_queue_status,time);
@@ -1800,7 +1802,7 @@ l1_cache::rd_miss_base( new_addr_type addr,
         // If evicted block is modified and not a write-through
         // (already modified lower level)
         if(wb && (m_config.m_write_policy != WRITE_THROUGH) ){
-            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr[0],
+            mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_blk_addr,
                m_wrbk_type,current_blksz/*m_config.get_line_sz()*/,true);
             send_write_request(wb, WRITE_BACK_REQUEST_SENT, time, events);
         }
@@ -1847,7 +1849,7 @@ read_only_cache::access( new_addr_type addr,
 //! A general function that takes the result of a tag_array probe
 //  and performs the correspding functions based on the cache configuration
 //  The access fucntion calls this function
-virtual enum cache_request_status
+enum cache_request_status
 data_cache::process_tag_probe( bool wr,
                                enum cache_request_status probe_status,
                                new_addr_type addr,
@@ -1972,6 +1974,7 @@ l1_cache::access( new_addr_type addr,
     new_addr_type block_addr = m_config.block_addr(addr);
     new_addr_type common_tag = m_config.common_tag(addr);
     new_addr_type chunck_tag = m_config.chunck_tag(addr);
+    unsigned sid = -1;
     unsigned data_size=mf->get_data_size();
     unsigned cache_index = (unsigned)-1;
     
@@ -2015,7 +2018,7 @@ enum cache_request_status tex_cache::access( new_addr_type addr, mem_fetch *mf,
     unsigned cache_index = (unsigned)-1;
 //    unsigned sid = m_config.get_sid(addr);
     unsigned data_size = mf->get_data_size();
-    enum cache_request_status status = m_tags.access(block_addr,time,cache_index,0,128,data_size);
+    enum cache_request_status status = m_tags.access(block_addr,time,cache_index);
     enum cache_request_status cache_status = RESERVATION_FAIL;
     assert( status != RESERVATION_FAIL );
     assert( status != HIT_RESERVED ); // as far as tags are concerned: HIT or MISS
