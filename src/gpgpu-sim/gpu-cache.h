@@ -74,7 +74,7 @@ struct cache_block_t {
             m_fine_grained = false;
 
             m_tag = 0;
-            m_block_addr = 0;
+            m_addr = 0;
             m_alloc_time = 0;
             m_fill_time = 0;
             m_last_access_time = 0;
@@ -84,7 +84,7 @@ struct cache_block_t {
     void allocate(new_addr_type tag, new_addr_type blk_addr, unsigned time)
     {
         m_tag = tag;
-        m_addr = block_addr;
+        m_addr = tag;
         m_alloc_time = time;
         m_last_access_time = time;
         m_status = RESERVED; 
