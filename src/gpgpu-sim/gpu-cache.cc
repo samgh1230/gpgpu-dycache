@@ -736,11 +736,11 @@ enum cache_request_status tag_array::access( new_addr_type addr, unsigned time, 
     return result;
 }
 
-enum cache_request_status tag_array::access( new_addr_type common_tag, new_addr_type chunck_tag, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted,unsigned sid,unsigned blksz,unsigned data_size ) 
+enum cache_request_status tag_array::access( new_addr_type addr, new_addr_type common_tag, new_addr_type chunck_tag, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted,unsigned sid,unsigned blksz,unsigned data_size ) 
 {
     m_access++;
     shader_cache_access_log(m_core_id, m_type_id, 0); // log accesses to cache
-    enum cache_request_status status = probe(common_tag,chunck_tag,idx,sid,blksz,data_size);
+    enum cache_request_status status = probe(addr,common_tag,chunck_tag,idx,sid,blksz,data_size);
     switch (status) {
     case HIT_RESERVED: 
         m_pending_hit++;
@@ -772,11 +772,11 @@ enum cache_request_status tag_array::access( new_addr_type common_tag, new_addr_
     return status;
 }
 
-void tag_array::fill( new_addr_type common_tag, new_addr_type chunck_tag, unsigned time, unsigned sid, unsigned blksz, unsigned data_size )
+void tag_array::fill( new_addr_type addr, new_addr_type common_tag, new_addr_type chunck_tag, unsigned time, unsigned sid, unsigned blksz, unsigned data_size )
 {
     assert( m_config.m_alloc_policy == ON_FILL );
     unsigned idx;
-    enum cache_request_status status = probe(common_tag,chunck_tag,idx,sid,blksz,data_size);
+    enum cache_request_status status = probe(addr, common_tag,chunck_tag,idx,sid,blksz,data_size);
     assert(status==MISS); // MSHR should have prevented redundant memory request
     m_lines[idx].allocate( common_tag,chunck_tag, time ,sid,blksz,data_size);
     
@@ -1272,7 +1272,7 @@ void baseline_cache::display_state( FILE *fp ) const{
 }
 
 /// Read miss handler without writeback
-virtual void baseline_cache::send_read_request(new_addr_type addr, new_addr_type block_addr, unsigned cache_index, mem_fetch *mf,
+void baseline_cache::send_read_request(new_addr_type addr, new_addr_type block_addr, unsigned cache_index, mem_fetch *mf,
 		unsigned time, bool &do_miss, std::list<cache_event> &events, bool read_only, bool wa){
 
 	bool wb=false;
@@ -1281,7 +1281,7 @@ virtual void baseline_cache::send_read_request(new_addr_type addr, new_addr_type
 }
 
 /// Read miss handler. Check MSHR hit or MSHR available
-virtual void baseline_cache::send_read_request(new_addr_type addr, new_addr_type block_addr, unsigned cache_index, mem_fetch *mf,
+void baseline_cache::send_read_request(new_addr_type addr, new_addr_type block_addr, unsigned cache_index, mem_fetch *mf,
 		unsigned time, bool &do_miss, bool &wb, cache_block_t &evicted, std::list<cache_event> &events, bool read_only, bool wa){
 
     bool mshr_hit = m_mshrs.probe(block_addr);
@@ -1337,15 +1337,15 @@ void l1_cache::send_read_request(new_addr_type addr, new_addr_type block_addr, u
 
     if ( mshr_hit && mshr_avail ) {
     	if(read_only)
-    		m_tag_array->access(block_addr,time,cache_index,sid,current_blksz,data_size);
+    		m_tag_array->access(block_addr,time,cache_index);
     	else
-    		m_tag_array->access(common_tag,chunck_tag,time,cache_index,wb,evicted,sid,current_blksz,data_size);
+    		m_tag_array->access(block_addr, common_tag,chunck_tag,time,cache_index,wb,evicted,sid,current_blksz,data_size);
 
         m_mshrs.add(block_addr,mf);
         do_miss = true;
     } else if ( !mshr_hit && mshr_avail && (m_miss_queue.size() < m_config.m_miss_queue_size) ) {
     	if(read_only)
-    		m_tag_array->access(block_addr,time,cache_index,sid,current_blksz,data_size);
+    		m_tag_array->access(block_addr,time,cache_index);
     	else
     		m_tag_array->access(block_addr,time,cache_index,wb,evicted,sid,current_blksz,data_size);
 
@@ -1377,7 +1377,7 @@ void data_cache::send_write_request(mem_fetch *mf, cache_event request, unsigned
 /****** Write-hit functions (Set by config file) ******/
 
 /// Write-back hit: Mark block as modified
-virtual cache_request_status data_cache::wr_hit_wb(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
+cache_request_status data_cache::wr_hit_wb(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
 	new_addr_type block_addr = m_config.block_addr(addr);
     unsigned data_size = mf->get_data_size();
     unsigned sid = m_config.get_sid(addr);
@@ -1390,7 +1390,7 @@ virtual cache_request_status data_cache::wr_hit_wb(new_addr_type addr, unsigned 
 }
 
 /// Write-through hit: Directly send request to lower level memory
-virtual cache_request_status data_cache::wr_hit_wt(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
+cache_request_status data_cache::wr_hit_wt(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
 	if(miss_queue_full(0))
 		return RESERVATION_FAIL; // cannot handle request this cycle
 
@@ -1408,7 +1408,7 @@ virtual cache_request_status data_cache::wr_hit_wt(new_addr_type addr, unsigned 
 }
 
 /// Write-evict hit: Send request to lower level memory and invalidate corresponding block
-virtual cache_request_status data_cache::wr_hit_we(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
+cache_request_status data_cache::wr_hit_we(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
 	if(miss_queue_full(0))
 		return RESERVATION_FAIL; // cannot handle request this cycle
 
@@ -1426,7 +1426,7 @@ virtual cache_request_status data_cache::wr_hit_we(new_addr_type addr, unsigned 
 }
 
 /// Global write-evict, local write-back: Useful for private caches
-virtual enum cache_request_status data_cache::wr_hit_global_we_local_wb(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
+enum cache_request_status data_cache::wr_hit_global_we_local_wb(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
 	bool evict = (mf->get_access_type() == GLOBAL_ACC_W); // evict a line that hits on global memory write
 	if(evict)
 		return wr_hit_we(addr, cache_index, mf, time, events, status); // Write-evict
@@ -1438,7 +1438,7 @@ virtual enum cache_request_status data_cache::wr_hit_global_we_local_wb(new_addr
 
 /// Write-allocate miss: Send write request to lower level memory
 // and send a read request for the same block
-virtual enum cache_request_status
+enum cache_request_status
 data_cache::wr_miss_wa( new_addr_type addr,
                         unsigned cache_index, mem_fetch *mf,
                         unsigned time, std::list<cache_event> &events,
@@ -1504,7 +1504,7 @@ data_cache::wr_miss_wa( new_addr_type addr,
 }
 
 /// No write-allocate miss: Simply send write request to lower level memory
-virtual enum cache_request_status
+enum cache_request_status
 data_cache::wr_miss_no_wa( new_addr_type addr,
                            unsigned cache_index,
                            mem_fetch *mf,
@@ -1525,7 +1525,7 @@ data_cache::wr_miss_no_wa( new_addr_type addr,
 
 /// Baseline read hit: Update LRU status of block.
 // Special case for atomic instructions -> Mark block as modified
-virtual enum cache_request_status
+enum cache_request_status
 data_cache::rd_hit_base( new_addr_type addr,
                          unsigned cache_index,
                          mem_fetch *mf,
@@ -1552,7 +1552,7 @@ data_cache::rd_hit_base( new_addr_type addr,
 
 /// Baseline read miss: Send read request to lower level memory,
 // perform write-back as necessary
-virtual enum cache_request_status
+enum cache_request_status
 data_cache::rd_miss_base( new_addr_type addr,
                           unsigned cache_index,
                           mem_fetch *mf,
@@ -1595,7 +1595,7 @@ cache_request_status l1_cache::wr_hit_wb(new_addr_type addr, unsigned cache_inde
     new_addr_type chunck_tag = m_config.chunck_tag(addr);
     unsigned data_size = mf->get_data_size();
     unsigned sid = m_config.get_sid(addr);
-	m_tag_array->access(common_tag,chunck_tag,time,cache_index,sid,current_blksz,data_size); // update LRU state
+	m_tag_array->access(block_addr, common_tag,chunck_tag,time,cache_index,sid,current_blksz,data_size); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	//block.m_status = MODIFIED;
     block.set_blk_status(MODIFIED,sid,current_blksz,data_size);
@@ -1613,7 +1613,7 @@ cache_request_status l1_cache::wr_hit_wt(new_addr_type addr, unsigned cache_inde
     new_addr_type chunck_tag = m_config.chunck_tag(addr);
     unsigned sid = m_config.get_sid(addr);
     unsigned data_size = mf->get_data_size();
-	m_tag_array->access(common_tag,chunck_tag,time,cache_index,sid,current_blksz,data_size); // update LRU state
+	m_tag_array->access(block_addr,common_tag,chunck_tag,time,cache_index,sid,current_blksz,data_size); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	//block.m_status = MODIFIED;
     block.set_blk_status(MODIFIED,sid,current_blksz,data_size);
@@ -1625,7 +1625,7 @@ cache_request_status l1_cache::wr_hit_wt(new_addr_type addr, unsigned cache_inde
 }
 
 /// Write-evict hit: Send request to lower level memory and invalidate corresponding block
-cache_request_status data_cache::wr_hit_we(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
+cache_request_status l1_cache::wr_hit_we(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
 	if(miss_queue_full(0))
 		return RESERVATION_FAIL; // cannot handle request this cycle
 
@@ -1643,7 +1643,7 @@ cache_request_status data_cache::wr_hit_we(new_addr_type addr, unsigned cache_in
 }
 
 /// Global write-evict, local write-back: Useful for private caches
-enum cache_request_status data_cache::wr_hit_global_we_local_wb(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
+enum cache_request_status l1_cache::wr_hit_global_we_local_wb(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
 	bool evict = (mf->get_access_type() == GLOBAL_ACC_W); // evict a line that hits on global memory write
 	if(evict)
 		return wr_hit_we(addr, cache_index, mf, time, events, status); // Write-evict
@@ -1656,7 +1656,7 @@ enum cache_request_status data_cache::wr_hit_global_we_local_wb(new_addr_type ad
 /// Write-allocate miss: Send write request to lower level memory
 // and send a read request for the same block
 enum cache_request_status
-data_cache::wr_miss_wa( new_addr_type addr,
+l1_cache::wr_miss_wa( new_addr_type addr,
                         unsigned cache_index, mem_fetch *mf,
                         unsigned time, std::list<cache_event> &events,
                         enum cache_request_status status )
@@ -1757,7 +1757,7 @@ l1_cache::rd_hit_base( new_addr_type addr,
     new_addr_type chunck_tag = m_config.chunck_tag(addr);
     unsigned sid=m_config.get_sid(addr);
     unsigned data_size=mf->get_data_size();
-    m_tag_array->access(common_tag,chunck_tag,time,cache_index,sid,current_blksz,data_size);
+    m_tag_array->access(block_addr,common_tag,chunck_tag,time,cache_index,sid,current_blksz,data_size);
     // Atomics treated as global read/write requests - Perform read, mark line as
     // MODIFIED
     if(mf->isatomic()){ 
