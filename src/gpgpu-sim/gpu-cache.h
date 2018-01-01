@@ -91,7 +91,7 @@ struct cache_block_t {
     }
     void allocate( new_addr_type c_tag, new_addr_type tag, unsigned time , unsigned sid/*index free start chunck*/, unsigned blksz,unsigned data_size)
     {
-        common_tag = c_tag;
+        m_common_tag = c_tag;
         switch(blksz){
             case 128:
                 assert(sid==0);
@@ -110,7 +110,7 @@ struct cache_block_t {
                         assert(sid==0);
                         for(int i=0;i<4;i++)
                         {
-                            m_tag[i]=tag++;
+                            m_blk_tag[i]=tag++;
                             m_blk_addr[i]=tag++;
                             m_blk_alloc_time[i]=time;
                             m_blk_last_access_time[i]=time;
@@ -151,7 +151,7 @@ struct cache_block_t {
                         assert(sid==0);
                         for(int i=0;i<4;i++){
                             m_blk_tag[i]=tag++;
-                            m_blk_block_addr[i]=tag++;
+                            m_blk_addr[i]=tag++;
                             m_blk_alloc_time[i]=time;
                             m_blk_last_access_time[i]=time;
                             m_blk_fill_time[i]=0;
@@ -193,7 +193,7 @@ struct cache_block_t {
             case 128:
                 assert(sid==0);
                 for(int i=0;i<4;i++){
-                    assert( m_status[i] == RESERVED );
+                    assert( m_blk_status[i] == RESERVED );
                     m_blk_status[i]=VALID;
                     m_blk_fill_time[i]=time;
                 }
@@ -205,7 +205,7 @@ struct cache_block_t {
                     assert(sid==0);
                     for(int i=0;i<4;i++)
                     {
-                        assert(m_status[i]==RESERVED);
+                        assert(m_blk_status[i]==RESERVED);
                         m_blk_status[i] = VALID;
                         m_blk_fill_time[i]=time;
                     }
@@ -214,7 +214,7 @@ struct cache_block_t {
                     assert(sid==0||sid==2);
                     for(int i=0;i<2;i++)
                     {
-                        assert(m_status[sid+i]==RESERVED);
+                        assert(m_blk_status[sid+i]==RESERVED);
                         m_blk_status[sid+i]=VALID;
                         m_blk_fill_time[sid+i]=time;
                     }
@@ -224,7 +224,7 @@ struct cache_block_t {
                     assert(false);
                     for(int i=0;i<2;i++)
                     {
-                        assert(m_status[sid+i]==RESERVED);
+                        assert(m_blk_status[sid+i]==RESERVED);
                         m_blk_status[sid+i]=VALID;
                         m_blk_fill_time[sid+i]=time;
                     }
@@ -236,7 +236,7 @@ struct cache_block_t {
                     case 128:
                     assert(sid==0);
                     for(int i=0;i<4;i++){
-                       assert( m_status[i] == RESERVED );
+                       assert( m_blk_status[i] == RESERVED );
                         m_blk_status[i]=VALID;
                         m_blk_fill_time[i]=time;
                     }
@@ -244,14 +244,14 @@ struct cache_block_t {
                     case 64:
                     assert(sid==0||sid==2);
                     for(int i=0;i<2;i++){
-                       assert( m_status[sid+i] == RESERVED );
+                       assert( m_blk_status[sid+i] == RESERVED );
                         m_blk_status[sid+i]=VALID;
                         m_blk_fill_time[sid+i]=time;
                     }
                     break;
                     case 32:
                         assert(sid<4);
-                        assert( m_status[sid] == RESERVED );
+                        assert( m_blk_status[sid] == RESERVED );
                         m_blk_status[sid]=VALID;
                         m_blk_fill_time[sid]=time;
                     break;
@@ -436,7 +436,7 @@ struct cache_block_t {
                             m_blk_status[i]=state;
                     break;
                     case 64:
-                        assert(sid==0||sid==2)
+                        assert(sid==0||sid==2);
                         for(int i=0;i<2;i++)
                             m_blk_status[sid+i]=state;
                     break;
@@ -491,9 +491,10 @@ struct cache_block_t {
 
     bool chunck_tag_match(new_addr_type chunck_tag, unsigned &sid, unsigned blksz, unsigned data_size)
     {
+        new_addr_type ck_tag;
         switch(blksz){
             case 128:
-                new_addr_type ck_tag = (chunck_tag>>2)<<2;
+                ck_tag = (chunck_tag>>2)<<2;
                 for(int i=0; i<4; i++){
                     if(ck_tag!=m_blk_tag[i]){
                         sid=(unsigned)-1;
@@ -507,7 +508,7 @@ struct cache_block_t {
             case 64:
                 switch(data_size){
                     case 128:
-                        new_addr_type ck_tag=(chunck_tag>>2)<<2;
+                        ck_tag=(chunck_tag>>2)<<2;
                         for(int i=0;i<4;i++)
                         {
                             if(ck_tag!=m_blk_tag[i]){
@@ -521,7 +522,7 @@ struct cache_block_t {
                     break;
                     case 64:
                     case 32:
-                        new_addr_type ck_tag=(chunck_tag>>1)<<1;
+                        ck_tag=(chunck_tag>>1)<<1;
                         for(int i=0;i<4;i=i+2){
                             for(int j=0;j<2;j++){
                                 if(ck_tag!=m_blk_tag[i+j])
@@ -543,7 +544,7 @@ struct cache_block_t {
             case 32:
                 switch(data_size){
                     case 128:
-                        new_addr_type ck_tag=(chunck_tag>>2)<<2;
+                        ck_tag=(chunck_tag>>2)<<2;
                         for(int i=0;i<4;i++)
                         {
                             if(ck_tag!=m_blk_tag[i]){
@@ -556,7 +557,7 @@ struct cache_block_t {
                         return true;
                     break;
                     case 64:
-                        new_addr_type ck_tag=(chunck_tag>>1)<<1;
+                        ck_tag=(chunck_tag>>1)<<1;
                         for(int i=0;i<3;i=i+1){
                             for(int j=0;j<2;j++){
                                 if(ck_tag!=m_blk_tag[i+j])
