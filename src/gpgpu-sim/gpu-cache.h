@@ -1604,6 +1604,7 @@ public:
                 mem_fetch *mf,
                 unsigned time,
                 std::list<cache_event> &events );
+    virtual void fill( mem_fetch *mf, unsigned time );
 protected:
 //! A general function that takes the result of a tag_array probe
     //  and performs the correspding functions based on the cache configuration
@@ -1740,7 +1741,7 @@ protected:
     void send_read_request(new_addr_type addr, new_addr_type block_addr, unsigned cache_index, mem_fetch *mf,
     		unsigned time, bool &do_miss, bool &wb, cache_block_t &evicted, std::list<cache_event> &events, bool read_only, bool wa);
     /// Interface for response from lower memory level (model bandwidth restictions in caller)
-    virtual void fill( mem_fetch *mf, unsigned time );
+    
 };
 
 /// Models second level shared cache with global write-back
