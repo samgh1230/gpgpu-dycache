@@ -494,13 +494,17 @@ struct cache_block_t {
         int i,j;
         switch(blksz){
             case 128:
-                ck_tag = (chunck_tag>>2)<<2;
-                for(i=0; i<4; i++){
+                // ck_tag = (chunck_tag>>2)<<2;
+                /*for(i=0; i<4; i++){
                     if(ck_tag!=m_blk_tag[i]){
                         sid=(unsigned)-1;
                         return false;
                     }
                     else ck_tag++;
+                }*/
+                if(chunck_tag!=m_blk_tag[0]){
+                    sid=(unsigned)-1;
+                    return false;
                 }
                 sid=0;
                 return true;
@@ -508,33 +512,28 @@ struct cache_block_t {
             case 64:
                 switch(data_size){
                     case 128:
-                        ck_tag=(chunck_tag>>2)<<2;
-                        for(i=0;i<4;i++)
+                        //ck_tag=(chunck_tag>>2)<<2;
+                        
+                        for(i=0;i<3;i=i+2)
                         {
-                            if(ck_tag!=m_blk_tag[i]){
+                            if(chunck_tag!=m_blk_tag[i]){
                                 sid=(unsigned)-1;
                                 return false;
                             }
-                            else ck_tag++;
+                            else chunck_tag++;
                         }
                         sid=0;
                         return true;
                     break;
                     case 64:
                     case 32:
-                        ck_tag=(chunck_tag>>1)<<1;
+                        //ck_tag=(chunck_tag>>1)<<1;
                         for(i=0;i<4;i=i+2){
-                            for(j=0;j<2;j++){
-                                if(ck_tag!=m_blk_tag[i+j])
-                                    break;
-                                else    
-                                    ck_tag++;
-                            }
-                            if(j==2){
-                                sid=i;
+                            if(chunck_tag==m_blk_tag[i])
+                            {
+                                sid = i;
                                 return true;
                             }
-                            ck_tag = (chunck_tag>>1)<<1;
                         }
                         sid=(unsigned)-1;
                         return false;
@@ -544,20 +543,20 @@ struct cache_block_t {
             case 32:
                 switch(data_size){
                     case 128:
-                        ck_tag=(chunck_tag>>2)<<2;
+                        //ck_tag=(chunck_tag>>2)<<2;
                         for(i=0;i<4;i++)
                         {
-                            if(ck_tag!=m_blk_tag[i]){
+                            if(chunck_tag!=m_blk_tag[i]){
                                 sid=(unsigned)-1;
                                 return false;
                             }
-                            else ck_tag++;
+                            else chunck_tag++;
                         }
                         sid=0;
                         return true;
                     break;
                     case 64:
-                        ck_tag=(chunck_tag>>1)<<1;
+                        ck_tag=chunck_tag;
                         for(i=0;i<3;i=i+1){
                             for(j=0;j<2;j++){
                                 if(ck_tag!=m_blk_tag[i+j])
@@ -569,7 +568,7 @@ struct cache_block_t {
                                 sid=i;
                                 return true;
                             }
-                            ck_tag = (chunck_tag>>1)<<1;
+                            ck_tag = chunck_tag;
                         }
                         sid=(unsigned)-1;
                         return false;
