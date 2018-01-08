@@ -597,7 +597,7 @@ enum cache_request_status tag_array::probe( new_addr_type addr,new_addr_type com
                                     if(last_access_time<valid_timestamp){
                                         valid_timestamp=last_access_time ;
                                         valid_line=index;
-                                        sid=min;
+                                        valid_sid=min;
                                     }
                                 }
                                 else if(m_config.m_replacement_policy==FIFO){
@@ -623,7 +623,7 @@ enum cache_request_status tag_array::probe( new_addr_type addr,new_addr_type com
                                     if(alloc_time<valid_timestamp){
                                         valid_timestamp = alloc_time;
                                         valid_line = index;
-                                        sid=min;
+                                        valid_sid=min;
                                     }
                                 }
                             }
@@ -634,16 +634,16 @@ enum cache_request_status tag_array::probe( new_addr_type addr,new_addr_type com
                             all_reserved = false;
                             if (line->m_blk_status[0] == INVALID) {
                                 invalid_line = index;
-                                sid=0;
+                                invalid_sid=0;
                             } else if(line->m_blk_status[1]==INVALID){
                                 invalid_line = index;
-                                sid=1;
+                                invalid_sid=1;
                             } else if(line->m_blk_status[2]==INVALID){
                                 invalid_line=index;
-                                sid=2;
+                                invalid_sid=2;
                             } else if(line->m_blk_status[3]==INVALID){
                                 invalid_line=index;
-                                sid=3;
+                                invalid_sid=3;
                             }
                             else {
                                 // valid line : keep track of most appropriate replacement candidate
@@ -772,18 +772,18 @@ enum cache_request_status tag_array::access( new_addr_type addr, new_addr_type c
     return status;
 }
 
-void tag_array::fill( new_addr_type addr, new_addr_type common_tag, new_addr_type chunck_tag, unsigned time, unsigned sid, unsigned blksz, unsigned data_size )
+void tag_array::fill( new_addr_type addr, new_addr_type common_tag, new_addr_type chunck_tag, unsigned time, unsigned &sid, unsigned blksz, unsigned data_size )
 {
     assert( m_config.m_alloc_policy == ON_FILL );
     unsigned idx;
     enum cache_request_status status = probe(addr, common_tag,chunck_tag,idx,sid,blksz,data_size);
-    assert(status==MISS); // MSHR should have prevented redundant memory request
+    //assert(status==MISS); // MSHR should have prevented redundant memory request
     m_lines[idx].allocate( common_tag,chunck_tag, time ,sid,blksz,data_size);
     
     m_lines[idx].fill(time,sid,blksz,data_size);
 }
 
-void tag_array::fill( unsigned index, unsigned time , unsigned sid, unsigned blksz, unsigned data_size) 
+void tag_array::fill( unsigned index, unsigned time , unsigned &sid, unsigned blksz, unsigned data_size) 
 {
     assert( m_config.m_alloc_policy == ON_MISS );
     m_lines[index].fill(time,sid,blksz,data_size);
@@ -1243,7 +1243,7 @@ void l1_cache::fill(mem_fetch *mf, unsigned time){
     if ( m_config.m_alloc_policy == ON_MISS )
         m_tag_array->fill(e->second.m_cache_index,time,sid,current_blksz,data_size);
     else if ( m_config.m_alloc_policy == ON_FILL )
-        m_tag_array->fill(e->second.m_block_addr,time,sid,current_blksz,data_size);
+        m_tag_array->fill(mf->get_addr(),m_config.common_tag(mf->get_addr()), m_config.chunck_tag(mf->get_addr()),time,sid,current_blksz,data_size);
     else abort();
     bool has_atomic = false;
     m_mshrs.mark_ready(e->second.m_block_addr, has_atomic);
@@ -2028,7 +2028,7 @@ enum cache_request_status tex_cache::access( new_addr_type addr, mem_fetch *mf,
         unsigned rob_index = m_rob.push( rob_entry(cache_index, mf, block_addr) );
         m_extra_mf_fields[mf] = extra_mf_fields(rob_index);
         mf->set_data_size(m_config.get_line_sz());
-        m_tags.fill(cache_index,time,0,128,data_size); // mark block as valid
+        m_tags.fill(cache_index,time); // mark block as valid
         m_request_fifo.push(mf);
         mf->set_status(m_request_queue_status,time);
         events.push_back(READ_REQUEST_SENT);

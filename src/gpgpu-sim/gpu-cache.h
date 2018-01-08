@@ -132,7 +132,7 @@ struct cache_block_t {
                     break;
                     case 32:
                         assert(sid==0||sid==2);
-                        assert(false);
+                        //assert(false);
                         for(int i=0;i<2;i++)
                         {
                             m_blk_tag[sid+i]=tag++;
@@ -159,7 +159,7 @@ struct cache_block_t {
                         }
                     break;
                     case 64:
-                        assert(sid==0||sid==2);
+                        //assert(sid==0||sid==2);
                         for(int i=0;i<2;i++){
                             m_blk_tag[sid+i]=tag++;
                             m_blk_addr[sid+i]=tag++;
@@ -170,9 +170,8 @@ struct cache_block_t {
                         }
                     break;
                     case 32:
-                        assert(sid==0||sid==2);
-                        m_blk_tag[sid]=tag++;
-                        m_blk_addr[sid]=tag++;
+                        m_blk_tag[sid]=tag;
+                        m_blk_addr[sid]=tag;
                         m_blk_alloc_time[sid]=time;
                         m_blk_last_access_time[sid]=time;
                         m_blk_fill_time[sid]=0;
@@ -242,7 +241,7 @@ struct cache_block_t {
                     }
                     break;
                     case 64:
-                    assert(sid==0||sid==2);
+                    //assert(sid==0||sid==2);
                     for(int i=0;i<2;i++){
                        assert( m_blk_status[sid+i] == RESERVED );
                         m_blk_status[sid+i]=VALID;
@@ -295,7 +294,7 @@ struct cache_block_t {
                             m_blk_last_access_time[i]=time;
                     break;
                     case 64:
-                        assert(sid==0||sid==2);
+                        //assert(sid==0||sid==2);
                         for(int i=0;i<2;i++)
                             m_blk_last_access_time[sid+i]=time;
                     break;
@@ -390,7 +389,7 @@ struct cache_block_t {
                             m_blk_fill_time[i]=time;
                     break;
                     case 64:
-                        assert(sid==0||sid==2);
+                        //assert(sid==0||sid==2);
                         for(int i=0;i<2;i++)
                             m_blk_fill_time[sid+i]=time;
                     break;
@@ -436,7 +435,7 @@ struct cache_block_t {
                             m_blk_status[i]=state;
                     break;
                     case 64:
-                        assert(sid==0||sid==2);
+                        //assert(sid==0||sid==2);
                         for(int i=0;i<2;i++)
                             m_blk_status[sid+i]=state;
                     break;
@@ -477,7 +476,7 @@ struct cache_block_t {
                         return (m_blk_status[0]==MODIFIED)||(m_blk_status[1]==MODIFIED)||(m_blk_status[2]==MODIFIED)||(m_blk_status[3]==MODIFIED);
                     break;
                     case 64:
-                        assert(sid==0||sid==2);
+                        //assert(sid==0||sid==2);
                         return (m_blk_status[sid]==MODIFIED)||(m_blk_status[sid+1]==MODIFIED);
                     break;
                     case 32:
@@ -958,8 +957,8 @@ public:
     enum cache_request_status access( new_addr_type addr, new_addr_type common_tag, new_addr_type chunck_tag, unsigned time, unsigned &idx , unsigned &sid,unsigned blksz,unsigned data_size);
     enum cache_request_status access( new_addr_type addr, new_addr_type common_tag, new_addr_type chunck_tag, unsigned time, unsigned &idx, bool &wb, cache_block_t &evicted,unsigned &sid, unsigned blksz, unsigned data_size );
 
-    void fill(new_addr_type addr, new_addr_type common_tag, new_addr_type chunck_tag, unsigned time, unsigned sid,unsigned blksz,unsigned data_size );
-    void fill( unsigned idx, unsigned time ,unsigned sid,unsigned blksz, unsigned data_size);
+    void fill(new_addr_type addr, new_addr_type common_tag, new_addr_type chunck_tag, unsigned time, unsigned &sid,unsigned blksz,unsigned data_size );
+    void fill( unsigned idx, unsigned time ,unsigned &sid,unsigned blksz, unsigned data_size);
 
     enum cache_request_status probe( new_addr_type addr, unsigned &idx) const;
     enum cache_request_status access( new_addr_type addr, unsigned time, unsigned &idx);
@@ -1560,12 +1559,14 @@ public:
     l1_cache(const char *name, cache_config &config,
             int core_id, int type_id, mem_fetch_interface *memport,
             mem_fetch_allocator *mfcreator, enum mem_fetch_status status )
-            : data_cache(name,config,core_id,type_id,memport,mfcreator,status, L1_WR_ALLOC_R, L1_WRBK_ACC){}
+            : data_cache(name,config,core_id,type_id,memport,mfcreator,status, L1_WR_ALLOC_R, L1_WRBK_ACC){
+                init(mfcreator);
+            }
 
     virtual ~l1_cache(){}
     void init( mem_fetch_allocator *mfcreator )
     {
-        m_memfetch_creator=mfcreator;
+        //m_memfetch_creator=mfcreator;
 
         // Set read hit function
         m_rd_hit = &l1_cache::rd_hit_base;
@@ -1599,7 +1600,7 @@ public:
             break; // Need to set a write miss function
         }
     }
-    enum cache_request_status
+    virtual enum cache_request_status
         access( new_addr_type addr,
                 mem_fetch *mf,
                 unsigned time,
@@ -1609,7 +1610,7 @@ protected:
 //! A general function that takes the result of a tag_array probe
     //  and performs the correspding functions based on the cache configuration
     //  The access fucntion calls this function
-    enum cache_request_status
+    virtual enum cache_request_status
         process_tag_probe( bool wr,
                            enum cache_request_status status,
                            new_addr_type addr,
@@ -1643,14 +1644,14 @@ protected:
                                  std::list<cache_event> &events,
                                  enum cache_request_status status );
     /// Marks block as MODIFIED and updates block LRU
-    enum cache_request_status
+    virtual enum cache_request_status
         wr_hit_wb( new_addr_type addr,
                    unsigned cache_index,
                    mem_fetch *mf,
                    unsigned time,
                    std::list<cache_event> &events,
                    enum cache_request_status status ); // write-back
-    enum cache_request_status
+    virtual enum cache_request_status
         wr_hit_wt( new_addr_type addr,
                    unsigned cache_index,
                    mem_fetch *mf,
@@ -1659,14 +1660,14 @@ protected:
                    enum cache_request_status status ); // write-through
 
     /// Marks block as INVALID and sends write request to lower level memory
-    enum cache_request_status
+    virtual enum cache_request_status
         wr_hit_we( new_addr_type addr,
                    unsigned cache_index,
                    mem_fetch *mf,
                    unsigned time,
                    std::list<cache_event> &events,
                    enum cache_request_status status ); // write-evict
-    enum cache_request_status
+    virtual enum cache_request_status
         wr_hit_global_we_local_wb( new_addr_type addr,
                                    unsigned cache_index,
                                    mem_fetch *mf,
@@ -1686,14 +1687,14 @@ protected:
                                   enum cache_request_status status );
     /// Sends read request, and possible write-back request,
     //  to lower level memory for a write miss with write-allocate
-    enum cache_request_status
+    virtual enum cache_request_status
         wr_miss_wa( new_addr_type addr,
                     unsigned cache_index,
                     mem_fetch *mf,
                     unsigned time,
                     std::list<cache_event> &events,
                     enum cache_request_status status ); // write-allocate
-    enum cache_request_status
+    virtual enum cache_request_status
         wr_miss_no_wa( new_addr_type addr,
                        unsigned cache_index,
                        mem_fetch *mf,
@@ -1710,7 +1711,7 @@ protected:
                                  unsigned time,
                                  std::list<cache_event> &events,
                                  enum cache_request_status status );
-    enum cache_request_status
+    virtual enum cache_request_status
         rd_hit_base( new_addr_type addr,
                      unsigned cache_index,
                      mem_fetch *mf,
@@ -1726,7 +1727,7 @@ protected:
                                   unsigned time,
                                   std::list<cache_event> &events,
                                   enum cache_request_status status );
-    enum cache_request_status
+    virtual enum cache_request_status
         rd_miss_base( new_addr_type addr,
                       unsigned cache_index,
                       mem_fetch*mf,
@@ -1735,10 +1736,10 @@ protected:
                       enum cache_request_status status );
 
     /// Read miss handler without writeback
-    void send_read_request(new_addr_type addr, new_addr_type block_addr, unsigned cache_index, mem_fetch *mf,
+    virtual void send_read_request(new_addr_type addr, new_addr_type block_addr, unsigned cache_index, mem_fetch *mf,
     		unsigned time, bool &do_miss, std::list<cache_event> &events, bool read_only, bool wa);
     /// Read miss handler. Check MSHR hit or MSHR available
-    void send_read_request(new_addr_type addr, new_addr_type block_addr, unsigned cache_index, mem_fetch *mf,
+    virtual void send_read_request(new_addr_type addr, new_addr_type block_addr, unsigned cache_index, mem_fetch *mf,
     		unsigned time, bool &do_miss, bool &wb, cache_block_t &evicted, std::list<cache_event> &events, bool read_only, bool wa);
     /// Interface for response from lower memory level (model bandwidth restictions in caller)
     
