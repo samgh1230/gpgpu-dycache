@@ -513,7 +513,7 @@ struct cache_block_t {
                     }
                     break;
                     case 32:{
-                        if(sid!=0||sid!=2)
+                        if(sid!=0&&sid!=2)
                             sid--;
                         cache_block_t e;
                         e.m_evicted_addr = m_block_addr[sid];

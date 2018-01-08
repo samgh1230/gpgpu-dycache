@@ -2510,7 +2510,9 @@ unsigned shader_core_ctx::get_new_blksz()
     
     }
 
-    float avg_data_sz = accumulate(m_data_sz.begin(),m_data_sz.end(),0.0)/m_data_sz.size();
+    float avg_data_sz = current_blksz;
+    if(m_data_sz.size())
+    avg_data_sz = accumulate(m_data_sz.begin(),m_data_sz.end(),0.0)/m_data_sz.size();
     for(int i=0;i<3;i++)
     {
         num_ref[i] /= m_data_sz.size();
