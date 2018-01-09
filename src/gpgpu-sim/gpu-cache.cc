@@ -1646,12 +1646,12 @@ cache_request_status l1_cache::wr_hit_we(new_addr_type addr, unsigned cache_inde
 }
 
 /// Global write-evict, local write-back: Useful for private caches
-enum cache_request_status l1_cache::wr_hit_global_we_local_wb(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
+enum cache_request_status l1_cache::wr_hit_global_we_local_wb(new_addr_type addr, unsigned cache_index, unsigned sid,mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
 	bool evict = (mf->get_access_type() == GLOBAL_ACC_W); // evict a line that hits on global memory write
 	if(evict)
-		return wr_hit_we(addr, cache_index, mf, time, events, status); // Write-evict
+		return wr_hit_we(addr, cache_index, sid, mf, time, events, status); // Write-evict
 	else
-		return wr_hit_wb(addr, cache_index, mf, time, events, status); // Write-back
+		return wr_hit_wb(addr, cache_index, sid, mf, time, events, status); // Write-back
 }
 
 /****** Write-miss functions (Set by config file) ******/

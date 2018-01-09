@@ -1674,6 +1674,7 @@ protected:
     virtual enum cache_request_status
         wr_hit_global_we_local_wb( new_addr_type addr,
                                    unsigned cache_index,
+                                   unsigned sid,
                                    mem_fetch *mf,
                                    unsigned time,
                                    std::list<cache_event> &events,
