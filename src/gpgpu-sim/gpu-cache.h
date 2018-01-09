@@ -1614,6 +1614,7 @@ protected:
                            enum cache_request_status status,
                            new_addr_type addr,
                            unsigned cache_index,
+                           unsigned sid,
                            mem_fetch* mf,
                            unsigned time,
                            std::list<cache_event>& events );
@@ -1638,6 +1639,7 @@ protected:
     enum cache_request_status
         (l1_cache::*m_wr_hit)( new_addr_type addr,
                                  unsigned cache_index,
+                                 unsigned sid,
                                  mem_fetch *mf,
                                  unsigned time,
                                  std::list<cache_event> &events,
@@ -1713,6 +1715,7 @@ protected:
     virtual enum cache_request_status
         rd_hit_base( new_addr_type addr,
                      unsigned cache_index,
+                     unsigned sid,
                      mem_fetch *mf,
                      unsigned time,
                      std::list<cache_event> &events,

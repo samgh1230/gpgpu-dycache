@@ -1592,7 +1592,7 @@ data_cache::rd_miss_base( new_addr_type addr,
     }
     return RESERVATION_FAIL;
 }
-cache_request_status l1_cache::wr_hit_wb(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
+cache_request_status l1_cache::wr_hit_wb(new_addr_type addr, unsigned cache_index, unsigned sid, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
 	new_addr_type block_addr = m_config.block_addr(addr);
     new_addr_type common_tag = m_config.common_tag(addr);
     new_addr_type chunck_tag = m_config.chunck_tag(addr);
@@ -1607,7 +1607,7 @@ cache_request_status l1_cache::wr_hit_wb(new_addr_type addr, unsigned cache_inde
 }
 
 /// Write-through hit: Directly send request to lower level memory
-cache_request_status l1_cache::wr_hit_wt(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
+cache_request_status l1_cache::wr_hit_wt(new_addr_type addr, unsigned cache_index,unsigned sid, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
 	if(miss_queue_full(0))
 		return RESERVATION_FAIL; // cannot handle request this cycle
 
@@ -1628,12 +1628,12 @@ cache_request_status l1_cache::wr_hit_wt(new_addr_type addr, unsigned cache_inde
 }
 
 /// Write-evict hit: Send request to lower level memory and invalidate corresponding block
-cache_request_status l1_cache::wr_hit_we(new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
+cache_request_status l1_cache::wr_hit_we(new_addr_type addr, unsigned cache_index, unsigned sid, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
 	if(miss_queue_full(0))
 		return RESERVATION_FAIL; // cannot handle request this cycle
 
     unsigned data_size=mf->get_data_size();
-    unsigned sid=(unsigned)-1;//unsigned sid = m_config.get_sid(addr);
+    //unsigned sid=(unsigned)-1;//unsigned sid = m_config.get_sid(addr);
 	// generate a write-through/evict
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	send_write_request(mf, WRITE_REQUEST_SENT, time, events);
@@ -1667,7 +1667,7 @@ l1_cache::wr_miss_wa( new_addr_type addr,
     new_addr_type block_addr = m_config.block_addr(addr);
     new_addr_type common_tag = m_config.common_tag(addr);
     new_addr_type chunck_tag = m_config.chunck_tag(addr);
-    unsigned sid=(unsigned)-1;//unsigned sid=m_config.get_sid(addr);
+    //unsigned sid=(unsigned)-1;//unsigned sid=m_config.get_sid(addr);
     unsigned data_size=mf->get_data_size();
 
     // Write allocate, maximum 3 requests (write miss, read request, write back request)
@@ -1750,6 +1750,7 @@ l1_cache::wr_miss_no_wa( new_addr_type addr,
 enum cache_request_status
 l1_cache::rd_hit_base( new_addr_type addr,
                          unsigned cache_index,
+                         unsigned sid,
                          mem_fetch *mf,
                          unsigned time,
                          std::list<cache_event> &events,
@@ -1789,7 +1790,7 @@ l1_cache::rd_miss_base( new_addr_type addr,
         return RESERVATION_FAIL; 
 
     new_addr_type block_addr = m_config.block_addr(addr);
-    unsigned sid=(unsigned)-1;//unsigned sid=m_config.get_sid(addr);
+    //unsigned sid=(unsigned)-1;//unsigned sid=m_config.get_sid(addr);
     unsigned data_size=mf->get_data_size();
     bool do_miss = false;
     bool wb = false;
@@ -1897,6 +1898,7 @@ l1_cache::process_tag_probe( bool wr,
                                enum cache_request_status probe_status,
                                new_addr_type addr,
                                unsigned cache_index,
+                               unsigned sid,
                                mem_fetch* mf,
                                unsigned time,
                                std::list<cache_event>& events )
@@ -1909,7 +1911,7 @@ l1_cache::process_tag_probe( bool wr,
     if(wr){ // Write
         if(probe_status == HIT){
             access_status = (this->*m_wr_hit)( addr,
-                                      cache_index,
+                                      cache_index, sid,
                                       mf, time, events, probe_status );
         }else if ( probe_status != RESERVATION_FAIL ) {
             access_status = (this->*m_wr_miss)( addr,
@@ -1919,7 +1921,7 @@ l1_cache::process_tag_probe( bool wr,
     }else{ // Read
         if(probe_status == HIT){
             access_status = (this->*m_rd_hit)( addr,
-                                      cache_index,
+                                      cache_index, sid,
                                       mf, time, events, probe_status );
         }else if ( probe_status != RESERVATION_FAIL ) {
             access_status = (this->*m_rd_miss)( addr,
@@ -1982,7 +1984,7 @@ l1_cache::access( new_addr_type addr,
     enum cache_request_status probe_status
         = m_tag_array->probe( block_addr, common_tag, chunck_tag, cache_index,sid,current_blksz,data_size );
     enum cache_request_status access_status
-        = process_tag_probe( wr, probe_status, addr, cache_index, mf, time, events );
+        = process_tag_probe( wr, probe_status, addr, cache_index, sid, mf, time, events );
     m_stats.inc_stats(mf->get_access_type(),
         m_stats.select_stats_status(probe_status, access_status));
    
