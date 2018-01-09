@@ -777,7 +777,7 @@ void tag_array::fill( new_addr_type addr, new_addr_type common_tag, new_addr_typ
     assert( m_config.m_alloc_policy == ON_FILL );
     unsigned idx;
     enum cache_request_status status = probe(addr, common_tag,chunck_tag,idx,sid,blksz,data_size);
-    //assert(status==MISS); // MSHR should have prevented redundant memory request
+    assert(status==MISS); // MSHR should have prevented redundant memory request
     m_lines[idx].allocate( common_tag,chunck_tag, time ,sid,blksz,data_size);
     
     m_lines[idx].fill(time,sid,blksz,data_size);
@@ -1215,8 +1215,8 @@ void baseline_cache::fill(mem_fetch *mf, unsigned time){
     assert( e != m_extra_mf_fields.end() );
     assert( e->second.m_valid );
     mf->set_data_size( e->second.m_data_size );
-    unsigned sid = m_config.get_sid(mf->get_addr());
-    unsigned data_size = mf->get_data_size();
+    //unsigned sid = m_config.get_sid(mf->get_addr());
+    //unsigned data_size = mf->get_data_size();
     if ( m_config.m_alloc_policy == ON_MISS )
         m_tag_array->fill(e->second.m_cache_index,time);
     else if ( m_config.m_alloc_policy == ON_FILL )
@@ -1238,8 +1238,9 @@ void l1_cache::fill(mem_fetch *mf, unsigned time){
     assert( e != m_extra_mf_fields.end() );
     assert( e->second.m_valid );
     mf->set_data_size( e->second.m_data_size );
-    unsigned sid = m_config.get_sid(mf->get_addr());
+    //unsigned sid = m_config.get_sid(mf->get_addr());
     unsigned data_size = mf->get_data_size();
+    
     if ( m_config.m_alloc_policy == ON_MISS )
         m_tag_array->fill(e->second.m_cache_index,time,sid,current_blksz,data_size);
     else if ( m_config.m_alloc_policy == ON_FILL )
