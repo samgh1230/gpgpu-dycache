@@ -218,7 +218,7 @@ struct cache_block_t {
                         m_blk_fill_time[sid+i]=time;
                     }
                 break;
-                case 32://this case shouldn't appear
+                case 32:
                     assert(sid==0||sid==2);
                     assert(false);
                     for(int i=0;i<2;i++)
@@ -520,14 +520,14 @@ struct cache_block_t {
                                 sid=(unsigned)-1;
                                 return false;
                             }
-                            else chunck_tag++;
+                            else chunck_tag += 2;
                         }
                         sid=0;
                         return true;
                     break;
                     case 64:
                     case 32:
-                        //ck_tag=(chunck_tag>>1)<<1;
+                        chunck_tag=(chunck_tag>>1)<<1;
                         for(i=0;i<4;i=i+2){
                             if(chunck_tag==m_blk_tag[i])
                             {

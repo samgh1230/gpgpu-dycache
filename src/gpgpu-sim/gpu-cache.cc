@@ -662,7 +662,7 @@ enum cache_request_status tag_array::probe( new_addr_type addr,new_addr_type com
                                     assert(i!=4);
                                     for(;i<4;i++)
                                     {
-                                        if(line->m_blk_status[i]!=RESERVED&&last_access_time<line->m_blk_last_access_time[i]){
+                                        if(line->m_blk_status[i]!=RESERVED&&last_access_time>line->m_blk_last_access_time[i]){
                                             last_access_time = line->m_blk_last_access_time[i];
                                             min=i;
                                         }
@@ -687,7 +687,7 @@ enum cache_request_status tag_array::probe( new_addr_type addr,new_addr_type com
                                     assert(i!=4);
                                     for(;i<4;i++)
                                     {
-                                        if(line->m_blk_status[i]!=RESERVED&&alloc_time<line->m_blk_last_access_time[i]){
+                                        if(line->m_blk_status[i]!=RESERVED&&alloc_time>line->m_blk_last_access_time[i]){
                                             alloc_time = line->m_blk_alloc_time[i];
                                             min=i;
                                         }
