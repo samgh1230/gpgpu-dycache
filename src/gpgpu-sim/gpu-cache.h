@@ -1712,6 +1712,7 @@ protected:
     enum cache_request_status
         (l1_cache::*m_rd_hit)( new_addr_type addr,
                                  unsigned cache_index,
+                                 unsigned sid,
                                  mem_fetch *mf,
                                  unsigned time,
                                  std::list<cache_event> &events,
