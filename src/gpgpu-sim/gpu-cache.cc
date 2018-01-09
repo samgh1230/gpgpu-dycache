@@ -777,7 +777,7 @@ void tag_array::fill( new_addr_type addr, new_addr_type common_tag, new_addr_typ
     assert( m_config.m_alloc_policy == ON_FILL );
     unsigned idx;
     enum cache_request_status status = probe(addr, common_tag,chunck_tag,idx,sid,blksz,data_size);
-    assert(status==MISS); // MSHR should have prevented redundant memory request
+//    assert(status==MISS); // MSHR should have prevented redundant memory request
     m_lines[idx].allocate( common_tag,chunck_tag, time ,sid,blksz,data_size);
     
     m_lines[idx].fill(time,sid,blksz,data_size);
@@ -1238,7 +1238,7 @@ void l1_cache::fill(mem_fetch *mf, unsigned time){
     assert( e != m_extra_mf_fields.end() );
     assert( e->second.m_valid );
     mf->set_data_size( e->second.m_data_size );
-    //unsigned sid = m_config.get_sid(mf->get_addr());
+    unsigned sid = (unsigned)-1;//m_config.get_sid(mf->get_addr());
     unsigned data_size = mf->get_data_size();
     
     if ( m_config.m_alloc_policy == ON_MISS )
@@ -1537,7 +1537,7 @@ data_cache::rd_hit_base( new_addr_type addr,
                          enum cache_request_status status )
 {
     new_addr_type block_addr = m_config.block_addr(addr);
-    unsigned sid=m_config.get_sid(addr);
+    unsigned sid=(unsigned)-1;//unsigned sid=m_config.get_sid(addr);
     unsigned data_size=mf->get_data_size();
     m_tag_array->access(block_addr,time,cache_index);
     // Atomics treated as global read/write requests - Perform read, mark line as
@@ -1568,7 +1568,7 @@ data_cache::rd_miss_base( new_addr_type addr,
         return RESERVATION_FAIL; 
 
     new_addr_type block_addr = m_config.block_addr(addr);
-    unsigned sid=m_config.get_sid(addr);
+    unsigned sid=(unsigned)-1;//unsigned sid=m_config.get_sid(addr);
     unsigned data_size=mf->get_data_size();
     bool do_miss = false;
     bool wb = false;
@@ -1597,7 +1597,7 @@ cache_request_status l1_cache::wr_hit_wb(new_addr_type addr, unsigned cache_inde
     new_addr_type common_tag = m_config.common_tag(addr);
     new_addr_type chunck_tag = m_config.chunck_tag(addr);
     unsigned data_size = mf->get_data_size();
-    unsigned sid = m_config.get_sid(addr);
+    unsigned sid=(unsigned)-1;//unsigned sid = m_config.get_sid(addr);
 	m_tag_array->access(block_addr, common_tag,chunck_tag,time,cache_index,sid,current_blksz,data_size); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	//block.m_status = MODIFIED;
@@ -1614,7 +1614,7 @@ cache_request_status l1_cache::wr_hit_wt(new_addr_type addr, unsigned cache_inde
 	new_addr_type block_addr = m_config.block_addr(addr);
     new_addr_type common_tag = m_config.common_tag(addr);
     new_addr_type chunck_tag = m_config.chunck_tag(addr);
-    unsigned sid = m_config.get_sid(addr);
+    unsigned sid=(unsigned)-1;//unsigned sid = m_config.get_sid(addr);
     unsigned data_size = mf->get_data_size();
 	m_tag_array->access(block_addr,common_tag,chunck_tag,time,cache_index,sid,current_blksz,data_size); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
@@ -1633,7 +1633,7 @@ cache_request_status l1_cache::wr_hit_we(new_addr_type addr, unsigned cache_inde
 		return RESERVATION_FAIL; // cannot handle request this cycle
 
     unsigned data_size=mf->get_data_size();
-    unsigned sid = m_config.get_sid(addr);
+    unsigned sid=(unsigned)-1;//unsigned sid = m_config.get_sid(addr);
 	// generate a write-through/evict
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	send_write_request(mf, WRITE_REQUEST_SENT, time, events);
@@ -1667,7 +1667,7 @@ l1_cache::wr_miss_wa( new_addr_type addr,
     new_addr_type block_addr = m_config.block_addr(addr);
     new_addr_type common_tag = m_config.common_tag(addr);
     new_addr_type chunck_tag = m_config.chunck_tag(addr);
-    unsigned sid=m_config.get_sid(addr);
+    unsigned sid=(unsigned)-1;//unsigned sid=m_config.get_sid(addr);
     unsigned data_size=mf->get_data_size();
 
     // Write allocate, maximum 3 requests (write miss, read request, write back request)
@@ -1758,7 +1758,7 @@ l1_cache::rd_hit_base( new_addr_type addr,
     new_addr_type block_addr = m_config.block_addr(addr);
     new_addr_type common_tag = m_config.common_tag(addr);
     new_addr_type chunck_tag = m_config.chunck_tag(addr);
-    unsigned sid=m_config.get_sid(addr);
+    unsigned sid=(unsigned)-1;//m_config.get_sid(addr);
     unsigned data_size=mf->get_data_size();
     m_tag_array->access(block_addr,common_tag,chunck_tag,time,cache_index,sid,current_blksz,data_size);
     // Atomics treated as global read/write requests - Perform read, mark line as
@@ -1789,7 +1789,7 @@ l1_cache::rd_miss_base( new_addr_type addr,
         return RESERVATION_FAIL; 
 
     new_addr_type block_addr = m_config.block_addr(addr);
-    unsigned sid=m_config.get_sid(addr);
+    unsigned sid=(unsigned)-1;//unsigned sid=m_config.get_sid(addr);
     unsigned data_size=mf->get_data_size();
     bool do_miss = false;
     bool wb = false;
@@ -1824,7 +1824,7 @@ read_only_cache::access( new_addr_type addr,
     assert(!mf->get_is_write());
     new_addr_type block_addr = m_config.block_addr(addr);
     unsigned cache_index = (unsigned)-1;
-    unsigned sid = m_config.get_sid(addr);
+    unsigned sid=(unsigned)-1;//unsigned sid = m_config.get_sid(addr);
     unsigned data_size = mf->get_data_size();
     enum cache_request_status status = m_tag_array->probe(block_addr,cache_index);
     enum cache_request_status cache_status = RESERVATION_FAIL;
