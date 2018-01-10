@@ -1597,7 +1597,7 @@ cache_request_status l1_cache::wr_hit_wb(new_addr_type addr, unsigned cache_inde
     new_addr_type common_tag = m_config.common_tag(addr);
     new_addr_type chunck_tag = m_config.chunck_tag(addr);
     unsigned data_size = mf->get_data_size();
-    unsigned sid=(unsigned)-1;//unsigned sid = m_config.get_sid(addr);
+    //nsigned sid=(unsigned)-1;//unsigned sid = m_config.get_sid(addr);
 	m_tag_array->access(block_addr, common_tag,chunck_tag,time,cache_index,sid,current_blksz,data_size); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	//block.m_status = MODIFIED;
@@ -1614,7 +1614,7 @@ cache_request_status l1_cache::wr_hit_wt(new_addr_type addr, unsigned cache_inde
 	new_addr_type block_addr = m_config.block_addr(addr);
     new_addr_type common_tag = m_config.common_tag(addr);
     new_addr_type chunck_tag = m_config.chunck_tag(addr);
-    unsigned sid=(unsigned)-1;//unsigned sid = m_config.get_sid(addr);
+    //unsigned sid=(unsigned)-1;//unsigned sid = m_config.get_sid(addr);
     unsigned data_size = mf->get_data_size();
 	m_tag_array->access(block_addr,common_tag,chunck_tag,time,cache_index,sid,current_blksz,data_size); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
@@ -1744,7 +1744,6 @@ l1_cache::wr_miss_no_wa( new_addr_type addr,
 }
 
 /****** Read hit functions (Set by config file) ******/
-
 /// Baseline read hit: Update LRU status of block.
 // Special case for atomic instructions -> Mark block as modified
 enum cache_request_status
@@ -1759,7 +1758,7 @@ l1_cache::rd_hit_base( new_addr_type addr,
     new_addr_type block_addr = m_config.block_addr(addr);
     new_addr_type common_tag = m_config.common_tag(addr);
     new_addr_type chunck_tag = m_config.chunck_tag(addr);
-    unsigned sid=(unsigned)-1;//m_config.get_sid(addr);
+    //unsigned sid=(unsigned)-1;//m_config.get_sid(addr);
     unsigned data_size=mf->get_data_size();
     m_tag_array->access(block_addr,common_tag,chunck_tag,time,cache_index,sid,current_blksz,data_size);
     // Atomics treated as global read/write requests - Perform read, mark line as

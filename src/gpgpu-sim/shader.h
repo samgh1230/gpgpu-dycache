@@ -1570,6 +1570,8 @@ private:
 };
 
 #define SAMPLE_INTERVAL 100*100
+#define SAMPLE_REQ  10000
+#define SAMPLE_INSTRUCTION 10000
 class shader_core_ctx : public core_t {
 public:
     // creator:
@@ -1794,6 +1796,9 @@ public:
     unsigned long long m_last_inst_gpu_tot_sim_cycle;
 
     unsigned m_sample_cycles;
+    unsigned m_sample_reqs;
+    unsigned m_sample_insts;
+    
     std::vector<unsigned> m_data_sz;
     unsigned current_blksz;
 

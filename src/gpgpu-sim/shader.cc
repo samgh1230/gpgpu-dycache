@@ -684,6 +684,8 @@ void shader_core_ctx::func_exec_inst( warp_inst_t &inst )
         {
             inst.generate_mem_accesses(m_data_sz);
             m_num_reqs.push_back((float)inst.active_count()/inst.accessq_count());
+            m_sample_insts++;
+            m_sample_reqs += inst.accessq_count();
         }
         else 
             inst.generate_mem_accesses();
@@ -2586,10 +2588,12 @@ void shader_core_ctx::adjust_cache_blk()
 void shader_core_ctx::cycle()
 {
     m_sample_cycles++;
-    if(m_sample_cycles==SAMPLE_INTERVAL)
+    // if(m_sample_cycles==SAMPLE_INTERVAL)
+    if(m_sample_reqs>=SAMPLE_REQ)
     {
         adjust_cache_blk();
-        m_sample_cycles=0;
+        //m_sample_cycles=0;
+        m_sample_reqs=0;
     }
 	m_stats->shader_cycles[m_sid]++;
     writeback();
