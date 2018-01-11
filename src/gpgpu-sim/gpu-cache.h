@@ -74,7 +74,7 @@ struct cache_block_t {
             m_fine_grained = false;
         }
         m_referred_chunk.reset();
-        m_tag = 0;b
+        m_tag = 0;
         m_addr = 0;
         m_alloc_time = 0;
         m_fill_time = 0;
@@ -703,7 +703,7 @@ struct cache_block_t {
     cache_block_state    m_blk_status[4];
     bool             m_fine_grained;
 
-    std::set<4>     m_referred_chunk;
+    std::bitset<4>     m_referred_chunk;
     //unsigned        m_num_chunk_referred;
     
     //tags for 128B management
@@ -1034,7 +1034,7 @@ public:
         }
     }
     unsigned words_referred(unsigned blk_num, unsigned blksz, unsigned data_size, unsigned sid){
-        int i;
+        int i,count=0;
         switch(blksz){
             case 128: return m_lines[blk_num].m_referred_chunk.count();
             case 64:
@@ -1050,7 +1050,7 @@ public:
                 switch(data_size){
                     case 128: return m_lines[blk_num].m_referred_chunk.count();
                     case 64:
-                    int count=0;
+                    //int count=0;
                     for(i=0;i<2;i++)
                     {
                         if(m_lines[blk_num].m_referred_chunk.test(sid+i))
@@ -1060,7 +1060,7 @@ public:
                     case 32:
                     if(m_lines[blk_num].m_referred_chunk.test(sid))
                         return 1;
-                    else return 0
+                    else return 0;
                 }
         }
     }

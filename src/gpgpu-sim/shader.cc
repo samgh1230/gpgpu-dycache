@@ -88,6 +88,9 @@ shader_core_ctx::shader_core_ctx( class gpgpu_sim *gpu,
     m_data_sz.clear();
     m_num_reqs.clear();
     current_blksz=m_config->gpgpu_cache_data1_linesize;
+    m_sample_cycles = 0;
+    m_sample_insts = 0;
+    m_sample_reqs = 0;
     
     m_sid = shader_id;
     m_tpc = tpc_id;
@@ -2605,6 +2608,9 @@ void shader_core_ctx::cycle()
         //m_sample_cycles=0;
         m_sample_reqs=0;
     }
+
+    /*if(cache_efficiency()<=0.5)
+        change2small_blksz(32);*/
 	m_stats->shader_cycles[m_sid]++;
     writeback();
     execute();
