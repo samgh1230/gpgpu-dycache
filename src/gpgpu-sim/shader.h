@@ -1122,6 +1122,9 @@ public:
     
     void change2big_blksz(unsigned blksz);
     void change2small_blksz(unsigned blksz);
+    float cache_efficiency(){
+        return m_L1D->cache_efficiency();
+    }
     
     class shader_core_ctx *m_core;
 protected:
@@ -1590,6 +1593,9 @@ public:
     void set_cache_blksz(unsigned blksz);
     unsigned get_new_blksz();
     void adjust_cache_blk();
+    float cache_efficiency(){
+        return m_ldst_unit->cache_efficiency();
+    }
     // modifiers
     void cycle();
     void reinit(unsigned start_thread, unsigned end_thread, bool reset_not_completed );

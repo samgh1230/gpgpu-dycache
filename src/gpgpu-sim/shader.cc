@@ -2517,8 +2517,18 @@ unsigned shader_core_ctx::get_new_blksz()
     avg_data_sz = accumulate(m_data_sz.begin(),m_data_sz.end(),0.0)/m_data_sz.size();
     for(int i=0;i<3;i++)
     {
-        num_ref[i] /= m_data_sz.size();
+      num_ref[i] /= m_data_sz.size();
     }
+
+    float small_data = (float)(num_ref[0]+num_ref[1])/m_data_sz.size();
+    float pct_of_32 = (float)num_ref[0]/(num_ref[0]+num_ref[1]);
+
+    if(small_data>=0.8){
+        if(pct_of_32>=0.5)
+            return 32;
+        else return 64;
+    }
+    else return 128;
 
     /*if(avg_data_sz<48)
         return 32;
@@ -2535,11 +2545,11 @@ unsigned shader_core_ctx::get_new_blksz()
     else return 128;*/
 
 
-    if(avg_data_sz<128)
+    /*if(avg_data_sz<128)
         return 32;
     else if(avg_data_sz>64&&avg_data_sz<64)
         return 64;
-    else return 128;
+    else return 128;*/
 
 
     /*float avg_reqs = 32;

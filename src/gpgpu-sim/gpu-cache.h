@@ -72,14 +72,14 @@ struct cache_block_t {
             m_blk_last_access_time[i]=0;
             m_blk_status[i]=INVALID;
             m_fine_grained = false;
-
-            m_tag = 0;
-            m_addr = 0;
-            m_alloc_time = 0;
-            m_fill_time = 0;
-            m_last_access_time = 0;
-            m_status = INVALID;
         }
+        m_referred_chunk.reset();
+        m_tag = 0;b
+        m_addr = 0;
+        m_alloc_time = 0;
+        m_fill_time = 0;
+        m_last_access_time = 0;
+        m_status = INVALID;
     }
     void allocate(new_addr_type tag, new_addr_type blk_addr, unsigned time)
     {
@@ -220,7 +220,7 @@ struct cache_block_t {
                 break;
                 case 32:
                     assert(sid==0||sid==2);
-                    assert(false);
+                    // assert(false);
                     for(int i=0;i<2;i++)
                     {
                         assert(m_blk_status[sid+i]==RESERVED);
@@ -266,22 +266,28 @@ struct cache_block_t {
         {
             case 128:
                 assert(sid==0);
-                for(int i=0;i<4;i++)
+                for(int i=0;i<4;i++){
                     m_blk_last_access_time[i]=time;
+                    m_referred_chunk.set(i);
+                }
             break;
             case 64:
                 switch(data_size)
                 {
                     case 128:
                         assert(sid==0);
-                        for(int i=0;i<4;i++)
+                        for(int i=0;i<4;i++){
                             m_blk_last_access_time[i]=time;
+                            m_referred_chunk.set(i);
+                        }
                     break;
                     case 64:
                     case 32:
                         assert(sid==0||sid==2);
-                        for(int i=0;i<2;i++)
+                        for(int i=0;i<2;i++){
                             m_blk_last_access_time[sid+i]=time;
+                            m_referred_chunk.set(sid+i);
+                        }
                     break;
                 }
             break;
@@ -290,17 +296,22 @@ struct cache_block_t {
                 {
                     case 128:
                         assert(sid==0);
-                        for(int i=0;i<4;i++)
+                        for(int i=0;i<4;i++){
                             m_blk_last_access_time[i]=time;
+                            m_referred_chunk.set(i);
+                        }
                     break;
                     case 64:
                         //assert(sid==0||sid==2);
-                        for(int i=0;i<2;i++)
+                        for(int i=0;i<2;i++){
                             m_blk_last_access_time[sid+i]=time;
+                            m_referred_chunk.set(sid+i);
+                        }
                     break;
                     case 32:
                         assert(sid<4);
                         m_blk_last_access_time[sid]=time;
+                        m_referred_chunk.set(sid);
                     break;
                 }
             break;
@@ -356,27 +367,35 @@ struct cache_block_t {
         {
             case 128:
                 assert(sid==0);
-                for(int i=0;i<4;i++)
+                for(int i=0;i<4;i++){
                     m_blk_fill_time[i]=time;
+                    m_referred_chunk.set(i);
+                }
             break;
             case 64:
                 switch(data_size)
                 {
                     case 128:
                         assert(sid==0);
-                        for(int i=0;i<4;i++)
+                        for(int i=0;i<4;i++){
                             m_blk_fill_time[i]=time;
+                            m_referred_chunk.set(i);
+                        }
                     break;
                     case 64:
                         assert(sid==0||sid==2);
-                        for(int i=0;i<2;i++)
+                        for(int i=0;i<2;i++){
                             m_blk_fill_time[sid+i]=time;
+                            m_referred_chunk.set(sid+i);
+                        }
                     break;
                     case 32:
                         assert(sid==0||sid==2);
-                        assert(false);
-                        for(int i=0;i<2;i++)
+                        //assert(false);
+                        for(int i=0;i<2;i++){
                             m_blk_fill_time[sid+i]=time;
+                            m_referred_chunk.set(sid+i);
+                        }
                     break;
                 }
             break;
@@ -385,17 +404,22 @@ struct cache_block_t {
                 {
                     case 128:
                         assert(sid==0);
-                        for(int i=0;i<4;i++)
+                        for(int i=0;i<4;i++){
                             m_blk_fill_time[i]=time;
+                            m_referred_chunk.set(i);
+                        }
                     break;
                     case 64:
                         //assert(sid==0||sid==2);
-                        for(int i=0;i<2;i++)
+                        for(int i=0;i<2;i++){
                             m_blk_fill_time[sid+i]=time;
+                            m_referred_chunk.set(sid+i);
+                        }
                     break;
                     case 32:
                         assert(sid<4);
                         m_blk_fill_time[sid]=time;
+                        m_referred_chunk.set(sid);
                     break;
                 }
             break;
@@ -678,6 +702,9 @@ struct cache_block_t {
     unsigned         m_blk_fill_time[4];
     cache_block_state    m_blk_status[4];
     bool             m_fine_grained;
+
+    std::set<4>     m_referred_chunk;
+    //unsigned        m_num_chunk_referred;
     
     //tags for 128B management
     new_addr_type   m_tag;
@@ -977,6 +1004,77 @@ public:
     void get_stats(unsigned &total_access, unsigned &total_misses, unsigned &total_hit_res, unsigned &total_res_fail) const;
 
 	void update_cache_parameters(cache_config &config);
+
+    unsigned words_evicted(unsigned blksz, unsigned data_size){
+        switch(blksz){
+            case 128:
+                return 4;
+            break;
+            case 64:
+                switch(data_size){
+                    case 128:
+                        return 4;
+                    break;
+                    case 64:
+                    case 32:
+                        return 2;
+                    break;
+                }
+            break;
+            case 32:
+                switch(data_size)
+                {
+                    case 128:
+                    return 4;
+                    case 64:
+                    return 2;
+                    case 32: return 1;
+                }
+            break;
+        }
+    }
+    unsigned words_referred(unsigned blk_num, unsigned blksz, unsigned data_size, unsigned sid){
+        int i;
+        switch(blksz){
+            case 128: return m_lines[blk_num].m_referred_chunk.count();
+            case 64:
+                switch(data_size){
+                    case 128: return m_lines[blk_num].m_referred_chunk.count();
+                    case 64: 
+                    case 32:
+                    if(m_lines[blk_num].m_referred_chunk.test(sid))
+                        return 2;
+                    else return 0;
+                }
+            case 32:
+                switch(data_size){
+                    case 128: return m_lines[blk_num].m_referred_chunk.count();
+                    case 64:
+                    int count=0;
+                    for(i=0;i<2;i++)
+                    {
+                        if(m_lines[blk_num].m_referred_chunk.test(sid+i))
+                            count++;
+                    }
+                    return count;
+                    case 32:
+                    if(m_lines[blk_num].m_referred_chunk.test(sid))
+                        return 1;
+                    else return 0
+                }
+        }
+    }
+
+    float cache_efficiency(){
+        if(m_num_words_evicted)
+            return (float)m_num_words_referred/m_num_words_evicted;
+        else return 1;
+    }
+    
+    void reset_words_statistic(){
+        m_num_words_referred=0;
+        m_num_words_evicted=0;
+    }
 protected:
     // This constructor is intended for use only from derived classes that wish to
     // avoid unnecessary memory allocation that takes place in the
@@ -1005,6 +1103,9 @@ protected:
 
     int m_core_id; // which shader core is using this
     int m_type_id; // what kind of cache is this (normal, texture, constant)
+
+    unsigned m_num_words_evicted;
+    unsigned m_num_words_referred;
 };
 
 class mshr_table {
@@ -1605,6 +1706,14 @@ public:
                 unsigned time,
                 std::list<cache_event> &events );
     virtual void fill( mem_fetch *mf, unsigned time );
+
+    float cache_efficiency()
+    {
+        return m_tag_array->cache_efficiency();
+    }
+    void reset_cache_stat(){
+        m_tag_array->reset_words_statistic();
+    }
 protected:
 //! A general function that takes the result of a tag_array probe
     //  and performs the correspding functions based on the cache configuration

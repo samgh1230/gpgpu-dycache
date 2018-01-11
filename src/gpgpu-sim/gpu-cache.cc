@@ -153,6 +153,9 @@ void tag_array::init( int core_id, int type_id )
     m_prev_snapshot_pending_hit = 0;
     m_core_id = core_id; 
     m_type_id = type_id;
+
+    m_num_words_evicted = 0;
+    m_num_words_referred=0;
 }
 
 enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx) const {
@@ -751,6 +754,8 @@ enum cache_request_status tag_array::access( new_addr_type addr, new_addr_type c
     case MISS:
         m_miss++;
         shader_cache_access_log(m_core_id, m_type_id, 1); // log cache misses
+        m_num_words_evicted += words_evicted(blksz,data_size);
+        m_num_words_referred += words_referred(idx,blksz,data_size,sid);
         if ( m_config.m_alloc_policy == ON_MISS ) {
             if( m_lines[idx].is_modified(sid,blksz,data_size)){//m_lines[idx].m_status == MODIFIED ) {
                 wb = true;
