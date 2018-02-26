@@ -686,7 +686,7 @@ void shader_core_ctx::func_exec_inst( warp_inst_t &inst )
         if(inst.space.get_type()==global_space||inst.space.get_type()==local_space||inst.space.get_type()==param_space_local)
         {
             inst.generate_mem_accesses(m_data_sz);
-            m_num_reqs.push_back((float)inst.active_count()/inst.accessq_count());
+            m_num_reqs.push_back(inst.accessq_count());
             m_sample_insts++;
             m_sample_reqs += inst.accessq_count();
         }
@@ -2057,7 +2057,7 @@ void gpgpu_sim::shader_print_cache_stats( FILE *fout ) const{
     }
 
     // L1D
-    FILE* f=fopen("ex-32.txt","a");
+    FILE* f=fopen("new-50.txt","a");
     if(!m_shader_config->m_L1D_config.disabled()){
         total_css.clear();
         css.clear();
@@ -2494,13 +2494,13 @@ void shader_core_ctx::set_cache_blksz(unsigned blksz)
 {
     if(blksz<current_blksz)
         change2small_blksz(blksz);
-    /*if(blksz>current_blksz)
-        change2big_blksz(blksz);*/
+    if(blksz>current_blksz)
+        change2big_blksz(blksz);
 }
 unsigned shader_core_ctx::get_new_blksz()
 {
-    std::vector<float> num_ref;
-    num_ref.resize(3,0.0);
+    std::vector<unsigned> num_ref;
+    num_ref.resize(3,0);
     for(int i=0;i<m_data_sz.size();i++)
     {
         switch(m_data_sz[i])
@@ -2518,20 +2518,28 @@ unsigned shader_core_ctx::get_new_blksz()
     float avg_data_sz = current_blksz;
     if(m_data_sz.size())
     avg_data_sz = accumulate(m_data_sz.begin(),m_data_sz.end(),0.0)/m_data_sz.size();
-    for(int i=0;i<3;i++)
+    /*for(int i=0;i<3;i++)
     {
       num_ref[i] /= m_data_sz.size();
-    }
+    }*/
+    
 
     float small_data = (float)(num_ref[0]+num_ref[1])/m_data_sz.size();
     float pct_of_32 = (float)num_ref[0]/(num_ref[0]+num_ref[1]);
-
-    if(small_data>=0.8){
+    //FILE* f = fopen("test-50.txt","a");
+    //fprintf(f,"cache efficiency=%f, avg_reqs_per_inst=%f, ratioofReplace=%f, small_data=%f\n",cache_efficiency(),avg_reqs_per_inst(),get_ratio_replace(),small_data);
+   // fflush(f);
+    //fclose(f);
+    //if(avg_reqs_per_inst()>=4)
+    // if(small_data>=0.8){
+    if(get_ratio_replace()>=0.5&&small_data>=0.5){
         if(pct_of_32>=0.5)
             return 32;
         else return 64;
     }
-    else return 128;
+    else if(get_ratio_replace()<0.5&&small_data<0.5) 
+        return 128;
+    else return current_blksz;
 
     /*if(avg_data_sz<48)
         return 32;
@@ -2593,6 +2601,7 @@ unsigned shader_core_ctx::get_new_blksz()
 void shader_core_ctx::adjust_cache_blk()
 {
     unsigned new_blksz = get_new_blksz();
+    reset_cache_efficiency();
     set_cache_blksz(new_blksz);
     m_data_sz.clear();
     m_num_reqs.clear();
@@ -2602,14 +2611,14 @@ void shader_core_ctx::cycle()
 {
     m_sample_cycles++;
     // if(m_sample_cycles==SAMPLE_INTERVAL)
-    if(m_sample_reqs>=SAMPLE_REQ)
+    if(get_num_processed_reqs()>=SAMPLE_REQ)
     {
         adjust_cache_blk();
         //m_sample_cycles=0;
         m_sample_reqs=0;
     }
 
-    /*if(cache_efficiency()<=0.5)
+    /*if(cache_efficiency()<=0.5||avg_reqs_per_inst()>=4)
         change2small_blksz(32);*/
 	m_stats->shader_cycles[m_sid]++;
     writeback();

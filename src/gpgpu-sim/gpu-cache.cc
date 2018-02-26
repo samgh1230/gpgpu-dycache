@@ -156,6 +156,8 @@ void tag_array::init( int core_id, int type_id )
 
     m_num_words_evicted = 0;
     m_num_words_referred=0;
+    m_num_reqs=0;
+    m_num_replace=0;
 }
 
 enum cache_request_status tag_array::probe( new_addr_type addr, unsigned &idx) const {
@@ -744,6 +746,7 @@ enum cache_request_status tag_array::access( new_addr_type addr, new_addr_type c
     m_access++;
     shader_cache_access_log(m_core_id, m_type_id, 0); // log accesses to cache
     enum cache_request_status status = probe(addr,common_tag,chunck_tag,idx,sid,blksz,data_size);
+    m_num_reqs++;
     switch (status) {
     case HIT_RESERVED: 
         m_pending_hit++;
@@ -754,8 +757,13 @@ enum cache_request_status tag_array::access( new_addr_type addr, new_addr_type c
     case MISS:
         m_miss++;
         shader_cache_access_log(m_core_id, m_type_id, 1); // log cache misses
-        m_num_words_evicted += words_evicted(blksz,data_size);
-        m_num_words_referred += words_referred(idx,blksz,data_size,sid);
+        //if(m_lines[idx].is_modified(sid,blksz,data_size)){
+        if(words_evicted(blksz,data_size)){
+            m_num_replace++;
+            m_num_words_evicted += words_evicted(blksz,data_size);
+            m_num_words_referred += words_referred(idx,blksz,data_size,sid);
+        }
+        
         if ( m_config.m_alloc_policy == ON_MISS ) {
             if( m_lines[idx].is_modified(sid,blksz,data_size)){//m_lines[idx].m_status == MODIFIED ) {
                 wb = true;
@@ -1249,7 +1257,7 @@ void l1_cache::fill(mem_fetch *mf, unsigned time){
     if ( m_config.m_alloc_policy == ON_MISS )
         m_tag_array->fill(e->second.m_cache_index,time,sid,current_blksz,data_size);
     else if ( m_config.m_alloc_policy == ON_FILL )
-        m_tag_array->fill(mf->get_addr(),m_config.common_tag(mf->get_addr()), m_config.chunck_tag(mf->get_addr()),time,sid,current_blksz,data_size);
+        m_tag_array->fill(mf->get_addr(),m_config.common_tag(mf->get_addr()), m_config.chunck_tag(mf->get_addr(),current_blksz,data_size),time,sid,current_blksz,data_size);
     else abort();
     bool has_atomic = false;
     m_mshrs.mark_ready(e->second.m_block_addr, has_atomic);
@@ -1340,8 +1348,9 @@ void l1_cache::send_read_request(new_addr_type addr, new_addr_type block_addr, u
 
     unsigned sid = m_config.get_sid(addr);
     new_addr_type common_tag = m_config.common_tag(addr);
-    new_addr_type chunck_tag = m_config.chunck_tag(addr);
     unsigned data_size = mf->get_data_size();
+    new_addr_type chunck_tag = m_config.chunck_tag(addr,current_blksz,data_size);
+    
 
     if ( mshr_hit && mshr_avail ) {
     	if(read_only)
@@ -1358,7 +1367,7 @@ void l1_cache::send_read_request(new_addr_type addr, new_addr_type block_addr, u
     		m_tag_array->access(block_addr,common_tag,chunck_tag,time,cache_index,wb,evicted,sid,current_blksz,data_size);
 
         m_mshrs.add(block_addr,mf);
-        m_extra_mf_fields[mf] = extra_mf_fields(block_addr,cache_index, mf->get_data_size());
+        
 
         unsigned rd_data_size;
         if(mf->get_data_size()>current_blksz)
@@ -1366,6 +1375,7 @@ void l1_cache::send_read_request(new_addr_type addr, new_addr_type block_addr, u
         else rd_data_size = current_blksz;
 
         mf->set_data_size( /*m_config.get_line_sz()*/rd_data_size);
+        m_extra_mf_fields[mf] = extra_mf_fields(block_addr,cache_index, mf->get_data_size());
         m_miss_queue.push_back(mf);
         mf->set_status(m_miss_queue_status,time);
         if(!wa)
@@ -1600,8 +1610,9 @@ data_cache::rd_miss_base( new_addr_type addr,
 cache_request_status l1_cache::wr_hit_wb(new_addr_type addr, unsigned cache_index, unsigned sid, mem_fetch *mf, unsigned time, std::list<cache_event> &events, enum cache_request_status status ){
 	new_addr_type block_addr = m_config.block_addr(addr);
     new_addr_type common_tag = m_config.common_tag(addr);
-    new_addr_type chunck_tag = m_config.chunck_tag(addr);
     unsigned data_size = mf->get_data_size();
+    new_addr_type chunck_tag = m_config.chunck_tag(addr,current_blksz,data_size);
+    
     //nsigned sid=(unsigned)-1;//unsigned sid = m_config.get_sid(addr);
 	m_tag_array->access(block_addr, common_tag,chunck_tag,time,cache_index,sid,current_blksz,data_size); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
@@ -1618,9 +1629,10 @@ cache_request_status l1_cache::wr_hit_wt(new_addr_type addr, unsigned cache_inde
 
 	new_addr_type block_addr = m_config.block_addr(addr);
     new_addr_type common_tag = m_config.common_tag(addr);
-    new_addr_type chunck_tag = m_config.chunck_tag(addr);
-    //unsigned sid=(unsigned)-1;//unsigned sid = m_config.get_sid(addr);
     unsigned data_size = mf->get_data_size();
+    new_addr_type chunck_tag = m_config.chunck_tag(addr,current_blksz,data_size);
+    //unsigned sid=(unsigned)-1;//unsigned sid = m_config.get_sid(addr);
+    
 	m_tag_array->access(block_addr,common_tag,chunck_tag,time,cache_index,sid,current_blksz,data_size); // update LRU state
 	cache_block_t &block = m_tag_array->get_block(cache_index);
 	//block.m_status = MODIFIED;
@@ -1671,9 +1683,10 @@ l1_cache::wr_miss_wa( new_addr_type addr,
 {
     new_addr_type block_addr = m_config.block_addr(addr);
     new_addr_type common_tag = m_config.common_tag(addr);
-    new_addr_type chunck_tag = m_config.chunck_tag(addr);
-    //unsigned sid=(unsigned)-1;//unsigned sid=m_config.get_sid(addr);
     unsigned data_size=mf->get_data_size();
+    new_addr_type chunck_tag = m_config.chunck_tag(addr,current_blksz,data_size);
+    //unsigned sid=(unsigned)-1;//unsigned sid=m_config.get_sid(addr);
+    
 
     // Write allocate, maximum 3 requests (write miss, read request, write back request)
     // Conservatively ensure the worst-case request can be handled this cycle
@@ -1762,9 +1775,10 @@ l1_cache::rd_hit_base( new_addr_type addr,
 {
     new_addr_type block_addr = m_config.block_addr(addr);
     new_addr_type common_tag = m_config.common_tag(addr);
-    new_addr_type chunck_tag = m_config.chunck_tag(addr);
-    //unsigned sid=(unsigned)-1;//m_config.get_sid(addr);
     unsigned data_size=mf->get_data_size();
+    new_addr_type chunck_tag = m_config.chunck_tag(addr,current_blksz,data_size);
+    //unsigned sid=(unsigned)-1;//m_config.get_sid(addr);
+    
     m_tag_array->access(block_addr,common_tag,chunck_tag,time,cache_index,sid,current_blksz,data_size);
     // Atomics treated as global read/write requests - Perform read, mark line as
     // MODIFIED
@@ -1965,7 +1979,6 @@ data_cache::access( new_addr_type addr,
     
     return access_status;
 }
-
 /// This is meant to model the first level data cache in Fermi.
 /// It is write-evict (global) or write-back (local) at the
 /// granularity of individual blocks (Set by GPGPU-Sim configuration file)
@@ -1979,10 +1992,11 @@ l1_cache::access( new_addr_type addr,
     assert( mf->get_data_size() <= m_config.get_line_sz());
     bool wr = mf->get_is_write();
     new_addr_type block_addr = m_config.block_addr(addr);
-    new_addr_type common_tag = m_config.common_tag(addr);
-    new_addr_type chunck_tag = m_config.chunck_tag(addr);
-    unsigned sid = -1;
     unsigned data_size=mf->get_data_size();
+    new_addr_type common_tag = m_config.common_tag(addr);
+    new_addr_type chunck_tag = m_config.chunck_tag(addr,current_blksz,data_size);
+    unsigned sid = -1;
+    
     unsigned cache_index = (unsigned)-1;
     
     enum cache_request_status probe_status

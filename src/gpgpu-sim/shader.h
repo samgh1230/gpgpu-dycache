@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <numeric>
 #include <assert.h>
 #include <map>
 #include <set>
@@ -1125,7 +1126,15 @@ public:
     float cache_efficiency(){
         return m_L1D->cache_efficiency();
     }
-    
+    void reset_cache_efficiency(){
+        m_L1D->reset_cache_stat();
+    }
+    float get_ratio_replace(){
+        return m_L1D->get_ratio_replace();
+    }
+    unsigned get_num_processed_reqs(){
+        return m_L1D->get_num_processed_reqs();
+    }
     class shader_core_ctx *m_core;
 protected:
     ldst_unit( mem_fetch_interface *icnt,
@@ -1573,7 +1582,7 @@ private:
 };
 
 #define SAMPLE_INTERVAL 100*100
-#define SAMPLE_REQ  10000
+#define SAMPLE_REQ  1000
 #define SAMPLE_INSTRUCTION 10000
 class shader_core_ctx : public core_t {
 public:
@@ -1595,6 +1604,20 @@ public:
     void adjust_cache_blk();
     float cache_efficiency(){
         return m_ldst_unit->cache_efficiency();
+    }
+    float avg_reqs_per_inst(){
+        if(m_num_reqs.size()>0)
+            return accumulate(m_num_reqs.begin(),m_num_reqs.end(),0.0)/m_num_reqs.size();
+        else return 1;
+    }
+    void reset_cache_efficiency(){
+        m_ldst_unit->reset_cache_efficiency();
+    }
+    float get_ratio_replace(){
+        return m_ldst_unit->get_ratio_replace();
+    }
+    unsigned get_num_processed_reqs(){
+        return m_ldst_unit->get_num_processed_reqs();
     }
     // modifiers
     void cycle();

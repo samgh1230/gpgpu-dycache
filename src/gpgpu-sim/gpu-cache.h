@@ -195,6 +195,7 @@ struct cache_block_t {
                     assert( m_blk_status[i] == RESERVED );
                     m_blk_status[i]=VALID;
                     m_blk_fill_time[i]=time;
+                    m_referred_chunk.set(i);
                 }
             break;
             case 64:
@@ -207,6 +208,7 @@ struct cache_block_t {
                         assert(m_blk_status[i]==RESERVED);
                         m_blk_status[i] = VALID;
                         m_blk_fill_time[i]=time;
+                        m_referred_chunk.set(i);
                     }
                 break;
                 case 64:
@@ -216,6 +218,7 @@ struct cache_block_t {
                         assert(m_blk_status[sid+i]==RESERVED);
                         m_blk_status[sid+i]=VALID;
                         m_blk_fill_time[sid+i]=time;
+                        m_referred_chunk.set(sid+i);
                     }
                 break;
                 case 32:
@@ -226,6 +229,7 @@ struct cache_block_t {
                         assert(m_blk_status[sid+i]==RESERVED);
                         m_blk_status[sid+i]=VALID;
                         m_blk_fill_time[sid+i]=time;
+                        m_referred_chunk.set(sid+i);
                     }
                 break;
             }
@@ -238,6 +242,7 @@ struct cache_block_t {
                        assert( m_blk_status[i] == RESERVED );
                         m_blk_status[i]=VALID;
                         m_blk_fill_time[i]=time;
+                        m_referred_chunk.set(i);
                     }
                     break;
                     case 64:
@@ -246,6 +251,7 @@ struct cache_block_t {
                        assert( m_blk_status[sid+i] == RESERVED );
                         m_blk_status[sid+i]=VALID;
                         m_blk_fill_time[sid+i]=time;
+                        m_referred_chunk.set(sid+i);
                     }
                     break;
                     case 32:
@@ -253,6 +259,7 @@ struct cache_block_t {
                         assert( m_blk_status[sid] == RESERVED );
                         m_blk_status[sid]=VALID;
                         m_blk_fill_time[sid]=time;
+                        m_referred_chunk.set(sid);
                     break;
                 }
             break;
@@ -895,12 +902,37 @@ public:
     }
     new_addr_type common_tag(new_addr_type addr)
     {
-        return addr >> 26;
+        return addr >> 27;
     }
-    new_addr_type chunck_tag(new_addr_type addr)
+    new_addr_type chunck_tag(new_addr_type addr, unsigned blksz, unsigned data_size)
     {
-        new_addr_type first_14 = (addr>>12) & (16*1024-1);
-        new_addr_type last_2 = (addr >> 5) & 3;
+        new_addr_type first_14 = (addr>>13) & (16*1024-1);
+        new_addr_type last_2;
+        switch(blksz)
+        {
+            case 128: last_2 = 0; break;
+            case 64:
+                switch(data_size) 
+                {
+                    case 128: last_2=0; break;
+                    case 64:
+                    case 32:
+                        last_2 = (addr>>5)&2;
+                    break;
+                }
+            break;
+            case 32: 
+                switch(data_size){
+                    case 128: last_2=0;break;
+                    case 64:
+                        last_2=(addr>>5)&2;
+                    break;
+                    case 32:
+                        last_2 = (addr>>5)&3;
+                    break;
+                }
+            break;
+        }
         first_14 <<= 2;
         return first_14 | last_2;
     }
@@ -1066,14 +1098,23 @@ public:
     }
 
     float cache_efficiency(){
-        if(m_num_words_evicted)
+        if(m_num_words_evicted&&m_num_words_referred)
             return (float)m_num_words_referred/m_num_words_evicted;
         else return 1;
     }
-    
+    float ratio_replace(){
+        if(m_num_reqs)
+            return (float)m_num_replace/m_num_reqs;
+        else return 0;
+    }
+    unsigned get_num_processed_reqs(){
+        return m_num_reqs;
+    }
     void reset_words_statistic(){
         m_num_words_referred=0;
         m_num_words_evicted=0;
+        m_num_reqs=0;
+        m_num_replace=0;
     }
 protected:
     // This constructor is intended for use only from derived classes that wish to
@@ -1106,6 +1147,8 @@ protected:
 
     unsigned m_num_words_evicted;
     unsigned m_num_words_referred;
+    unsigned m_num_reqs;
+    unsigned m_num_replace;
 };
 
 class mshr_table {
@@ -1711,8 +1754,14 @@ public:
     {
         return m_tag_array->cache_efficiency();
     }
+    float get_ratio_replace(){
+        return m_tag_array->ratio_replace();
+    }
     void reset_cache_stat(){
         m_tag_array->reset_words_statistic();
+    }
+    unsigned get_num_processed_reqs(){
+        return m_tag_array->get_num_processed_reqs();
     }
 protected:
 //! A general function that takes the result of a tag_array probe
