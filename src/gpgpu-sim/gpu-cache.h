@@ -2145,14 +2145,14 @@ public:
     List_Type addr_filter(new_addr_type addr)
     {
         if(addr>=m_bound_regs[0]&&addr<=m_bound_regs[1])
-            return WORKLIST;
+            return WORK_LIST;
         else if(addr>=m_bound_regs[2] && addr <= m_bound_regs[3])
-            return VERTEXLIST;
+            return VERTEX_LIST;
         else if(addr >= m_bound_regs[4] && addr <= m_bound_regs[5])
-            return EDGELIST;
+            return EDGE_LIST;
         else if(addr >= m_bound_regs[6] && addr <= m_bound_regs[7])
-            return VISITEDLIST;
-        else return -1;
+            return VISIT_LIST;
+        else return NONE;
     }
     void gen_prefetch_requests(new_addr_type addr, List_Type type)//统一入口
     {
