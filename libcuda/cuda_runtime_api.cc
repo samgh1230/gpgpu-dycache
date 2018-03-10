@@ -419,10 +419,35 @@ extern "C" {
  *                                                                              *
  *******************************************************************************/
 
-__host__ cudaError_t CUDARTAPI cudaMallocMark(void **devPtr, size_t size, unsigned data_type) 
+__host__ cudaError_t CUDARTAPI cudaMallocMark(void **devPtr, size_t size, enum Struct_Type struct_type) 
 {
 	CUctx_st* context = GPGPUSim_Context();
 	*devPtr = context->get_device()->get_gpgpu()->gpu_malloc(size);
+
+	gpgpu_sim* gpu = context->get_device()->get_gpgpu();
+	switch(struct_type){
+		case WORKLIST: 
+			gpu->worklist_start_addr = *devPtr;
+			gpu->worklist_end_addr = *devPtr + size;
+			printf("worklist start_addr = 0x%llx, end_addr = 0x%llx\n",*devPtr,*devPtr+size);
+			break;
+		case VERTEXLIST:
+			gpu->vertexlist_start_addr = *devPtr;
+			gpu->vertexlist_end_addr = *devPtr + size;
+			printf("vertexlist start_addr = 0x%llx, end_addr = 0x%llx\n",*devPtr,*devPtr+size);
+			break;
+		case EDGELIST:
+			gpu->edgelist_start_addr = *devPtr;
+			gpu->edgelist_end_addr = *devPtr + size;
+			printf("edgelist start_addr = 0x%llx, end_addr = 0x%llx\n",*devPtr,*devPtr+size);
+			break;
+		case VISITEDLIST:
+			gpu->visitlist_start_addr = *devPtr;
+			gpu->visitlist_end_addr = *devPtr + size;
+			printf("visitlist start_addr = 0x%llx, end_addr = 0x%llx\n",*devPtr,*devPtr+size);
+			break;
+	}
+
 	if(g_debug_execution >= 3)
 		printf("GPGPU-Sim PTX: cudaMallocing %zu bytes starting at 0x%llx..\n",size, (unsigned long long) *devPtr);
 	if ( *devPtr  ) {

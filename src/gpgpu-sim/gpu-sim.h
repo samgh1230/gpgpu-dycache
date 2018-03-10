@@ -362,6 +362,14 @@ private:
     friend class gpgpu_sim;
 };
 
+enum Struct_Type{
+    WORKLIST,
+    VERTEXLIST,
+    EDGELIST,
+    VISITLIST
+};
+
+
 class gpgpu_sim : public gpgpu_t {
 public:
    gpgpu_sim( const gpgpu_sim_config &config );
