@@ -419,7 +419,7 @@ extern "C" {
  *                                                                              *
  *******************************************************************************/
 
-__host__ cudaError_t CUDARTAPI cudaMalloc(void **devPtr, size_t size, unsigned data_type) 
+__host__ cudaError_t CUDARTAPI cudaMallocMark(void **devPtr, size_t size, unsigned data_type) 
 {
 	CUctx_st* context = GPGPUSim_Context();
 	*devPtr = context->get_device()->get_gpgpu()->gpu_malloc(size);
