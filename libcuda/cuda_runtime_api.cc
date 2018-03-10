@@ -426,22 +426,22 @@ __host__ cudaError_t CUDARTAPI cudaMallocMark(void **devPtr, size_t size, enum S
 
 	gpgpu_sim* gpu = context->get_device()->get_gpgpu();
 	switch(struct_type){
-		case WORKLIST: 
+		case 0: 
 			gpu->worklist_start_addr = *devPtr;
 			gpu->worklist_end_addr = *devPtr + size;
 			printf("worklist start_addr = 0x%llx, end_addr = 0x%llx\n",*devPtr,*devPtr+size);
 			break;
-		case VERTEXLIST:
+		case 1:
 			gpu->vertexlist_start_addr = *devPtr;
 			gpu->vertexlist_end_addr = *devPtr + size;
 			printf("vertexlist start_addr = 0x%llx, end_addr = 0x%llx\n",*devPtr,*devPtr+size);
 			break;
-		case EDGELIST:
+		case 2:
 			gpu->edgelist_start_addr = *devPtr;
 			gpu->edgelist_end_addr = *devPtr + size;
 			printf("edgelist start_addr = 0x%llx, end_addr = 0x%llx\n",*devPtr,*devPtr+size);
 			break;
-		case VISITEDLIST:
+		case 3:
 			gpu->visitlist_start_addr = *devPtr;
 			gpu->visitlist_end_addr = *devPtr + size;
 			printf("visitlist start_addr = 0x%llx, end_addr = 0x%llx\n",*devPtr,*devPtr+size);
