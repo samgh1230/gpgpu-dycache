@@ -488,10 +488,10 @@ public:
    unsigned long long  gpu_sim_insn_last_update;
    unsigned gpu_sim_insn_last_update_sid;
 
-   AddressType worklist_start_addr, worklist_end_addr;
-   AddressType vertexlist_start_addr, vertexlist_end_addr;
-   AddressType edgelist_start_addr, edgelist_end_addr;
-   AddressType visitlist_start_addr, visitlist_end_addr;
+   new_addr_type worklist_start_addr, worklist_end_addr;
+   new_addr_type vertexlist_start_addr, vertexlist_end_addr;
+   new_addr_type edgelist_start_addr, edgelist_end_addr;
+   new_addr_type visitlist_start_addr, visitlist_end_addr;
 
 
 
