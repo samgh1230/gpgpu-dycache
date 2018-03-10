@@ -2119,13 +2119,13 @@ private:
 
 typedef  new_addr_type Bound_Reg;
 typedef  unsigned long long EWMA_Time;
-enum List_Type{
-    NONE,
-    WORKLIST,
-    VERTEXLIST,
-    EDGELIST,
-    VISITEDLIST
-};
+// enum List_Type{
+//     NONE,
+//     WORKLIST,
+//     VERTEXLIST,
+//     EDGELIST,
+//     VISITEDLIST
+// };
 struct EWMA_Unit{
     EWMA_Time work_time;
     EWMA_Time data_time;
