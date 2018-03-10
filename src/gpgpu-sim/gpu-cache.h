@@ -2117,4 +2117,62 @@ private:
     extra_mf_fields_lookup m_extra_mf_fields;
 };
 
+typedef  new_addr_type Bound_Reg;
+typedef  unsigned long long EWMA_Time;
+enum List_Type{
+    NONE,
+    WORKLIST,
+    VERTEXLIST,
+    EDGELIST,
+    VISITEDLIST
+};
+struct EWMA_Unit{
+    EWMA_Time work_time;
+    EWMA_Time data_time;
+
+    EWMA_Time gen_new_ewma_time(EWMA_Time new_time);
+    //ratio reg;
+};
+enum Prefetch_Mode{
+    VERTEX,
+    LARGE_NODE
+};
+
+class Prefetch_Unit{
+public:
+    Prefetch_Unit();
+    ~Prefetch_Unit();
+    List_Type addr_filter(new_addr_type addr)
+    {
+        if(addr>=m_bound_regs[0]&&addr<=m_bound_regs[1])
+            return WORKLIST;
+        else if(addr>=m_bound_regs[2] && addr <= m_bound_regs[3])
+            return VERTEXLIST;
+        else if(addr >= m_bound_regs[4] && addr <= m_bound_regs[5])
+            return EDGELIST;
+        else if(addr >= m_bound_regs[6] && addr <= m_bound_regs[7])
+            return VISITEDLIST;
+        else return NONE;
+    }
+    void gen_prefetch_requests(new_addr_type addr, List_Type type)//统一入口
+    {
+        switch(type){
+            case WORKLIST: gen_prefetch_worklist(addr);break;
+            case VERTEXLIST: gen_prefetch_vertexlist(addr);break;
+            case EDGELIST:  gen_prefetch_edgelist(addr);break;
+            case VISITEDLIST:   gen_prefetch_visitedlist(addr);break;
+            case NONE: break;
+        }
+    }
+    void gen_prefetch_worklist(new_addr_type addr);//generate worklist prefetch, push reqs into req_q
+    void gen_prefetch_vertexlist(new_addr_type addr);//generate vertexlist prefetch, push reqs into req_q
+    void gen_prefetch_edgelist(new_addr_type addr);//generate edgelist prefetch, push reqs into req_q
+    void gen_prefetch_visitedlist(new_addr_type addr);//generate visited list prefetch, push reqs into req_q
+private:
+    Bound_Reg m_bound_regs[8];//worklist, vertexlist, edgelist, visitedlist. (start, end)
+    EWMA_Unit m_ewma;
+    std::list<mem_fetch*> m_req_q;
+    Prefetch_Mode m_mode;
+};
+
 #endif

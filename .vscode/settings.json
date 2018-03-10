@@ -3,5 +3,6 @@
         "*.cu": "cpp",
         "ios": "cpp",
         "xutility": "cpp"
-    }
+    },
+    "python.pythonPath": "D:\\Python27\\python.exe"
 }

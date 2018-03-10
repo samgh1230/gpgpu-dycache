@@ -419,6 +419,20 @@ extern "C" {
  *                                                                              *
  *******************************************************************************/
 
+__host__ cudaError_t CUDARTAPI cudaMalloc(void **devPtr, size_t size, unsigned data_type) 
+{
+	CUctx_st* context = GPGPUSim_Context();
+	*devPtr = context->get_device()->get_gpgpu()->gpu_malloc(size);
+	if(g_debug_execution >= 3)
+		printf("GPGPU-Sim PTX: cudaMallocing %zu bytes starting at 0x%llx..\n",size, (unsigned long long) *devPtr);
+	if ( *devPtr  ) {
+		return g_last_cudaError = cudaSuccess;
+	} else {
+		return g_last_cudaError = cudaErrorMemoryAllocation;
+	}
+}
+
+
 __host__ cudaError_t CUDARTAPI cudaMalloc(void **devPtr, size_t size) 
 {
 	CUctx_st* context = GPGPUSim_Context();
