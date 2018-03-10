@@ -2119,13 +2119,13 @@ private:
 
 typedef  new_addr_type Bound_Reg;
 typedef  unsigned long long EWMA_Time;
-// enum List_Type{
-//     NONE,
-//     WORKLIST,
-//     VERTEXLIST,
-//     EDGELIST,
-//     VISITEDLIST
-// };
+enum List_Type{
+    NONE,
+    WORK_LIST,
+    VERTEX_LIST,
+    EDGE_LIST,
+    VISIT_LIST
+};
 struct EWMA_Unit{
     EWMA_Time work_time;
     EWMA_Time data_time;
@@ -2142,7 +2142,7 @@ class Prefetch_Unit{
 public:
     Prefetch_Unit();
     ~Prefetch_Unit();
-    Struct_Type addr_filter(new_addr_type addr)
+    List_Type addr_filter(new_addr_type addr)
     {
         if(addr>=m_bound_regs[0]&&addr<=m_bound_regs[1])
             return WORKLIST;
@@ -2154,13 +2154,13 @@ public:
             return VISITEDLIST;
         else return -1;
     }
-    void gen_prefetch_requests(new_addr_type addr, Struct_Type type)//统一入口
+    void gen_prefetch_requests(new_addr_type addr, List_Type type)//统一入口
     {
         switch(type){
-            case WORKLIST: gen_prefetch_worklist(addr);break;
-            case VERTEXLIST: gen_prefetch_vertexlist(addr);break;
-            case EDGELIST:  gen_prefetch_edgelist(addr);break;
-            case VISITEDLIST:   gen_prefetch_visitedlist(addr);break;
+            case WORK_LIST: gen_prefetch_worklist(addr);break;
+            case VERTEX_LIST: gen_prefetch_vertexlist(addr);break;
+            case EDGE_LIST:  gen_prefetch_edgelist(addr);break;
+            case VISIT_LIST:   gen_prefetch_visitedlist(addr);break;
             default: break;
         }
     }
