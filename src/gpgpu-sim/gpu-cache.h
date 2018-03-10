@@ -2142,7 +2142,7 @@ class Prefetch_Unit{
 public:
     Prefetch_Unit();
     ~Prefetch_Unit();
-    List_Type addr_filter(new_addr_type addr)
+    Struct_Type addr_filter(new_addr_type addr)
     {
         if(addr>=m_bound_regs[0]&&addr<=m_bound_regs[1])
             return WORKLIST;
@@ -2152,16 +2152,16 @@ public:
             return EDGELIST;
         else if(addr >= m_bound_regs[6] && addr <= m_bound_regs[7])
             return VISITEDLIST;
-        else return NONE;
+        else return -1;
     }
-    void gen_prefetch_requests(new_addr_type addr, List_Type type)//统一入口
+    void gen_prefetch_requests(new_addr_type addr, Struct_Type type)//统一入口
     {
         switch(type){
             case WORKLIST: gen_prefetch_worklist(addr);break;
             case VERTEXLIST: gen_prefetch_vertexlist(addr);break;
             case EDGELIST:  gen_prefetch_edgelist(addr);break;
             case VISITEDLIST:   gen_prefetch_visitedlist(addr);break;
-            case NONE: break;
+            default: break;
         }
     }
     void gen_prefetch_worklist(new_addr_type addr);//generate worklist prefetch, push reqs into req_q
