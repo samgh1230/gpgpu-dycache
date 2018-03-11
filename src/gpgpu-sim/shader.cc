@@ -1654,6 +1654,7 @@ ldst_unit::ldst_unit( mem_fetch_interface *icnt,
                               m_mf_allocator,
                               IN_L1D_MISS_QUEUE );
     }
+    m_prefetch_unit = new Prefetch_Unit();
 }
 
 ldst_unit::ldst_unit( mem_fetch_interface *icnt,
