@@ -1331,7 +1331,8 @@ void gpgpu_sim::cycle()
       }
 #endif
 
-      issue_block2core();
+      //issue_block2core();
+      issue_block2core(struct_bound);
       
       // Depending on configuration, flush the caches once all of threads are completed.
       int all_threads_complete = 1;
