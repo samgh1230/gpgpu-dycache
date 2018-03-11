@@ -2148,9 +2148,10 @@ public:
             m_bound_regs[i] = struct_bound[i];
     }
 
-    bool is_full(){return m_req_q.size()==m_max_queue_length}
+    bool is_full(){return m_req_q.size()==m_max_queue_length;}
 
-    void new_load_addr(new_addr_type addr){
+    void new_load_addr(new_addr_type addr)
+    {
         if(!is_full()){
             List_Type type = addr_filter(addr);
             gen_prefetch_requests(addr, type);
@@ -2198,7 +2199,7 @@ public:
         printf("generate visitlist prefetch\n");
     }
 
-    mem_fetch* pop_from_top() {return m_req_q.front()}
+    mem_access_t* pop_from_top() {return m_req_q.front();}
     void del_req_from_top() {m_req_q.pop_front()}
 private:
     Bound_Reg m_bound_regs[8];//worklist, vertexlist, edgelist, visitedlist. (start, end)
