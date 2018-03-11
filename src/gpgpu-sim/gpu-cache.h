@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "gpu-misc.h"
 #include "mem_fetch.h"
 #include "../abstract_hardware_model.h"
@@ -190,7 +191,7 @@ struct cache_block_t {
     {
         switch(blksz){
             case 128:
-                assert(sid==0);
+                // assert(sid==0);
                 for(int i=0;i<4;i++){
                     assert( m_blk_status[i] == RESERVED );
                     m_blk_status[i]=VALID;
@@ -202,7 +203,7 @@ struct cache_block_t {
             switch(data_size)
             {
                 case 128:
-                    assert(sid==0);
+                    // assert(sid==0);
                     for(int i=0;i<4;i++)
                     {
                         assert(m_blk_status[i]==RESERVED);
@@ -212,7 +213,7 @@ struct cache_block_t {
                     }
                 break;
                 case 64:
-                    assert(sid==0||sid==2);
+                    // assert(sid==0||sid==2);
                     for(int i=0;i<2;i++)
                     {
                         assert(m_blk_status[sid+i]==RESERVED);
@@ -222,7 +223,7 @@ struct cache_block_t {
                     }
                 break;
                 case 32:
-                    assert(sid==0||sid==2);
+                    // assert(sid==0||sid==2);
                     // assert(false);
                     for(int i=0;i<2;i++)
                     {
@@ -237,7 +238,7 @@ struct cache_block_t {
             case 32:
                 switch(data_size){
                     case 128:
-                    assert(sid==0);
+                    // assert(sid==0);
                     for(int i=0;i<4;i++){
                        assert( m_blk_status[i] == RESERVED );
                         m_blk_status[i]=VALID;
@@ -2200,7 +2201,7 @@ public:
         switch(type){
             case WORK_LIST: gen_prefetch_worklist(addr);break;
             case VERTEX_LIST: gen_prefetch_vertexlist(addr);break;
-            case EDGE_LIST:  gen_prefetch_edgelist(addr);break;
+            case EDGE_LIST:  if((addr-m_bound_regs[4])%(4*128)==0) gen_prefetch_edgelist(addr); break;
             case VISIT_LIST:   gen_prefetch_visitedlist(addr);break;
             default: break;
         }
@@ -2217,6 +2218,11 @@ public:
     void gen_prefetch_edgelist(new_addr_type addr)//generate edgelist prefetch, push reqs into req_q
     {
         printf("generate edgelist prefetch\n");
+        for(unsigned i=0;i<4;i++){
+            new_addr_type next_addr = addr + 128*(4+i);
+            mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, next_addr, 128, false);
+            m_req_q.push_back(access);
+        }
     }
     void gen_prefetch_visitedlist(new_addr_type addr)//generate visited list prefetch, push reqs into req_q
     {

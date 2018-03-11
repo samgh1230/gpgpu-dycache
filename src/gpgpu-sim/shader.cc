@@ -1412,7 +1412,7 @@ mem_stage_stall_type ldst_unit::process_prefetch_queue( cache_t *cache )
     mem_access_t* access = m_prefetcher->pop_from_top();
     mem_fetch *mf = m_mf_allocator->alloc(access->get_addr(),access->get_type(),access->get_size(),false);
     std::list<cache_event> events;
-
+    mf->set_prefetch_flag();
     enum cache_request_status status = cache->access(mf->get_addr(),mf,gpu_sim_cycle+gpu_tot_sim_cycle,events);
     return process_prefetch_cache_access( cache, mf->get_addr(), events, mf, status );
 }
@@ -1909,7 +1909,7 @@ void ldst_unit::cycle()
                m_L1D->fill(mf,gpu_sim_cycle+gpu_tot_sim_cycle);
                m_response_fifo.pop_front();
                unsigned char* data = new unsigned char(128);
-               m_shader->get_data_from_memory(data,128,mf->get_addr());
+               m_core->get_data_from_memory(data,128,mf->get_addr());
                m_prefetcher->prefetched_data(data,mf->get_addr());
                delete mf;//是否需要删除
            }
