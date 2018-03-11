@@ -2233,8 +2233,9 @@ public:
     mem_access_t* pop_from_top() {return m_req_q.front();}
     void del_req_from_top() {m_req_q.pop_front();}
     bool queue_empty() {return !m_req_q.size();}
+    Bound_Reg m_bound_regs[8];
 private:
-    Bound_Reg m_bound_regs[8];//worklist, vertexlist, edgelist, visitedlist, out_worklist. (start, end)
+    //worklist, vertexlist, edgelist, visitedlist, out_worklist. (start, end)
     //EWMA_Unit m_ewma;
     std::list<mem_access_t*> m_req_q;
     //Prefetch_Mode m_mode;
