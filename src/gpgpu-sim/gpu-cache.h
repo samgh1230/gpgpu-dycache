@@ -2140,8 +2140,8 @@ enum Prefetch_Mode{
 
 class Prefetch_Unit{
 public:
-    Prefetch_Unit();
-    ~Prefetch_Unit();
+    Prefetch_Unit(){m_max_queue_length=1000;}
+    ~Prefetch_Unit(){}
 
     void update_struct_bound(new_addr_type* struct_bound){
         for(unsigned i=0; i<8; i++)
@@ -2160,7 +2160,7 @@ public:
 
     List_Type addr_filter(new_addr_type addr)
     {
-        if(addr>=m_bound_regs[0]&&addr<=m_bound_regs[1])
+        if((addr>=m_bound_regs[0]&&addr<=m_bound_regs[1])))
             return WORK_LIST;
         else if(addr>=m_bound_regs[2] && addr <= m_bound_regs[3])
             return VERTEX_LIST;
@@ -2201,8 +2201,9 @@ public:
 
     mem_access_t* pop_from_top() {return m_req_q.front();}
     void del_req_from_top() {m_req_q.pop_front();}
+    bool queue_empty() {return !m_req_q.size();}
 private:
-    Bound_Reg m_bound_regs[8];//worklist, vertexlist, edgelist, visitedlist. (start, end)
+    Bound_Reg m_bound_regs[8];//worklist, vertexlist, edgelist, visitedlist, out_worklist. (start, end)
     //EWMA_Unit m_ewma;
     std::list<mem_access_t*> m_req_q;
     //Prefetch_Mode m_mode;

@@ -1352,6 +1352,65 @@ ldst_unit::process_cache_access( cache_t* cache,
     return result;
 }
 
+
+mem_stage_stall_type
+ldst_unit::process_prefetch_cache_access( cache_t* cache,
+                                 new_addr_type address,
+                                 std::list<cache_event>& events,
+                                 mem_fetch *mf,
+                                 enum cache_request_status status )
+{
+    mem_stage_stall_type result = NO_RC_FAIL;
+    printf("process prefetch cache access\n");
+    //bool write_sent = was_write_sent(events);
+    //bool read_sent = was_read_sent(events);
+    //if( write_sent ) 
+        //m_core->inc_store_req( inst.warp_id() );
+    if ( status == HIT ) {
+        // assert( !read_sent );
+        m_prefetcher->del_req_from_top();// inst.accessq_pop_back();
+        // if ( inst.is_load() ) {
+        //     for ( unsigned r=0; r < 4; r++)
+        //         if (inst.out[r] > 0)
+        //             m_pending_writes[inst.warp_id()][inst.out[r]]--; 
+        // }
+        // if( !write_sent ) 
+        //     delete mf;
+        delete mf;
+    } else if ( status == RESERVATION_FAIL ) {
+        result = COAL_STALL;
+        // assert( !read_sent );
+        // assert( !write_sent );
+        delete mf;
+    } else {
+        assert( status == MISS || status == HIT_RESERVED );
+        //inst.clear_active( access.get_warp_mask() ); // threads in mf writeback when mf returns
+        m_prefetcher->del_req_from_top();// inst.accessq_pop_back();
+    }
+    // if( !inst.accessq_empty() )
+    //     result = BK_CONF;
+    return result;
+}
+
+mem_stage_stall_type ldst_unit::process_prefetch_queue( cache_t *cache )
+{
+    mem_stage_stall_type result = NO_RC_FAIL;
+    printf("process prefetch queue\n");
+    if( m_prefetcher->queue_empty() )
+        return result;
+
+    if( !cache->data_port_free() ) 
+        return DATA_PORT_STALL; 
+
+    //const mem_access_t &access = inst.accessq_back();
+    mem_access_t* access = m_prefetcher->pop_from_top();
+    mem_fetch *mf = m_mf_allocator->alloc(access->get_addr(),access->get_type(),access->get_size(),false);
+    std::list<cache_event> events;
+
+    enum cache_request_status status = cache->access(mf->get_addr(),mf,gpu_sim_cycle+gpu_tot_sim_cycle,events);
+    return process_prefetch_cache_access( cache, mf->get_addr(), events, mf, status );
+}
+
 mem_stage_stall_type ldst_unit::process_memory_access_queue( cache_t *cache, warp_inst_t &inst )
 {
     mem_stage_stall_type result = NO_RC_FAIL;
@@ -1410,8 +1469,11 @@ bool ldst_unit::memory_cycle( warp_inst_t &inst, mem_stage_stall_type &stall_rea
    if( inst.empty() || 
        ((inst.space.get_type() != global_space) &&
         (inst.space.get_type() != local_space) &&
-        (inst.space.get_type() != param_space_local)) ) 
-       return true;
+        (inst.space.get_type() != param_space_local)) ) {
+            process_prefetch_queue(m_L1D);
+            return true;
+        }
+    //    return true;
    if( inst.active_count() == 0 ) 
        return true;
    assert( !inst.accessq_empty() );
@@ -1654,7 +1716,7 @@ ldst_unit::ldst_unit( mem_fetch_interface *icnt,
                               m_mf_allocator,
                               IN_L1D_MISS_QUEUE );
     }
-    m_prefetch_unit = new Prefetch_Unit();
+    m_prefetcher = new Prefetch_Unit();
 }
 
 ldst_unit::ldst_unit( mem_fetch_interface *icnt,
@@ -1836,7 +1898,13 @@ void ldst_unit::cycle()
 
    if( !m_response_fifo.empty() ) {
        mem_fetch *mf = m_response_fifo.front();
-       if (mf->istexture()) {
+       if(mf->is_prefetched()){
+           if(m_L1D->fill_port_free()){
+               m_L1D->fill(mf,gpgpu_sim_cycle+gpgpu_tot_sim_cycle);
+               m_response_fifo.pop_front();
+               delete mf;//是否需要删除
+           }
+       } else if (mf->istexture()) {
            if (m_L1T->fill_port_free()) {
                m_L1T->fill(mf,gpu_sim_cycle+gpu_tot_sim_cycle);
                m_response_fifo.pop_front(); 

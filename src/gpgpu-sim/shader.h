@@ -1123,6 +1123,9 @@ public:
     void update_prefetch_struct_bound(new_addr_type* struct_bound){
         m_prefetcher->update_struct_bound(struct_bound);
     }
+
+    mem_stage_stall_type process_prefetch_cache_access(cache_t* cache, new_addr_type address, std::list<cache_event>& events, mem_fetch* mf, cache_request_status status);
+    mem_stage_stall_type process_prefetch_queue( cache_t *cache);
     
     void change2big_blksz(unsigned blksz);
     void change2small_blksz(unsigned blksz);
