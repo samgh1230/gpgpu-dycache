@@ -1908,10 +1908,10 @@ void ldst_unit::cycle()
            if(m_L1D->fill_port_free()){
                m_L1D->fill(mf,gpu_sim_cycle+gpu_tot_sim_cycle);
                m_response_fifo.pop_front();
-               unsigned char* data = new unsigned char(128);
+               unsigned char data[128];
                m_core->get_data_from_memory(data,128,mf->get_addr());
                m_prefetcher->prefetched_data(data,mf->get_addr());
-               delete mf;//是否需要删除
+               //delete mf;//是否需要删除
            }
        } else if (mf->istexture()) {
            if (m_L1T->fill_port_free()) {

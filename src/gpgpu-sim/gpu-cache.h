@@ -2161,7 +2161,7 @@ public:
 
     void prefetched_data(unsigned char* data, new_addr_type addr){
         List_Type type = addr_filter(addr);
-        unsigned* pre_data = new unsigned(32);
+        unsigned pre_data[32];
         for(unsigned i=0; i<32; i++){
             unsigned tmp=0;
             for(unsigned j=0; j<4; j++){
@@ -2170,7 +2170,7 @@ public:
             pre_data[i] = tmp;
             printf("read data:%u\n",tmp);
         }
-        delete data;
+        //delete data;
         for(unsigned i=0; i<32;i++){
             new_addr_type next_prefetch_addr;
             switch(type){
@@ -2180,7 +2180,6 @@ public:
                 default: break;
             }
         }
-        delete pre_data;
     }
 
     List_Type addr_filter(new_addr_type addr)
@@ -2220,6 +2219,8 @@ public:
         printf("generate edgelist prefetch\n");
         for(unsigned i=0;i<4;i++){
             new_addr_type next_addr = addr + 128*(4+i);
+            if(next_addr>=m_bound_regs[5])
+                return ;
             mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, next_addr, 128, false);
             m_req_q.push_back(access);
         }
