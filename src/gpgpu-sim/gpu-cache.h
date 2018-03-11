@@ -2200,7 +2200,7 @@ public:
     }
 
     mem_access_t* pop_from_top() {return m_req_q.front();}
-    void del_req_from_top() {m_req_q.pop_front()}
+    void del_req_from_top() {m_req_q.pop_front();}
 private:
     Bound_Reg m_bound_regs[8];//worklist, vertexlist, edgelist, visitedlist. (start, end)
     //EWMA_Unit m_ewma;
