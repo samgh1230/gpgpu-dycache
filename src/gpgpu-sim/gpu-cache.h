@@ -256,7 +256,6 @@ struct cache_block_t {
                     }
                     break;
                     case 32:
-                        assert(sid<4);
                         assert( m_blk_status[sid] == RESERVED );
                         m_blk_status[sid]=VALID;
                         m_blk_fill_time[sid]=time;
@@ -2166,6 +2165,7 @@ public:
             unsigned tmp=0;
             for(unsigned j=0; j<4; j++){
                 tmp += (unsigned)data[i*32+j] * pow(2,j*8);
+                printf("data[%u]=%u\n",i*32+j,(unsigned)data[i*32+j]);
             }
             pre_data[i] = tmp;
             printf("read data:%u\n",tmp);
@@ -2219,7 +2219,7 @@ public:
         printf("generate edgelist prefetch\n");
         for(unsigned i=0;i<4;i++){
             new_addr_type next_addr = addr + 128*(4+i);
-            if(next_addr>=m_bound_regs[5])
+            if(next_addr>=m_bound_regs[5]||next_addr<m_bound_regs[4])
                 return ;
             mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, next_addr, 128, false);
             m_req_q.push_back(access);
