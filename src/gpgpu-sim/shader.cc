@@ -1909,7 +1909,7 @@ void ldst_unit::cycle()
                m_L1D->fill(mf,gpu_sim_cycle+gpu_tot_sim_cycle);
                m_response_fifo.pop_front();
                unsigned char data[128];
-               m_core->get_data_from_memory(data,128,mf->get_addr());
+               m_core->get_data_from_memory(data,128,mf->get_addr()|0xffffff80);
                m_prefetcher->prefetched_data(data,mf->get_addr());
                //delete mf;//是否需要删除
            }

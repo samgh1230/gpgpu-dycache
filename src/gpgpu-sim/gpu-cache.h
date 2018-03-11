@@ -2218,9 +2218,9 @@ public:
     {
         printf("generate edgelist prefetch\n");
         for(unsigned i=0;i<4;i++){
-            new_addr_type next_addr = addr + 128*(4+i);
+            new_addr_type next_addr = addr + 128*(i);
             if(next_addr>=m_bound_regs[5]||next_addr<m_bound_regs[4])
-                return ;
+                break;
             mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, next_addr, 128, false);
             m_req_q.push_back(access);
         }
