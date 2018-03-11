@@ -1602,7 +1602,9 @@ public:
 
 // used by simt_core_cluster:
 
-    void update_struct_bound(new_addr_type* struct_bound);
+    void update_struct_bound(new_addr_type* struct_bound){
+        m_ldst_unit->update_prefetch_struct_bound(struct_bound);
+    }
 
     void change2small_blksz(unsigned blksz);
     void change2big_blksz(unsigned blksz);
