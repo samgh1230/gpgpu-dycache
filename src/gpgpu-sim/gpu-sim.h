@@ -433,6 +433,7 @@ private:
    void reinit_clock_domains(void);
    int  next_clock_domain(void);
    void issue_block2core();
+   void issue_block2core(new_addr_type* struct_bound);
    void print_dram_stats(FILE *fout) const;
    void shader_print_runtime_stat( FILE *fout );
    void shader_print_l1_miss_stat( FILE *fout ) const;
@@ -496,12 +497,16 @@ public:
    unsigned long long  gpu_sim_insn_last_update;
    unsigned gpu_sim_insn_last_update_sid;
 
-   new_addr_type worklist_start_addr, worklist_end_addr;
-   new_addr_type vertexlist_start_addr, vertexlist_end_addr;
-   new_addr_type edgelist_start_addr, edgelist_end_addr;
-   new_addr_type visitlist_start_addr, visitlist_end_addr;
+//    new_addr_type worklist_start_addr, worklist_end_addr;
+//    new_addr_type vertexlist_start_addr, vertexlist_end_addr;
+//    new_addr_type edgelist_start_addr, edgelist_end_addr;
+//    new_addr_type visitlist_start_addr, visitlist_end_addr;
 
+   new_addr_type struct_bound[8];
 
+   //update data structure bounds.
+   //type: 1-worklist, 2-vertexlist, 3-edgelist, 4-visitlist 
+   void update_struct_bound(new_addr_type start, unsigned size, unsigned type);
 
    FuncCache get_cache_config(std::string kernel_name);
    void set_cache_config(std::string kernel_name, FuncCache cacheConfig );

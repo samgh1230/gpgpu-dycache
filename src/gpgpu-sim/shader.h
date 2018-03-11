@@ -1120,6 +1120,9 @@ public:
     void get_L1C_sub_stats(struct cache_sub_stats &css) const;
     void get_L1T_sub_stats(struct cache_sub_stats &css) const;
 
+    void update_prefetch_struct_bound(new_addr_type* struct_bound){
+        m_prefetcher->update_struct_bound(struct_bound);
+    }
     
     void change2big_blksz(unsigned blksz);
     void change2small_blksz(unsigned blksz);
@@ -1189,6 +1192,8 @@ protected:
    std::list<mem_fetch*> m_response_fifo;
    opndcoll_rfu_t *m_operand_collector;
    Scoreboard *m_scoreboard;
+
+   Prefetch_Unit *m_prefetcher;
 
    mem_fetch *m_next_global;
    warp_inst_t m_next_wb;
@@ -1623,6 +1628,7 @@ public:
     void cycle();
     void reinit(unsigned start_thread, unsigned end_thread, bool reset_not_completed );
     void issue_block2core( class kernel_info_t &kernel );
+    void issue_block2core( class kernel_info_t &kernel, new_addr_type* struct_bound);
     void cache_flush();
     void accept_fetch_response( mem_fetch *mf );
     void accept_ldst_unit_response( class mem_fetch * mf );
@@ -1905,6 +1911,7 @@ public:
 
     void reinit();
     unsigned issue_block2core();
+    unsigned issue_block2core(new_addr_type* struct_bound);
     void cache_flush();
     bool icnt_injection_buffer_full(unsigned size, bool write);
     void icnt_inject_request_packet(class mem_fetch *mf);

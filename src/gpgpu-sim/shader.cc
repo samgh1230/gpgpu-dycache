@@ -1364,6 +1364,8 @@ mem_stage_stall_type ldst_unit::process_memory_access_queue( cache_t *cache, war
     //const mem_access_t &access = inst.accessq_back();
     mem_fetch *mf = m_mf_allocator->alloc(inst,inst.accessq_back());
     std::list<cache_event> events;
+    if(inst.is_load())
+        m_prefetcher->new_load_addr(mf->get_addr());
     if(inst.space.get_type()==global_space && mf->get_data_size()>m_core->m_config->gpgpu_cache_data1_linesize){
         printf("mem_fetch data size=%d,cache line size=%d\n",mf->get_data_size(),m_core->m_config->gpgpu_cache_data1_linesize);
         exit(1);
@@ -3421,6 +3423,29 @@ unsigned simt_core_cluster::issue_block2core()
         kernel_info_t *kernel = m_core[core]->get_kernel();
         if( kernel && !kernel->no_more_ctas_to_run() && (m_core[core]->get_n_active_cta() < m_config->max_cta(*kernel)) ) {
             m_core[core]->issue_block2core(*kernel);
+            num_blocks_issued++;
+            m_cta_issue_next_core=core; 
+            break;
+        }
+    }
+    return num_blocks_issued;
+}
+
+unsigned simt_core_cluster::issue_block2core(new_addr_type* struct_bound)
+{
+    unsigned num_blocks_issued=0;
+    for( unsigned i=0; i < m_config->n_simt_cores_per_cluster; i++ ) {
+        unsigned core = (i+m_cta_issue_next_core+1)%m_config->n_simt_cores_per_cluster;
+        if( m_core[core]->get_not_completed() == 0 ) {
+            if( m_core[core]->get_kernel() == NULL ) {
+                kernel_info_t *k = m_gpu->select_kernel();
+                if( k ) 
+                    m_core[core]->set_kernel(k);
+            }
+        }
+        kernel_info_t *kernel = m_core[core]->get_kernel();
+        if( kernel && !kernel->no_more_ctas_to_run() && (m_core[core]->get_n_active_cta() < m_config->max_cta(*kernel)) ) {
+            m_core[core]->issue_block2core(*kernel,struct_bound);
             num_blocks_issued++;
             m_cta_issue_next_core=core; 
             break;

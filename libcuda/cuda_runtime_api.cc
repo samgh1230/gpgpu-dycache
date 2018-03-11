@@ -427,23 +427,23 @@ __host__ cudaError_t CUDARTAPI cudaMallocMark(void **devPtr, size_t size, enum S
 	gpgpu_sim* gpu = context->get_device()->get_gpgpu();
 	switch(struct_type){
 		case 0: 
-			gpu->worklist_start_addr = (new_addr_type)*devPtr;
-			gpu->worklist_end_addr = (new_addr_type)(*devPtr + size);
+			gpu->struct_bound[0] = (new_addr_type)*devPtr;
+			gpu->struct_bound[1] = (new_addr_type)(*devPtr + size);
 			printf("worklist start_addr = 0x%llx, end_addr = 0x%llx\n",*devPtr,*devPtr+size);
 			break;
 		case 1:
-			gpu->vertexlist_start_addr = (new_addr_type)*devPtr;
-			gpu->vertexlist_end_addr =  (new_addr_type)(*devPtr + size);
+			gpu->struct_bound[2] = (new_addr_type)*devPtr;
+			gpu->struct_bound[3] =  (new_addr_type)(*devPtr + size);
 			printf("vertexlist start_addr = 0x%llx, end_addr = 0x%llx\n",*devPtr,*devPtr+size);
 			break;
 		case 2:
-			gpu->edgelist_start_addr = (new_addr_type)*devPtr;
-			gpu->edgelist_end_addr = (new_addr_type)(*devPtr + size);
+			gpu->struct_bound[4] = (new_addr_type)*devPtr;
+			gpu->struct_bound[5] = (new_addr_type)(*devPtr + size);
 			printf("edgelist start_addr = 0x%llx, end_addr = 0x%llx\n",*devPtr,*devPtr+size);
 			break;
 		case 3:
-			gpu->visitlist_start_addr =(new_addr_type) *devPtr;
-			gpu->visitlist_end_addr = (new_addr_type)(*devPtr + size);
+			gpu->struct_bound[6] =(new_addr_type) *devPtr;
+			gpu->struct_bound[7] = (new_addr_type)(*devPtr + size);
 			printf("visitlist start_addr = 0x%llx, end_addr = 0x%llx\n",*devPtr,*devPtr+size);
 			break;
 	}

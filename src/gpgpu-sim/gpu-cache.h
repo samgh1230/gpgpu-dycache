@@ -2142,6 +2142,21 @@ class Prefetch_Unit{
 public:
     Prefetch_Unit();
     ~Prefetch_Unit();
+
+    void update_struct_bound(new_addr_type* struct_bound){
+        for(unsigned i=0; i<8; i++)
+            m_bound_regs[i] = struct_bound[i];
+    }
+
+    bool is_full(){return m_req_q.size()==m_max_queue_length}
+
+    void new_load_addr(new_addr_type addr){
+        if(!is_full()){
+            List_Type type = addr_filter(addr);
+            gen_prefetch_requests(addr, type);
+        }
+    }
+
     List_Type addr_filter(new_addr_type addr)
     {
         if(addr>=m_bound_regs[0]&&addr<=m_bound_regs[1])
@@ -2154,6 +2169,7 @@ public:
             return VISIT_LIST;
         else return NONE;
     }
+
     void gen_prefetch_requests(new_addr_type addr, List_Type type)//统一入口
     {
         switch(type){
@@ -2164,15 +2180,32 @@ public:
             default: break;
         }
     }
-    void gen_prefetch_worklist(new_addr_type addr);//generate worklist prefetch, push reqs into req_q
-    void gen_prefetch_vertexlist(new_addr_type addr);//generate vertexlist prefetch, push reqs into req_q
-    void gen_prefetch_edgelist(new_addr_type addr);//generate edgelist prefetch, push reqs into req_q
-    void gen_prefetch_visitedlist(new_addr_type addr);//generate visited list prefetch, push reqs into req_q
+
+    void gen_prefetch_worklist(new_addr_type addr)//generate worklist prefetch, push reqs into req_q
+    {
+        printf("generate worklist prefetch\n");
+    }
+    void gen_prefetch_vertexlist(new_addr_type addr)//generate vertexlist prefetch, push reqs into req_q
+    {
+        printf("generate vertexlist prefetch\n");
+    }
+    void gen_prefetch_edgelist(new_addr_type addr)//generate edgelist prefetch, push reqs into req_q
+    {
+        printf("generate edgelist prefetch\n");
+    }
+    void gen_prefetch_visitedlist(new_addr_type addr)//generate visited list prefetch, push reqs into req_q
+    {
+        printf("generate visitlist prefetch\n");
+    }
+
+    mem_fetch* pop_from_top() {return m_req_q.front()}
+    void del_req_from_top() {m_req_q.pop_front()}
 private:
     Bound_Reg m_bound_regs[8];//worklist, vertexlist, edgelist, visitedlist. (start, end)
-    EWMA_Unit m_ewma;
-    std::list<mem_fetch*> m_req_q;
-    Prefetch_Mode m_mode;
+    //EWMA_Unit m_ewma;
+    std::list<mem_access_t*> m_req_q;
+    //Prefetch_Mode m_mode;
+    unsigned m_max_queue_length;
 };
 
 #endif
