@@ -1602,6 +1602,8 @@ public:
 
 // used by simt_core_cluster:
 
+    void update_struct_bound(new_addr_type* struct_bound);
+
     void change2small_blksz(unsigned blksz);
     void change2big_blksz(unsigned blksz);
     void set_cache_blksz(unsigned blksz);
