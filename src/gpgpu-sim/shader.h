@@ -1126,7 +1126,7 @@ public:
 
     mem_stage_stall_type process_prefetch_cache_access(cache_t* cache, new_addr_type address, std::list<cache_event>& events, mem_fetch* mf, cache_request_status status);
     mem_stage_stall_type process_prefetch_queue( cache_t *cache);
-    
+
     void change2big_blksz(unsigned blksz);
     void change2small_blksz(unsigned blksz);
     float cache_efficiency(){
@@ -1608,6 +1608,8 @@ public:
     void update_struct_bound(new_addr_type* struct_bound){
         m_ldst_unit->update_prefetch_struct_bound(struct_bound);
     }
+
+    void get_data_from_memory(unsigned char* data, unsigned size, new_addr_type addr);
 
     void change2small_blksz(unsigned blksz);
     void change2big_blksz(unsigned blksz);

@@ -694,6 +694,12 @@ void shader_core_ctx::func_exec_inst( warp_inst_t &inst )
             inst.generate_mem_accesses();
 }
 
+void shader_core_ctx::get_data_from_memory(unsigned char* data, unsigned size, new_addr_type addr)
+{
+    printf("read data from memory\n");
+    get_gpu()->memcpy_from_gpu((void*)data, (size_t)addr, size);
+}
+
 void shader_core_ctx::issue_warp( register_set& pipe_reg_set, const warp_inst_t* next_inst, const active_mask_t &active_mask, unsigned warp_id )
 {
     warp_inst_t** pipe_reg = pipe_reg_set.get_free();
@@ -1900,8 +1906,11 @@ void ldst_unit::cycle()
        mem_fetch *mf = m_response_fifo.front();
        if(mf->is_prefetched()){
            if(m_L1D->fill_port_free()){
-               m_L1D->fill(mf,gpgpu_sim_cycle+gpgpu_tot_sim_cycle);
+               m_L1D->fill(mf,gpu_sim_cycle+gpu_tot_sim_cycle);
                m_response_fifo.pop_front();
+               unsigned char* data = new unsigned char(128);
+               m_shader->get_data_from_memory(data,128,mf->get_addr());
+               m_prefetcher->prefetched_data(data,mf->get_addr());
                delete mf;//是否需要删除
            }
        } else if (mf->istexture()) {

@@ -2158,9 +2158,33 @@ public:
         }
     }
 
+    void prefetched_data(unsigned char* data, new_addr_type addr){
+        List_Type type = addr_filter(addr);
+        unsigned* pre_data = new unsigned(32);
+        for(unsigned i=0; i<32; i++){
+            unsigned tmp=0;
+            for(unsigned j=0; j<4; j++){
+                tmp += (unsigned)data[i*32+j] * pow(2,j*8);
+            }
+            pre_data[i] = tmp;
+            printf("read data:%u\n",tmp);
+        }
+        delete data;
+        for(unsigned i=0; i<32;i++){
+            new_addr_type next_prefetch_addr;
+            switch(type){
+                case WORK_LIST: next_prefetch_addr = m_bound_regs[2] + pre_data[i]; gen_prefetch_vertexlist(next_prefetch_addr); break;
+                case VERTEX_LIST: next_prefetch_addr = m_bound_regs[4] + pre_data[i]; gen_prefetch_edgelist(next_prefetch_addr); break;
+                case EDGE_LIST: next_prefetch_addr = m_bound_regs[6] + pre_data[i]; gen_prefetch_visitedlist(next_prefetch_addr); break;
+                default: break;
+            }
+        }
+        delete pre_data;
+    }
+
     List_Type addr_filter(new_addr_type addr)
     {
-        if((addr>=m_bound_regs[0]&&addr<=m_bound_regs[1])))
+        if((addr>=m_bound_regs[0]&&addr<=m_bound_regs[1]))
             return WORK_LIST;
         else if(addr>=m_bound_regs[2] && addr <= m_bound_regs[3])
             return VERTEX_LIST;
