@@ -1,8 +1,10 @@
 {
     "files.associations": {
         "*.cu": "cpp",
+        "*.h": "cpp",
         "ios": "cpp",
-        "xutility": "cpp"
+        "xutility": "cpp",
+        "istream": "cpp"
     },
     "python.pythonPath": "D:\\Python27\\python.exe"
 }
