@@ -2158,7 +2158,7 @@ public:
         }
     }
 
-    void prefetched_data(unsigned_int64* pre_data, new_addr_type addr){
+    void prefetched_data(unsigned long long* pre_data, new_addr_type addr){
         List_Type type = addr_filter(addr);
         //unsigned pre_data[32];
         // for(unsigned i=0; i<32; i++){
