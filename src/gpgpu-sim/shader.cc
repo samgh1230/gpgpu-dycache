@@ -697,7 +697,7 @@ void shader_core_ctx::func_exec_inst( warp_inst_t &inst )
 void shader_core_ctx::read_data_from_memory(unsigned* data, new_addr_type addr)
 {
     printf("read data from memory\n");
-    get_gpu()->read(addr,4,data);
+    get_gpu()->get_global_memory()->read(addr,4,data);
 }
 
 void shader_core_ctx::issue_warp( register_set& pipe_reg_set, const warp_inst_t* next_inst, const active_mask_t &active_mask, unsigned warp_id )
