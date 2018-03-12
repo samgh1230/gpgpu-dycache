@@ -2158,18 +2158,20 @@ public:
         }
     }
 
-    void prefetched_data(unsigned* data, new_addr_type addr){
+    void prefetched_data(unsigned* pre_data, new_addr_type addr){
         List_Type type = addr_filter(addr);
-        unsigned pre_data[32];
-        for(unsigned i=0; i<32; i++){
-            unsigned tmp=0;
-            for(unsigned j=0; j<4; j++){
-                tmp += (unsigned)data[i*32+j] * pow(2,j*8);
-                printf("data[%u]=%u\n",i*32+j,(unsigned)data[i*32+j]);
-            }
-            pre_data[i] = tmp;
-            printf("read data:%u\n",tmp);
-        }
+        //unsigned pre_data[32];
+        // for(unsigned i=0; i<32; i++){
+        //     unsigned tmp=0;
+        //     for(unsigned j=0; j<4; j++){
+        //         tmp += (unsigned)data[i*32+j] * pow(2,j*8);
+        //         printf("data[%u]=%u\n",i*32+j,(unsigned)data[i*32+j]);
+        //     }
+        //     pre_data[i] = tmp;
+        //     printf("read data:%u\n",tmp);
+        // }
+        for(unsigned i=0;i<32;i++)
+            printf("data[%u]=%u\n",i,pre_data[i]);
         //delete data;
         for(unsigned i=0; i<32;i++){
             new_addr_type next_prefetch_addr;

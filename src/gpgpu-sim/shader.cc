@@ -1910,7 +1910,7 @@ void ldst_unit::cycle()
                m_response_fifo.pop_front();
                unsigned data[32];
                for(unsigned i=0;i<32;i++)
-                    m_core->read_data_from_memory(data,mf->get_addr()+4*i);
+                    m_core->read_data_from_memory(&data[i],mf->get_addr()+4*i);
                m_prefetcher->prefetched_data(data,mf->get_addr());
                //delete mf;//是否需要删除
            }
