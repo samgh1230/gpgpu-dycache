@@ -694,10 +694,10 @@ void shader_core_ctx::func_exec_inst( warp_inst_t &inst )
             inst.generate_mem_accesses();
 }
 
-void shader_core_ctx::read_data_from_memory(unsigned* data, new_addr_type addr)
+void shader_core_ctx::read_data_from_memory(unsigned int64* data, new_addr_type addr)
 {
     printf("read data from memory\n");
-    get_gpu()->get_global_memory()->read(addr,4,data);
+    get_gpu()->get_global_memory()->read(addr,8,data);
 }
 
 void shader_core_ctx::issue_warp( register_set& pipe_reg_set, const warp_inst_t* next_inst, const active_mask_t &active_mask, unsigned warp_id )
@@ -1908,7 +1908,7 @@ void ldst_unit::cycle()
            if(m_L1D->fill_port_free()){
                m_L1D->fill(mf,gpu_sim_cycle+gpu_tot_sim_cycle);
                m_response_fifo.pop_front();
-               unsigned data[32];
+               unsigned int64 data[16];
                for(unsigned i=0;i<32;i++)
                     m_core->read_data_from_memory(&data[i],mf->get_addr()+4*i);
                m_prefetcher->prefetched_data(data,mf->get_addr());

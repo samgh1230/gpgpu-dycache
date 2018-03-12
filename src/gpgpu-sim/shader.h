@@ -1609,7 +1609,7 @@ public:
         m_ldst_unit->update_prefetch_struct_bound(struct_bound);
     }
 
-    void read_data_from_memory(unsigned* data, new_addr_type addr);
+    void read_data_from_memory(unsigned int64* data, new_addr_type addr);
 
     void change2small_blksz(unsigned blksz);
     void change2big_blksz(unsigned blksz);
