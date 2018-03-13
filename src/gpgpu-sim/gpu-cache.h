@@ -2170,15 +2170,16 @@ public:
         //     pre_data[i] = tmp;
         //     printf("read data:%u\n",tmp);
         // }
-        for(unsigned i=0;i<32;i++)
-            printf("data[%u]=%u\n",i,pre_data[i]);
+        // for(unsigned i=0;i<16;i++)
+        //     printf("data[%u]=%u\n",i,pre_data[i]);
         //delete data;
-        for(unsigned i=0; i<32;i++){
+        for(unsigned i=0; i<16;i++){
             new_addr_type next_prefetch_addr;
             switch(type){
                 case WORK_LIST: next_prefetch_addr = m_bound_regs[2] + pre_data[i]; gen_prefetch_vertexlist(next_prefetch_addr); break;
-                case VERTEX_LIST: next_prefetch_addr = m_bound_regs[4] + pre_data[i]; gen_prefetch_edgelist(next_prefetch_addr); break;
+                case VERTEX_LIST: gen_prefetch_edgelist_on_vertex(pre_data[0]); break;
                 case EDGE_LIST: next_prefetch_addr = m_bound_regs[6] + pre_data[i]; gen_prefetch_visitedlist(next_prefetch_addr); break;
+                case VISIT_LIST: printf("prefetched visit list data\n"); break;
                 default: break;
             }
         }
@@ -2219,9 +2220,20 @@ public:
     void gen_prefetch_edgelist(new_addr_type addr)//generate edgelist prefetch, push reqs into req_q
     {
         printf("generate edgelist prefetch\n");
-        for(unsigned i=0;i<4;i++){
-            new_addr_type next_addr = addr + 128*(i);
+        for(unsigned i=0;i<4;i++)
+            new_addr_type next_addr = addr + 128*(4+i);
             if(next_addr>=m_bound_regs[5]||next_addr<m_bound_regs[4])
+                break;
+            mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, next_addr, 128, false);
+            m_req_q.push_back(access);
+        }
+    }
+    void gen_prefetch_edgelist_on_vertex(unsigned long long offset)
+    {
+        printf("generate edgelist prefetch on vertex\n");
+        for(unsigned i=0;i<8;i++){
+            new_addr_type next_addr = m_bound_regs[4] + offset + 128*i;
+            if(next_addr >= m_bound_regs[5] || next_addr < m_bound_regs[4])
                 break;
             mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, next_addr, 128, false);
             m_req_q.push_back(access);
