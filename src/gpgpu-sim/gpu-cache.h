@@ -2171,7 +2171,7 @@ public:
             case WORK_LIST:
                 m_prefetched_vid = pre_data[m_prefetched_wl_idx%16];//假设worklist是128B对齐的,那么cacheline的offset就是模16
     
-                new_addr_type el_head_addr = ((m_bound_regs[2] + (m_prefetchd_vid%16)*8)|0xffff8000);//计算需要访问vertex结构的地址，并128B对齐
+                new_addr_type el_head_addr = ((m_bound_regs[2] + (m_prefetched_vid%16)*8)|0xffff8000);//计算需要访问vertex结构的地址，并128B对齐
                 new_addr_type el_tail_addr = ((m_bound_regs[2] + ((1+m_prefetched_vid)%16)*8)|0xffff8000);
                 if(el_tail_addr == el_head_addr){
                     gen_prefetch_vertexlist(el_head_addr); 
@@ -2313,8 +2313,8 @@ private:
     bool m_double_line;
 
     unsigned long long m_worklist_head, m_worklist_tail;
-    unsigned long long m_prefetchd_vid;
-    unsigned long long m_prefetchd_el_head, m_prefetched_el_tail;
+    unsigned long long m_prefetched_vid;
+    unsigned long long m_prefetched_el_head, m_prefetched_el_tail;
     bool m_el_head_ready, m_el_tail_ready;
     unsigned long long m_cur_wl_idx;//使用CUDA api更新
     unsigned long long m_prefetched_wl_idx;
