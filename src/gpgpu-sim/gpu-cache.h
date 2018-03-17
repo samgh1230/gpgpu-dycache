@@ -2148,40 +2148,75 @@ public:
             m_bound_regs[i] = struct_bound[i];
     }
 
+    void set_worklist_band(unsigned long long start, unsigned long long end)
+    {
+        m_worklist_head = start;
+        m_worklist_tail = end;
+    }
+
     bool is_full(){return m_req_q.size()==m_max_queue_length;}
 
     void new_load_addr(new_addr_type addr)
     {
-        if(!is_full()){
+        // if(!is_full()){
             List_Type type = addr_filter(addr);
             gen_prefetch_requests(addr, type);
-        }
+        // }
     }
 
     void prefetched_data(unsigned long long* pre_data, new_addr_type addr){
         List_Type type = addr_filter(addr);
-        //unsigned pre_data[32];
-        // for(unsigned i=0; i<32; i++){
-        //     unsigned tmp=0;
-        //     for(unsigned j=0; j<4; j++){
-        //         tmp += (unsigned)data[i*32+j] * pow(2,j*8);
-        //         printf("data[%u]=%u\n",i*32+j,(unsigned)data[i*32+j]);
-        //     }
-        //     pre_data[i] = tmp;
-        //     printf("read data:%u\n",tmp);
-        // }
-        // for(unsigned i=0;i<16;i++)
-        //     printf("data[%u]=%u\n",i,pre_data[i]);
-        //delete data;
-        for(unsigned i=0; i<16;i++){
-            new_addr_type next_prefetch_addr;
-            switch(type){
-                case WORK_LIST: next_prefetch_addr = m_bound_regs[2] + pre_data[i]; gen_prefetch_vertexlist(next_prefetch_addr); break;
-                case VERTEX_LIST: gen_prefetch_edgelist_on_vertex(pre_data[0]); break;
-                case EDGE_LIST: next_prefetch_addr = m_bound_regs[6] + pre_data[i]; gen_prefetch_visitedlist(next_prefetch_addr); break;
-                case VISIT_LIST: printf("prefetched visit list data\n"); break;
-                default: break;
-            }
+
+        switch(type){
+            case WORK_LIST:
+                m_prefetched_vid = pre_data[m_prefetched_wl_idx%16];//假设worklist是128B对齐的,那么cacheline的offset就是模16
+    
+                new_addr_type el_head_addr = ((m_bound_regs[2] + (m_prefetchd_vid%16)*8)|0xffff8000);//计算需要访问vertex结构的地址，并128B对齐
+                new_addr_type el_tail_addr = ((m_bound_regs[2] + ((1+m_prefetched_vid)%16)*8)|0xffff8000);
+                if(el_tail_addr == el_head_addr){
+                    gen_prefetch_vertexlist(el_head_addr); 
+                    m_double_line=false;
+                }
+                else {
+                    gen_prefetch_vertexlist(el_head_addr);
+                    gen_prefetch_vertexlist(el_tail_addr);
+                    m_double_line=true;
+                }
+                break;
+            case VERTEX_LIST:
+                new_addr_type vid_addr = (m_bound_regs[2] + (m_prefetched_vid%16)*8) | 0xfff80000;
+                new_addr_type next_vid_addr = (vid_addr + 8) | 0xfff80000;
+                if(m_double_line){
+                    if(addr==vid_addr){
+                        m_prefetched_el_head = pre_data[m_prefetched_vid%16];
+                        m_el_head_ready = true;
+                    } else (addr==next_vid_addr){
+                        m_prefetched_el_tail = pre_data[(m_prefetched_vid+1)%16];
+                        m_el_tail_ready = true;
+                    } else{
+                        printf("Error!\n");
+                        exit(1);
+                    }
+                    if(m_el_head_ready & m_el_tail_ready){
+                        gen_prefetch_edgelist_on_vertex(m_prefetched_el_head,m_prefetched_el_tail);
+                        m_el_head_ready = false;
+                        m_el_tail_ready = false;
+                    }
+                }
+            break;
+            case EDGE_LIST:
+                new_addr_type el_addr = addr;
+                for(unsigned i=0; i<16; i++){
+                    el_addr = el_addr + i*8;
+                    if(el_addr<m_bound_regs[4]+8*m_prefetched_el_tail)
+                    {
+                        new_addr_type prefetch_vl_addr = m_bound_regs[6] + pre_data[i]*8;
+                        gen_prefetch_visitedlist(prefetch_vl_addr);
+                    }
+                }
+            break;
+            default:    
+            break;
         }
     }
 
@@ -2201,10 +2236,16 @@ public:
     void gen_prefetch_requests(new_addr_type addr, List_Type type)//统一入口
     {
         switch(type){
-            case WORK_LIST: gen_prefetch_worklist(addr);break;
-            case VERTEX_LIST: gen_prefetch_vertexlist(addr);break;
-            case EDGE_LIST:  if((addr-m_bound_regs[4])%(4*128)==0) gen_prefetch_edgelist(addr); break;
-            case VISIT_LIST:   gen_prefetch_visitedlist(addr);break;
+            case WORK_LIST: 
+                assert(addr%128==0);
+                if(addr+(m_cur_wl_idx%16)*8 != m_bound_regs[1]){
+                    gen_prefetch_worklist(addr+8);
+                    m_prefetched_wl_idx = m_cur_wl_idx+1;
+                }
+                break;
+            // case VERTEX_LIST: gen_prefetch_vertexlist(addr);break;
+            // case EDGE_LIST:  if((addr-m_bound_regs[4])%(4*128)==0) gen_prefetch_edgelist(addr); break;
+            // case VISIT_LIST:   gen_prefetch_visitedlist(addr);break;
             default: break;
         }
     }
@@ -2212,15 +2253,21 @@ public:
     void gen_prefetch_worklist(new_addr_type addr)//generate worklist prefetch, push reqs into req_q
     {
         printf("generate worklist prefetch\n");
+        assert(addr>=m_bound_regs[0]&&addr<m_bound_regs[1]);
+        mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, addr, 128, false);
+        m_req_q.push_back(access);
     }
     void gen_prefetch_vertexlist(new_addr_type addr)//generate vertexlist prefetch, push reqs into req_q
     {
         printf("generate vertexlist prefetch\n");
+        assert(addr>=m_bound_regs[2]&&addr<m_bound_regs[3]);
+        mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, addr, 128, false);
+        m_req_q.push_back(access);
     }
     void gen_prefetch_edgelist(new_addr_type addr)//generate edgelist prefetch, push reqs into req_q
     {
         printf("generate edgelist prefetch\n");
-        for(unsigned i=0;i<4;i++)
+        for(unsigned i=0;i<4;i++){
             new_addr_type next_addr = addr + 128*(4+i);
             if(next_addr>=m_bound_regs[5]||next_addr<m_bound_regs[4])
                 break;
@@ -2228,11 +2275,17 @@ public:
             m_req_q.push_back(access);
         }
     }
-    void gen_prefetch_edgelist_on_vertex(unsigned long long offset)
+    void gen_prefetch_edgelist_on_vertex(unsigned long long start_offset, unsigned long long end_offset)
     {
         printf("generate edgelist prefetch on vertex\n");
-        for(unsigned i=0;i<8;i++){
-            new_addr_type next_addr = m_bound_regs[4] + offset + 128*i;
+        unsigned long long length = 8*(end_offset-start_offset);
+        if(length%128) length = length/128+1;
+        else length /=128;
+
+        unsigned max_lines = (length>8)?8:length;
+
+        for(unsigned i=0;i<max_lines;i++){
+            new_addr_type next_addr = m_bound_regs[4] + start_offset*8 + 128*i;
             if(next_addr >= m_bound_regs[5] || next_addr < m_bound_regs[4])
                 break;
             mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, next_addr, 128, false);
@@ -2242,6 +2295,9 @@ public:
     void gen_prefetch_visitedlist(new_addr_type addr)//generate visited list prefetch, push reqs into req_q
     {
         printf("generate visitlist prefetch\n");
+        assert(addr>=m_bound_regs[6]&&addr<m_bound_regs[7]);
+        mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, addr, 128, false);
+        m_req_q.push_back(access);
     }
 
     mem_access_t* pop_from_top() {return m_req_q.front();}
@@ -2254,6 +2310,14 @@ private:
     std::list<mem_access_t*> m_req_q;
     //Prefetch_Mode m_mode;
     unsigned m_max_queue_length;
+    bool m_double_line;
+
+    unsigned long long m_worklist_head, m_worklist_tail;
+    unsigned long long m_prefetchd_vid;
+    unsigned long long m_prefetchd_el_head, m_prefetched_el_tail;
+    bool m_el_head_ready, m_el_tail_ready;
+    unsigned long long m_cur_wl_idx;//使用CUDA api更新
+    unsigned long long m_prefetched_wl_idx;
 };
 
 #endif

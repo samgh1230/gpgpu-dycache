@@ -1368,20 +1368,14 @@ ldst_unit::process_prefetch_cache_access( cache_t* cache,
 {
     mem_stage_stall_type result = NO_RC_FAIL;
     printf("process prefetch cache access\n");
-    //bool write_sent = was_write_sent(events);
-    //bool read_sent = was_read_sent(events);
-    //if( write_sent ) 
-        //m_core->inc_store_req( inst.warp_id() );
+   
     if ( status == HIT ) {
         // assert( !read_sent );
         m_prefetcher->del_req_from_top();// inst.accessq_pop_back();
-        // if ( inst.is_load() ) {
-        //     for ( unsigned r=0; r < 4; r++)
-        //         if (inst.out[r] > 0)
-        //             m_pending_writes[inst.warp_id()][inst.out[r]]--; 
-        // }
-        // if( !write_sent ) 
-        //     delete mf;
+        unsigned long long data[16];
+        for(unsigned i=0;i<16;i++)
+            m_core->read_data_from_memory(&data[i],mf->get_addr()+8*i);
+        m_prefetcher->prefetched_data(data,mf->get_addr());
         delete mf;
     } else if ( status == RESERVATION_FAIL ) {
         result = COAL_STALL;
