@@ -2166,13 +2166,14 @@ public:
 
     void prefetched_data(unsigned long long* pre_data, new_addr_type addr){
         List_Type type = addr_filter(addr);
+        new_addr_type el_head_addr, el_tail_addr;
+        new_addr_type vid_addr, next_vid_addr, el_addr,prefetch_vl_addr;
 
         switch(type){
             case WORK_LIST:
                 m_prefetched_vid = pre_data[m_prefetched_wl_idx%16];//假设worklist是128B对齐的,那么cacheline的offset就是模16
-    
-                new_addr_type el_head_addr = ((m_bound_regs[2] + (m_prefetched_vid%16)*8)|0xffff8000);//计算需要访问vertex结构的地址，并128B对齐
-                new_addr_type el_tail_addr = ((m_bound_regs[2] + ((1+m_prefetched_vid)%16)*8)|0xffff8000);
+                el_head_addr = ((m_bound_regs[2] + (m_prefetched_vid%16)*8)|0xffff8000);//计算需要访问vertex结构的地址，并128B对齐
+                el_tail_addr = ((m_bound_regs[2] + ((1+m_prefetched_vid)%16)*8)|0xffff8000);
                 if(el_tail_addr == el_head_addr){
                     gen_prefetch_vertexlist(el_head_addr); 
                     m_double_line=false;
@@ -2184,13 +2185,13 @@ public:
                 }
                 break;
             case VERTEX_LIST:
-                new_addr_type vid_addr = (m_bound_regs[2] + (m_prefetched_vid%16)*8) | 0xfff80000;
-                new_addr_type next_vid_addr = (vid_addr + 8) | 0xfff80000;
+                vid_addr = (m_bound_regs[2] + (m_prefetched_vid%16)*8) | 0xfff80000;
+                next_vid_addr = (vid_addr + 8) | 0xfff80000;
                 if(m_double_line){
                     if(addr==vid_addr){
                         m_prefetched_el_head = pre_data[m_prefetched_vid%16];
                         m_el_head_ready = true;
-                    } else (addr==next_vid_addr){
+                    } else if (addr==next_vid_addr){
                         m_prefetched_el_tail = pre_data[(m_prefetched_vid+1)%16];
                         m_el_tail_ready = true;
                     } else{
@@ -2205,12 +2206,12 @@ public:
                 }
             break;
             case EDGE_LIST:
-                new_addr_type el_addr = addr;
+                el_addr = addr;
                 for(unsigned i=0; i<16; i++){
                     el_addr = el_addr + i*8;
                     if(el_addr<m_bound_regs[4]+8*m_prefetched_el_tail)
                     {
-                        new_addr_type prefetch_vl_addr = m_bound_regs[6] + pre_data[i]*8;
+                        prefetch_vl_addr = m_bound_regs[6] + pre_data[i]*8;
                         gen_prefetch_visitedlist(prefetch_vl_addr);
                     }
                 }
