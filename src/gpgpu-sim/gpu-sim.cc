@@ -1330,9 +1330,11 @@ void gpgpu_sim::cycle()
           mcpat_cycle(m_config, getShaderCoreConfig(), m_gpgpusim_wrapper, m_power_stats, m_config.gpu_stat_sample_freq, gpu_tot_sim_cycle, gpu_sim_cycle, gpu_tot_sim_insn, gpu_sim_insn);
       }
 #endif
-
-      //issue_block2core();
-      issue_block2core(struct_bound);
+      if(m_prefetch_started)
+        issue_block2core(struct_bound);
+      else 
+        issue_block2core();
+      
       
       // Depending on configuration, flush the caches once all of threads are completed.
       int all_threads_complete = 1;

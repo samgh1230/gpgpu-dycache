@@ -309,6 +309,8 @@ public:
         g_visualizer_filename = strdup(buf);
 
         m_valid=true;
+
+        m_prefetch_started = false;
     }
 
     unsigned num_shader() const { return m_shader_config.num_shader(); }
@@ -427,6 +429,9 @@ public:
     */
     simt_core_cluster * getSIMTCluster();
 
+    void start_prefetch() {m_prefetch_started=true;}
+    void end_prefetch() {m_prefetch_started=false;}
+
 
 private:
    // clocks
@@ -503,6 +508,7 @@ public:
 //    new_addr_type visitlist_start_addr, visitlist_end_addr;
 
    new_addr_type struct_bound[8];
+   bool m_prefetch_started;
 
    //update data structure bounds.
    //type: 1-worklist, 2-vertexlist, 3-edgelist, 4-visitlist 

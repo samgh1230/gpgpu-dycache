@@ -78,6 +78,8 @@ shader_core_ctx::shader_core_ctx( class gpgpu_sim *gpu,
      m_barriers( this, config->max_warps_per_shader, config->max_cta_per_core, config->max_barriers_per_cta, config->warp_size ),
      m_dynamic_warp_id(0)
 {
+    m_prefetch_started=false;
+
     m_cluster = cluster;
     m_config = config;
     m_memory_config = mem_config;
@@ -689,6 +691,17 @@ void shader_core_ctx::func_exec_inst( warp_inst_t &inst )
             m_num_reqs.push_back(inst.accessq_count());
             m_sample_insts++;
             m_sample_reqs += inst.accessq_count();
+
+            if(inst.accessq_count()==1){
+                new_addr_type addr = inst.accessq.front()->get_addr();
+                if(addr<get_gpgpu()->struct_bound[1]&&addr>=get_gpgpu()->struct_bound[0])
+                {
+                    unsigned long long* data;
+                    get_gpgpu()->get_global_memory()->read(addr,8,data);
+                    printf("get current worklist idx: %llu\n",*data);
+                    m_ldst_unit->get_prefetcher()->set_cur_wl_idx(data);
+                }
+            }
         }
         else 
             inst.generate_mem_accesses();
@@ -3519,6 +3532,7 @@ unsigned simt_core_cluster::issue_block2core(new_addr_type* struct_bound)
         kernel_info_t *kernel = m_core[core]->get_kernel();
         if( kernel && !kernel->no_more_ctas_to_run() && (m_core[core]->get_n_active_cta() < m_config->max_cta(*kernel)) ) {
             m_core[core]->issue_block2core(*kernel,struct_bound);
+            m_core[core]->set_prefetch_started();
             num_blocks_issued++;
             m_cta_issue_next_core=core; 
             break;

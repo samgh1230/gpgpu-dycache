@@ -1141,6 +1141,12 @@ public:
     unsigned get_num_processed_reqs(){
         return m_L1D->get_num_processed_reqs();
     }
+    void set_prefetch_cur_wl_idx(unsigned long long  wl_idx)
+    {
+        m_prefetcher->set_cur_wl_idx(wl_idx);
+    }
+
+    Prefetch_Unit* get_prefetcher() {return m_prefetcher;}
     class shader_core_ctx *m_core;
 protected:
     ldst_unit( mem_fetch_interface *icnt,
@@ -1609,6 +1615,10 @@ public:
         m_ldst_unit->update_prefetch_struct_bound(struct_bound);
     }
 
+    void set_prefetch_started() {m_prefetch_started=true;}
+    bool is_prefetch_started() {return m_prefetch_started;}
+    void reset_prefetch_started() {m_prefetch_started=false;}
+
     void read_data_from_memory(unsigned long long* data, new_addr_type addr);
 
     void change2small_blksz(unsigned blksz);
@@ -1847,6 +1857,8 @@ public:
     unsigned current_blksz;
 
     std::vector<float> m_num_reqs;
+
+    bool m_prefetch_started;
 
     // general information
     unsigned m_sid; // shader id

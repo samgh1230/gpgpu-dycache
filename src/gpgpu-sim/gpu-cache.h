@@ -2140,8 +2140,26 @@ enum Prefetch_Mode{
 
 class Prefetch_Unit{
 public:
-    Prefetch_Unit(){m_max_queue_length=1000;}
+    Prefetch_Unit(){init();}
     ~Prefetch_Unit(){}
+
+    void init()
+    {
+        m_req_q.clear();
+        m_max_queue_length=1000;
+        m_double_line=false;
+        m_worklist_head=m_worklist_tail=-1;
+        m_prefetched_vid=-1;
+        m_prefetched_el_head=m_prefetched_el_tail=-1;
+        m_el_tail_ready=m_el_head_ready=false;
+        m_cur_wl_idx=-1;
+        m_prefetched_wl_idx=-1;
+    }
+    
+    void reinit()
+    {
+        init();
+    }
 
     void update_struct_bound(new_addr_type* struct_bound){
         for(unsigned i=0; i<8; i++)
@@ -2153,6 +2171,8 @@ public:
         m_worklist_head = start;
         m_worklist_tail = end;
     }
+
+    void set_cur_wl_idx(unsigned long long idx) {m_cur_wl_idx=idx;}
 
     bool is_full(){return m_req_q.size()==m_max_queue_length;}
 
@@ -2202,6 +2222,7 @@ public:
                         gen_prefetch_edgelist_on_vertex(m_prefetched_el_head,m_prefetched_el_tail);
                         m_el_head_ready = false;
                         m_el_tail_ready = false;
+                        m_double_line=false;
                     }
                 }
             break;
@@ -2305,6 +2326,8 @@ public:
     void del_req_from_top() {m_req_q.pop_front();}
     bool queue_empty() {return !m_req_q.size();}
     Bound_Reg m_bound_regs[8];
+
+    
 private:
     //worklist, vertexlist, edgelist, visitedlist, out_worklist. (start, end)
     //EWMA_Unit m_ewma;

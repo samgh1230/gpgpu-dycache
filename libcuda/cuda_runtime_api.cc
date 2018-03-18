@@ -419,6 +419,26 @@ extern "C" {
  *                                                                              *
  *******************************************************************************/
 
+__host__ cudaError_t CUDARTAPI cudaStartPrefetch()
+{
+	CUctx_st* context = GPGPUSim_Context();
+	gpgpu_sim* gpu = context->get_device()->get_gpgpu();
+	gpu->start_prefetch();
+}
+
+__host__ cudaError_t CUDARTAPI cudaEndPrefetch()
+{
+	CUctx_st* context = GPGPUSim_Context();
+	gpgpu_sim* gpu = context->get_device()->get_gpgpu();
+	gpu->end_prefetch();
+}
+
+__host__ cudaError_t CUDARTAPI cudaUpdateWlBand(unsigned long long start, unsigned long long end)
+{
+	gpu->struct_bound[0] = start;
+	gpu->struct_bound[1] = end;
+}
+
 __host__ cudaError_t CUDARTAPI cudaMallocMark(void **devPtr, size_t size, enum Struct_Type struct_type) 
 {
 	CUctx_st* context = GPGPUSim_Context();
