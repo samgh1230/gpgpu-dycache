@@ -2162,7 +2162,7 @@ public:
     }
 
     void update_struct_bound(new_addr_type* struct_bound){
-        for(unsigned i=0; i<8; i++)
+        for(unsigned i=0; i<10; i++)
             m_bound_regs[i] = struct_bound[i];
     }
 
@@ -2326,7 +2326,7 @@ public:
     mem_access_t* pop_from_top() {return m_req_q.front();}
     void del_req_from_top() {m_req_q.pop_front();}
     bool queue_empty() {return !m_req_q.size();}
-    Bound_Reg m_bound_regs[8];
+    Bound_Reg m_bound_regs[10];
 
     
 private:

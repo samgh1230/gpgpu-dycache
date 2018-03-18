@@ -506,7 +506,7 @@ public:
 //    new_addr_type edgelist_start_addr, edgelist_end_addr;
 //    new_addr_type visitlist_start_addr, visitlist_end_addr;
 
-   new_addr_type struct_bound[8];
+   new_addr_type struct_bound[10];
    bool m_prefetch_started;
 
    //update data structure bounds.

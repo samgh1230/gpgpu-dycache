@@ -435,12 +435,16 @@ __host__ cudaError_t CUDARTAPI cudaEndPrefetch()
 	return g_last_cudaError = cudaSuccess;
 }
 
-__host__ cudaError_t CUDARTAPI cudaUpdateWlBand(unsigned long long start, unsigned wl_size)
+__host__ cudaError_t CUDARTAPI cudaUpdateWlBand( unsigned wl_size)
 {
 	CUctx_st* context = GPGPUSim_Context();
 	gpgpu_sim* gpu = context->get_device()->get_gpgpu();
-	gpu->struct_bound[0] = start;
-	gpu->struct_bound[1] = start+wl_size*8;
+	unsigned long long tmp_start = gpu->struct_bound[0];
+	unsigned long long tmp_end = gpu->struct_bound[1];
+	gpu->struct_bound[0] = gpu->struct_bound[8];
+	gpu->struct_bound[1] = gpu->struct_bound[9]+wl_size*8;
+	gpu->struct_bound[8] = tmp_start;
+	gpu->struct_bound[9] = tmp_end;
 	return g_last_cudaError = cudaSuccess;
 }
 
@@ -470,6 +474,11 @@ __host__ cudaError_t CUDARTAPI cudaMallocMark(void **devPtr, size_t size, enum S
 			gpu->struct_bound[6] =(new_addr_type) *devPtr;
 			gpu->struct_bound[7] = (new_addr_type)(*devPtr + size);
 			printf("visitlist start_addr = 0x%llx, end_addr = 0x%llx\n",*devPtr,*devPtr+size);
+			break;
+		case 3:
+			gpu->struct_bound[8] =(new_addr_type) *devPtr;
+			gpu->struct_bound[9] = (new_addr_type)(*devPtr + size);
+			printf("worklist2 start_addr = 0x%llx, end_addr = 0x%llx\n",*devPtr,*devPtr+size);
 			break;
 	}
 
