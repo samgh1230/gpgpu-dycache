@@ -435,11 +435,12 @@ __host__ cudaError_t CUDARTAPI cudaEndPrefetch()
 	return g_last_cudaError = cudaSuccess;
 }
 
-__host__ cudaError_t CUDARTAPI cudaUpdateWlBand(unsigned wl_size)
+__host__ cudaError_t CUDARTAPI cudaUpdateWlBand(unsigned long long start, unsigned wl_size)
 {
 	CUctx_st* context = GPGPUSim_Context();
 	gpgpu_sim* gpu = context->get_device()->get_gpgpu();
-	gpu->struct_bound[1] = gpu->struct_bound[0]+wl_size*8;
+	gpu->struct_bound[0] = start;
+	gpu->struct_bound[1] = start+wl_size*8;
 	return g_last_cudaError = cudaSuccess;
 }
 
