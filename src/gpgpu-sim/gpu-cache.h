@@ -2260,8 +2260,9 @@ public:
         switch(type){
             case WORK_LIST: 
                 assert(addr%128==0);
-                if(addr+(m_cur_wl_idx%16)*8 != m_bound_regs[1]){
-                    gen_prefetch_worklist(addr+8);
+                printf("current worklist index:%llu\n",m_cur_wl_idx);
+                if(addr+((m_cur_wl_idx+1)%16)*8 < m_bound_regs[1]){
+                    gen_prefetch_worklist(addr+128);
                     m_prefetched_wl_idx = m_cur_wl_idx+1;
                 }
                 break;

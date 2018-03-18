@@ -1408,7 +1408,7 @@ ldst_unit::process_prefetch_cache_access( cache_t* cache,
 mem_stage_stall_type ldst_unit::process_prefetch_queue( cache_t *cache )
 {
     mem_stage_stall_type result = NO_RC_FAIL;
-    printf("process prefetch queue\n");
+    // printf("process prefetch queue\n");
     if( m_prefetcher->queue_empty() )
         return result;
 
