@@ -424,6 +424,7 @@ __host__ cudaError_t CUDARTAPI cudaStartPrefetch()
 	CUctx_st* context = GPGPUSim_Context();
 	gpgpu_sim* gpu = context->get_device()->get_gpgpu();
 	gpu->start_prefetch();
+	return g_last_cudaError = cudaSuccess;
 }
 
 __host__ cudaError_t CUDARTAPI cudaEndPrefetch()
@@ -431,12 +432,16 @@ __host__ cudaError_t CUDARTAPI cudaEndPrefetch()
 	CUctx_st* context = GPGPUSim_Context();
 	gpgpu_sim* gpu = context->get_device()->get_gpgpu();
 	gpu->end_prefetch();
+	return g_last_cudaError = cudaSuccess;
 }
 
 __host__ cudaError_t CUDARTAPI cudaUpdateWlBand(unsigned long long start, unsigned long long end)
 {
+	CUctx_st* context = GPGPUSim_Context();
+	gpgpu_sim* gpu = context->get_device()->get_gpgpu();
 	gpu->struct_bound[0] = start;
 	gpu->struct_bound[1] = end;
+	return g_last_cudaError = cudaSuccess;
 }
 
 __host__ cudaError_t CUDARTAPI cudaMallocMark(void **devPtr, size_t size, enum Struct_Type struct_type) 

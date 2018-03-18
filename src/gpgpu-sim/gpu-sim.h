@@ -310,7 +310,6 @@ public:
 
         m_valid=true;
 
-        m_prefetch_started = false;
     }
 
     unsigned num_shader() const { return m_shader_config.num_shader(); }

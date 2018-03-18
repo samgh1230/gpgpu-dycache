@@ -594,6 +594,8 @@ gpgpu_sim::gpgpu_sim( const gpgpu_sim_config &config )
     *active_sms=0;
 
     last_liveness_message_time = 0;
+
+    m_prefetch_started=false;
 }
 
 int gpgpu_sim::shared_mem_size() const
