@@ -2193,7 +2193,7 @@ public:
             case WORK_LIST:
                 m_prefetched_vid = pre_data[m_prefetched_wl_idx%16];//假设worklist是128B对齐的,那么cacheline的offset就是模16
                 el_head_addr = ((m_bound_regs[2] + (m_prefetched_vid/16)*128+ (m_prefetched_vid%16)*8)&ADDRALIGN);//计算需要访问vertex结构的地址，并128B对齐
-                el_tail_addr = ((m_bound_regs[2] + ((1+m_prefetched_vid)/16)*128+((1+m_prefetched_vid)%16)*8)&ADDRALIGN);
+                el_tail_addr = ((m_bound_regs[2] + ((1+m_prefetched_vid)/16)*128+(((1+m_prefetched_vid)%16)*8))&ADDRALIGN);
                 if(el_tail_addr == el_head_addr){
                     gen_prefetch_vertexlist(el_head_addr); 
                     m_double_line=false;
