@@ -692,13 +692,16 @@ void shader_core_ctx::func_exec_inst( warp_inst_t &inst )
             m_sample_insts++;
             m_sample_reqs += inst.accessq_count();
 
-            new_addr_type addr = inst.accessq_back().get_addr();
-            if(addr<get_gpu()->struct_bound[1]&&addr>=get_gpu()->struct_bound[0])
+            if(!inst.accessq_empty())
             {
-                unsigned long long* data;
-                get_gpu()->get_global_memory()->read(addr,8,data);
-                printf("get current worklist idx: %llu\n",*data);
-                m_ldst_unit->get_prefetcher()->set_cur_wl_idx(*data);
+                new_addr_type addr = inst.accessq_back().get_addr();
+                if(addr<get_gpu()->struct_bound[1]&&addr>=get_gpu()->struct_bound[0])
+                {
+                    unsigned long long data;
+                    get_gpu()->get_global_memory()->read(addr,8,&data);
+                    printf("get current worklist idx: %llu\n",data);
+                    m_ldst_unit->get_prefetcher()->set_cur_wl_idx(data);
+                }
             }
         }
         else 
