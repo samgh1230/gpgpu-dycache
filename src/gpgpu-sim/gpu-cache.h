@@ -2234,7 +2234,7 @@ public:
                 el_addr = addr;
                 for(unsigned i=0; i<16; i++){
                     el_addr = el_addr + i*8;
-                    if(el_addr<m_bound_regs[4]+8*m_prefetched_el_tail)
+                    if(el_addr<m_bound_regs[6]+8*m_prefetched_el_tail)
                     {
                         prefetch_vl_addr = m_bound_regs[6] + pre_data[i]*8;
                         gen_prefetch_visitedlist(prefetch_vl_addr);
