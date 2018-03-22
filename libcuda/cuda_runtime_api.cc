@@ -442,7 +442,7 @@ __host__ cudaError_t CUDARTAPI cudaUpdateWlBand( unsigned wl_size)
 	unsigned long long tmp_start = gpu->struct_bound[0];
 	unsigned long long tmp_end = gpu->struct_bound[1];
 	gpu->struct_bound[0] = gpu->struct_bound[8];
-	gpu->struct_bound[1] = gpu->struct_bound[9]+wl_size*8;
+	gpu->struct_bound[1] = gpu->struct_bound[8]+wl_size*8;
 	gpu->struct_bound[8] = tmp_start;
 	gpu->struct_bound[9] = tmp_end;
 	return g_last_cudaError = cudaSuccess;
