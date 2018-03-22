@@ -608,7 +608,7 @@ enum cache_operator_type {
     CACHE_WRITE_BACK,   // .wb
     CACHE_WRITE_THROUGH // .wt
 };
-
+class warp_inst_t;
 class mem_access_t {
 public:
    mem_access_t() { init(); }
@@ -655,7 +655,7 @@ public:
       m_inst = inst;
    } 
 
-   warp_inst_t* get_marked_inst() {return inst;}
+   warp_inst_t* get_marked_inst() {return m_inst;}
 
    new_addr_type get_addr() const { return m_addr; }
    void set_addr(new_addr_type addr) {m_addr=addr;}
