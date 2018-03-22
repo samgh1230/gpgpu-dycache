@@ -896,7 +896,7 @@ public:
     }
 
     void set_marked() {m_marked_inst=true;}
-    void is_marked() {return m_marked_inst;}
+    bool is_marked() {return m_marked_inst;}
 
     struct transaction_info {
         std::bitset<4> chunks; // bitmask: 32-byte chunks accessed

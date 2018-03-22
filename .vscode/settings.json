@@ -4,7 +4,12 @@
         "*.h": "cpp",
         "ios": "cpp",
         "xutility": "cpp",
-        "istream": "cpp"
+        "istream": "cpp",
+        "algorithm": "cpp",
+        "deque": "cpp",
+        "list": "cpp",
+        "vector": "cpp",
+        "xstring": "cpp"
     },
     "python.pythonPath": "D:\\Python27\\python.exe"
 }
