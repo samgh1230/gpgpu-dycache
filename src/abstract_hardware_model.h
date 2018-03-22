@@ -638,6 +638,25 @@ public:
       m_write = wr;
    }
 
+   mem_access_t( mem_access_type type, 
+                 new_addr_type address, 
+                 unsigned size, 
+                 bool wr, 
+                 const active_mask_t &active_mask,
+                 const mem_access_byte_mask_t &byte_mask,
+                 warp_inst_t* inst )
+    : m_warp_mask(active_mask), m_byte_mask(byte_mask)
+   {
+      init();
+      m_type = type;
+      m_addr = address;
+      m_req_size = size;
+      m_write = wr;
+      m_inst = inst;
+   } 
+
+   warp_inst_t* get_marked_inst() {return inst;}
+
    new_addr_type get_addr() const { return m_addr; }
    void set_addr(new_addr_type addr) {m_addr=addr;}
    unsigned get_size() const { return m_req_size; }
@@ -678,6 +697,8 @@ private:
    mem_access_type m_type;
    active_mask_t m_warp_mask;
    mem_access_byte_mask_t m_byte_mask;
+
+   warp_inst_t* m_inst;
 
    static unsigned sm_next_access_uid;
 };
@@ -823,6 +844,8 @@ public:
         m_mem_accesses_created=false;
         m_cache_hit=false;
         m_is_printf=false;
+
+        m_marked_inst=false;
     }
     virtual ~warp_inst_t(){
     }
@@ -871,6 +894,9 @@ public:
         for(unsigned i=0; i<num_addrs; i++)
             m_per_scalar_thread[n].memreqaddr[i] = addr[i];
     }
+
+    void set_marked() {m_marked_inst=true;}
+    void is_marked() {return m_marked_inst;}
 
     struct transaction_info {
         std::bitset<4> chunks; // bitmask: 32-byte chunks accessed
@@ -986,6 +1012,8 @@ protected:
     active_mask_t m_warp_active_mask; // dynamic active mask for timing model (after predication)
     active_mask_t m_warp_issued_mask; // active mask at issue (prior to predication test) -- for instruction counting
 
+    bool m_marked_inst;
+    
     struct per_thread_info {
         per_thread_info() {
             for(unsigned i=0; i<MAX_ACCESSES_PER_INSN_PER_THREAD; i++)

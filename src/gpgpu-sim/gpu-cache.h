@@ -193,7 +193,7 @@ struct cache_block_t {
             case 128:
                 // assert(sid==0);
                 for(int i=0;i<4;i++){
-                    assert( m_blk_status[i] == RESERVED );
+                    // assert( m_blk_status[i] == RESERVED );
                     m_blk_status[i]=VALID;
                     m_blk_fill_time[i]=time;
                     m_referred_chunk.set(i);
@@ -2172,72 +2172,144 @@ public:
         m_worklist_tail = end;
     }
 
-    void set_cur_wl_idx(unsigned long long idx) {m_cur_wl_idx=idx;}
+    void set_cur_wl_idx(new_addr_type addr, warp_inst_t* inst) {
+        assert((addr-m_bound_regs[0])%8==0);
+        unsigned long long cur_wl_idx = (addr-m_bound_regs[0])/8;
+        printf("add inst2cur_wl mapping. inst:0x%x, current wl index:%llu\n",inst,cur_wl_idx);
+        std::map<warp_inst_t*, unsigned long long>::iterator it = inst2cur_wl.find(inst);
+        assert(!it);
+        inst2cur_wl[inst] = cur_wl_idx;
+    }
 
     bool is_full(){return m_req_q.size()==m_max_queue_length;}
 
-    void new_load_addr(new_addr_type addr)
+    void new_load_addr(new_addr_type addr, warp_inst_t* inst)
     {
+        std::map<warp_inst_t*, unsigned long long>::iterator it = inst2cur_wl.find(inst);
+    
         // if(!is_full()){
-            List_Type type = addr_filter(addr);
-            gen_prefetch_requests(addr, type);
+        List_Type type = addr_filter(addr);
+        if(type==WORK_LIST&&it){
+            unsigned long long cur_wl = it->second;
+            unsigned long long next_addr = m_bound_regs[0]+8*(cur_wl+1);
+            next_addr &= ADDRALIGN;
+
+            if(next_addr>=m_bound_regs[0]&&next_addr<m_bound_regs[1])
+            {
+                if(!inst2next_wl.find(inst))
+                    inst2next_wl[inst]=cur_wl+1;
+                else{
+                    printf("already has a mapping. inst(0x%x), next_wl_index(%llu)\n",inst,addr2next_wl[inst]);
+                    exit(1);
+                }
+                printf("current wl index:%llu, next_wl_index_addr:0x%x\n", cur_wl, next_addr);
+                gen_prefetch_requests(next_addr, type, inst);
+            } else {
+                printf("prefetch address exceeds wl range. addr(0x%x)\n",next_addr);
+                exit(1);
+            }
+        } else if(!it){
+            printf("cannot find mapping for current warp wl index. inst(0x%x)\n",inst);
+            exit(1);
+        }
         // }
     }
 #define ADDRALIGN 0xffffff80;
-    void prefetched_data(unsigned long long* pre_data, new_addr_type addr){
+    void prefetched_data(unsigned long long* pre_data, new_addr_type addr, warp_inst_t* inst){
         List_Type type = addr_filter(addr);
         new_addr_type el_head_addr, el_tail_addr;
         new_addr_type vid_addr, next_vid_addr, el_addr,prefetch_vl_addr;
 
+        unsigned long long prefetched_next_wl_idx, prefetched_vid;
+        unsigned long long m_prefetched_vid, el_idx;
+
         switch(type){
             case WORK_LIST:
-                m_prefetched_vid = pre_data[m_prefetched_wl_idx%16];//假设worklist是128B对齐的,那么cacheline的offset就是模16
-                el_head_addr = (m_bound_regs[2] + m_prefetched_vid/16*128 + (m_prefetched_vid%16)*8)&ADDRALIGN;//计算需要访问vertex结构的地址，并128B对齐
-                el_tail_addr = (m_bound_regs[2] + (1+m_prefetched_vid)/16*128+((1+m_prefetched_vid)%16)*8)&ADDRALIGN;
+                if(inst2next_wl.find(inst))
+                    prefetched_next_wl_idx = inst2next_wl[inst];
+                else{
+                    printf("cannot find mapping for prefetched next wl index. inst(0x%x)\n",inst);
+                    exit(1);
+                }
+                prefetched_vid = pre_data[prefetched_next_wl_idx%16];//假设worklist是128B对齐的并且每个item是8B,那么cacheline的offset就是模16
+                if(!inst2vid.find(inst))
+                    inst2vid[inst]=prefetched_vid;
+                else{
+                    printf("already has a mapping. prefetched_wl_index(%llu), prefetched_vid(%llu)\n",prefetched_next_wl_idx,next_wl2vid[prefetched_next_wl_idx]);
+                    exit(1);
+                }
+                el_head_addr = m_bound_regs[2] + prefetched_vid/16*128 + (prefetched_vid%16)*8;//计算需要访问vertex结构的地址，并128B对齐
+                el_tail_addr = el_head_addr+8;
+                el_head_addr &= ADDRALIGN;
+                el_tail_addr &= ADDRALIGN;
+
                 if(el_tail_addr == el_head_addr){
-                    gen_prefetch_vertexlist(el_head_addr); 
-                    m_double_line=false;
+                    assert(!inst2num_prefetched.find(inst));
+                    inst2num_vl_prefetched[inst]=1;
+                   
+                    assert(!inst2el_addr.find(inst));
+                    inst2el_addr[inst].push_back(el_head_addr);
+                    inst2el_addr[inst].push_back(el_tail_addr);
+                    gen_prefetch_vertexlist(el_head_addr,inst); 
                 }
                 else {
-                    gen_prefetch_vertexlist(el_head_addr);
-                    gen_prefetch_vertexlist(el_tail_addr);
-                    m_double_line=true;
+                    assert(!inst2num_prefetched.find(inst));
+                    inst2num_vl_prefetched[inst]=2;
+                    
+                    assert(!inst2el_addr.find(inst));
+                    inst2el_addr[inst].push_back(el_head_addr);
+                    inst2el_addr[inst].push_back(el_tail_addr);
+                    
+                    gen_prefetch_vertexlist(el_head_addr,inst);
+                    gen_prefetch_vertexlist(el_tail_addr,inst);
                 }
                 break;
             case VERTEX_LIST:
-                vid_addr = (m_bound_regs[2] +(m_prefetched_vid/16)*128+ (m_prefetched_vid%16)*8) & ADDRALIGN;
-                next_vid_addr = (vid_addr + 8) & ADDRALIGN;
-                if(m_double_line){
-                    if(addr==vid_addr){
-                        m_prefetched_el_head = pre_data[m_prefetched_vid%16];
-                        m_el_head_ready = true;
-                    } else if (addr==next_vid_addr){
-                        m_prefetched_el_tail = pre_data[(m_prefetched_vid+1)%16];
-                        m_el_tail_ready = true;
-                    } else{
-                        printf("Error!\n");
-                        exit(1);
+                assert(inst2vid.find(inst));
+                m_prefetched_vid = inst2vid[inst];
+                vid_addr = m_bound_regs[2] + (m_prefetched_vid/16)*128 + (m_prefetched_vid%16)*8;
+                next_vid_addr = vid_addr+8;
+                vid_addr &= ADDRALIGN;
+                next_vid_addr &= ADDRALIGN;
+
+                assert(inst2num_vl_prefetched.find(inst));
+                assert(!inst2el_idx.find(inst)||inst2el_idx[inst].size()<2);
+                // if(m_double_line){
+                if(addr==vid_addr){
+                    inst2el_idx[inst].push_back(pre_data[m_prefetched_vid%16]);
+                    assert(inst2num_vl_prefetched[inst]>0);
+                    inst2num_vl_prefetched[inst]--;
+                    // m_el_head_ready = true;
+                }  
+                if (addr==next_vid_addr){
+                    inst2el_idx[inst].push_back(pre_data[(m_prefetched_vid+1)%16]);
+                    // assert(inst2num_vl_prefetched.find(inst));
+                    assert(inst2num_vl_prefetched[inst]>0);
+                    inst2num_vl_prefetched[inst]--;
+                    // m_el_tail_ready = true;
+                } 
+                
+                if(!inst2num_vl_prefetched[inst]){
+                    el_idx = inst2el_idx[inst][0];
+                    // el_tail = inst2el_idx[inst][1];
+                    if(el_idx>inst2el_idx[inst][1]){
+                        inst2el_idx[inst][0] = inst2el_idx[inst][1];
+                        inst2el_idx[inst][1] = el_idx;
+                        // gen_prefetch_edgelist_on_vertex(el_tail,el_head,inst);
                     }
-                    if(m_el_head_ready & m_el_tail_ready){
-                        gen_prefetch_edgelist_on_vertex(m_prefetched_el_head,m_prefetched_el_tail);
-                        m_el_head_ready = false;
-                        m_el_tail_ready = false;
-                        m_double_line=false;
-                    }
-                } else{
-                    m_prefetched_el_head = pre_data[m_prefetched_vid%16];
-                    m_prefetched_el_tail = pre_data[m_prefetched_vid%16+1];
-                    gen_prefetch_edgelist_on_vertex(m_prefetched_el_head,m_prefetched_el_tail);
+    
+                    gen_prefetch_edgelist_on_vertex(inst2el_idx[inst][0],inst2el_idx[inst][1],inst);
                 }
+                
             break;
             case EDGE_LIST:
                 el_addr = addr;
+                assert(inst2el_idx.find(inst));
                 for(unsigned i=0; i<16; i++){
-                    el_addr = el_addr + i*8;
-                    if(el_addr<m_bound_regs[6]+8*m_prefetched_el_tail)
+                    if(el_addr+i*8<m_bound_regs[6]+8*inst2el_idx[inst][1])
                     {
-                        prefetch_vl_addr = m_bound_regs[6] + pre_data[i]*8;
-                        gen_prefetch_visitedlist(prefetch_vl_addr);
+                        prefetch_vl_addr = m_bound_regs[6] + pre_data[i]*4;
+                        gen_prefetch_visitedlist(prefetch_vl_addr,inst);
                     }
                 }
             break;
@@ -2259,16 +2331,16 @@ public:
         else return NONE;
     }
 
-    void gen_prefetch_requests(new_addr_type addr, List_Type type)//统一入口
+    void gen_prefetch_requests(new_addr_type addr, List_Type type, warp_inst_t* inst)//统一入口
     {
         switch(type){
             case WORK_LIST: 
                 //assert(addr%128==0);
                 //printf("current worklist index:%llu\n",m_cur_wl_idx);
-                if(addr+8 < m_bound_regs[1]){
-                    gen_prefetch_worklist(addr+8);
-                    m_prefetched_wl_idx = m_cur_wl_idx+1;
-                }
+                // if(addr< m_bound_regs[1]){
+                gen_prefetch_worklist(addr,inst);
+                    //m_prefetched_wl_idx = m_cur_wl_idx+1;
+                // }
                 break;
             // case VERTEX_LIST: gen_prefetch_vertexlist(addr);break;
             // case EDGE_LIST:  if((addr-m_bound_regs[4])%(4*128)==0) gen_prefetch_edgelist(addr); break;
@@ -2277,32 +2349,32 @@ public:
         }
     }
 
-    void gen_prefetch_worklist(new_addr_type addr)//generate worklist prefetch, push reqs into req_q
+    void gen_prefetch_worklist(new_addr_type addr, warp_inst_t* inst)//generate worklist prefetch, push reqs into req_q
     {
         printf("generate worklist prefetch\n");
         assert(addr>=m_bound_regs[0]&&addr<m_bound_regs[1]);
-        mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, addr, 128, false);
+        mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, addr, 128, false, inst);
         m_req_q.push_back(access);
     }
-    void gen_prefetch_vertexlist(new_addr_type addr)//generate vertexlist prefetch, push reqs into req_q
+    void gen_prefetch_vertexlist(new_addr_type addr, warp_inst_t* inst)//generate vertexlist prefetch, push reqs into req_q
     {
         printf("generate vertexlist prefetch\n");
         assert(addr>=m_bound_regs[2]&&addr<m_bound_regs[3]);
-        mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, addr, 128, false);
+        mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, addr, 128, false, inst);
         m_req_q.push_back(access);
     }
-    void gen_prefetch_edgelist(new_addr_type addr)//generate edgelist prefetch, push reqs into req_q
+    void gen_prefetch_edgelist(new_addr_type addr, warp_inst_t* inst)//generate edgelist prefetch, push reqs into req_q
     {
         printf("generate edgelist prefetch\n");
         for(unsigned i=0;i<4;i++){
             new_addr_type next_addr = addr + 128*(4+i);
             if(next_addr>=m_bound_regs[5]||next_addr<m_bound_regs[4])
                 break;
-            mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, next_addr, 128, false);
+            mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, next_addr, 128, false, inst);
             m_req_q.push_back(access);
         }
     }
-    void gen_prefetch_edgelist_on_vertex(unsigned long long start_offset, unsigned long long end_offset)
+    void gen_prefetch_edgelist_on_vertex(unsigned long long start_offset, unsigned long long end_offset, warp_inst_t* inst)
     {
         printf("generate edgelist prefetch on vertex\n");
         unsigned long long length = 8*(end_offset-start_offset);
@@ -2315,7 +2387,7 @@ public:
             new_addr_type next_addr = m_bound_regs[4] + start_offset*8 + 128*i;
             if(next_addr >= m_bound_regs[5] || next_addr < m_bound_regs[4])
                 break;
-            mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, next_addr, 128, false);
+            mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, next_addr, 128, false, inst);
             m_req_q.push_back(access);
         }
     }
@@ -2341,12 +2413,20 @@ private:
     unsigned m_max_queue_length;
     bool m_double_line;
 
-    unsigned long long m_worklist_head, m_worklist_tail;
-    unsigned long long m_prefetched_vid;
-    unsigned long long m_prefetched_el_head, m_prefetched_el_tail;
-    bool m_el_head_ready, m_el_tail_ready;
-    unsigned long long m_cur_wl_idx;//使用CUDA api更新
-    unsigned long long m_prefetched_wl_idx;
+    unsigned long long m_worklist_head, m_worklist_tail;//整个GPU共享work list的addr range
+
+    std::map<warp_inst_t*, unsigned long long> inst2cur_wl;//<inst, current warp wl index>
+    std::map<warp_inst_t*, unsigned long long> inst2next_wl;//<current wl index, next wl index>
+    std::map<warp_inst_t*, unsigned long long> inst2vid; //<next wl index, prefetched vid>
+    std::map<warp_inst_t*, unsigned> inst2num_vl_prefetched;//<prefetched vertexlist addr, issued num of prefetching>
+    std::map<warp_inst_t*, std::vector<unsigned long long> > inst2el_addr;
+    std::map<warp_inst_t*, std::vector<unsigned long long> > inst2el_idx;
+
+    // unsigned long long m_prefetched_vid;
+    // unsigned long long m_prefetched_el_head, m_prefetched_el_tail;
+    // bool m_el_head_ready, m_el_tail_ready;
+    // unsigned long long m_cur_wl_idx;//通过runtime更新
+    // unsigned long long m_prefetched_wl_idx;
 };
 
 #endif

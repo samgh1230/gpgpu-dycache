@@ -684,6 +684,7 @@ void shader_core_ctx::fetch()
 void shader_core_ctx::func_exec_inst( warp_inst_t &inst )
 {
     execute_warp_inst_t(inst);
+
     if( inst.is_load() || inst.is_store() )
         if(inst.space.get_type()==global_space||inst.space.get_type()==local_space||inst.space.get_type()==param_space_local)
         {
@@ -692,16 +693,16 @@ void shader_core_ctx::func_exec_inst( warp_inst_t &inst )
             m_sample_insts++;
             m_sample_reqs += inst.accessq_count();
 
-            if(!inst.accessq_empty())
+            if(inst.is_marked())
             {
-                new_addr_type addr = inst.accessq_back().get_addr();
-                if(addr<get_gpu()->struct_bound[1]&&addr>=get_gpu()->struct_bound[0])
-                {
-                    unsigned long long data;
-                    get_gpu()->get_global_memory()->read(addr,8,&data);
-                    printf("get current worklist idx: %llu\n",data);
-                    m_ldst_unit->get_prefetcher()->set_cur_wl_idx(data);
-                }
+                new_addr_type wl_idx_addr = inst.get_addr(0);
+                for(unsigned i=0; i<32; i++)
+                    assert(wl_idx_addr==inst.get_addr(i));
+                // unsigned long long data;
+                // get_gpu()->get_global_memory()->read(addr,8,&data);
+
+                //printf("get current worklist idx: %llu\n",data);
+                m_ldst_unit->get_prefetcher()->set_cur_wl_idx(wl_idx_addr,&inst);
             }
         }
         else 
@@ -710,7 +711,6 @@ void shader_core_ctx::func_exec_inst( warp_inst_t &inst )
 
 void shader_core_ctx::read_data_from_memory(unsigned long long* data, new_addr_type addr)
 {
-    printf("read data from memory\n");
     get_gpu()->get_global_memory()->read(addr,8,data);
 }
 
@@ -1381,7 +1381,6 @@ ldst_unit::process_prefetch_cache_access( cache_t* cache,
                                  enum cache_request_status status )
 {
     mem_stage_stall_type result = NO_RC_FAIL;
-    printf("process prefetch cache access\n");
    
     if ( status == HIT ) {
         // assert( !read_sent );
@@ -1389,7 +1388,7 @@ ldst_unit::process_prefetch_cache_access( cache_t* cache,
         unsigned long long data[16];
         for(unsigned i=0;i<16;i++)
             m_core->read_data_from_memory(&data[i],mf->get_addr()+8*i);
-        m_prefetcher->prefetched_data(data,mf->get_addr());
+        m_prefetcher->prefetched_data(data,mf->get_addr(),mf->get_marked_inst());
         delete mf;
     } else if ( status == RESERVATION_FAIL ) {
         result = COAL_STALL;
@@ -1421,6 +1420,7 @@ mem_stage_stall_type ldst_unit::process_prefetch_queue( cache_t *cache )
     mem_fetch *mf = m_mf_allocator->alloc(access->get_addr(),access->get_type(),access->get_size(),false);
     std::list<cache_event> events;
     mf->set_prefetch_flag();
+    mf->set_marked_inst(access->get_marked_inst());
     enum cache_request_status status = cache->access(mf->get_addr(),mf,gpu_sim_cycle+gpu_tot_sim_cycle,events);
     return process_prefetch_cache_access( cache, mf->get_addr(), events, mf, status );
 }
@@ -1438,7 +1438,7 @@ mem_stage_stall_type ldst_unit::process_memory_access_queue( cache_t *cache, war
     mem_fetch *mf = m_mf_allocator->alloc(inst,inst.accessq_back());
     std::list<cache_event> events;
     if(inst.is_load())
-        m_prefetcher->new_load_addr(mf->get_addr());
+        m_prefetcher->new_load_addr(mf->get_addr(),&inst);
     if(inst.space.get_type()==global_space && mf->get_data_size()>m_core->m_config->gpgpu_cache_data1_linesize){
         printf("mem_fetch data size=%d,cache line size=%d\n",mf->get_data_size(),m_core->m_config->gpgpu_cache_data1_linesize);
         exit(1);
