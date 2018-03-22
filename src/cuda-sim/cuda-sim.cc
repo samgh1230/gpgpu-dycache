@@ -1198,7 +1198,9 @@ void ptx_thread_info::ptx_exec_inst( warp_inst_t &inst, unsigned lane_id)
    set_npc( pc + pI->inst_size() );
 
    if(pI->source_line()==140) 
+    {
         inst.set_marked();
+    }
 
    try {
 

@@ -2212,6 +2212,7 @@ public:
             printf("cannot find mapping for current warp wl index. inst(0x%x)\n",inst);
             exit(1);
         }
+        inst2cur_wl.erase(it);
         // }
     }
 
@@ -2223,6 +2224,9 @@ public:
         unsigned long long prefetched_next_wl_idx, prefetched_vid;
         unsigned long long m_prefetched_vid, el_idx;
 
+        std::map<warp_inst_t*,unsigned long long>::iterator next_wl_it, vid_it,el_idx_it;
+
+
         switch(type){
             case WORK_LIST:
                 if(inst2next_wl.find(inst)!=inst2next_wl.end())
@@ -2231,6 +2235,8 @@ public:
                     printf("cannot find mapping for prefetched next wl index. inst(0x%x)\n",inst);
                     exit(1);
                 }
+                next_wl_it = inst2next_wl.find(inst);
+                inst2next_wl.erase(next_wl_it);
                 prefetched_vid = pre_data[prefetched_next_wl_idx%16];//假设worklist是128B对齐的并且每个item是8B,那么cacheline的offset就是模16
                 if(inst2vid.find(inst)==inst2vid.end())
                     inst2vid[inst]=prefetched_vid;
@@ -2247,18 +2253,18 @@ public:
                     assert(inst2num_vl_prefetched.find(inst)==inst2num_vl_prefetched.end());
                     inst2num_vl_prefetched[inst]=1;
                    
-                    assert(inst2el_addr.find(inst)==inst2el_addr.end());
-                    inst2el_addr[inst].push_back(el_head_addr);
-                    inst2el_addr[inst].push_back(el_tail_addr);
+                    // assert(inst2el_addr.find(inst)==inst2el_addr.end());
+                    // inst2el_addr[inst].push_back(el_head_addr);
+                    // inst2el_addr[inst].push_back(el_tail_addr);
                     gen_prefetch_vertexlist(el_head_addr,inst); 
                 }
                 else {
                     assert(inst2num_vl_prefetched.find(inst)==inst2num_vl_prefetched.end());
                     inst2num_vl_prefetched[inst]=2;
                     
-                    assert(inst2el_addr.find(inst)==inst2el_addr.end());
-                    inst2el_addr[inst].push_back(el_head_addr);
-                    inst2el_addr[inst].push_back(el_tail_addr);
+                    // assert(inst2el_addr.find(inst)==inst2el_addr.end());
+                    // inst2el_addr[inst].push_back(el_head_addr);
+                    // inst2el_addr[inst].push_back(el_tail_addr);
                     
                     gen_prefetch_vertexlist(el_head_addr,inst);
                     gen_prefetch_vertexlist(el_tail_addr,inst);
@@ -2271,6 +2277,9 @@ public:
                 next_vid_addr = vid_addr+8;
                 vid_addr &= ADDRALIGN;
                 next_vid_addr &= ADDRALIGN;
+
+                vid_it = inst2vid.find(inst);
+                inst2vid.erase(vid_it);
 
                 assert(inst2num_vl_prefetched.find(inst)!=inst2num_vl_prefetched.end());
                 assert(inst2el_idx.find(inst)==inst2el_idx.end()||inst2el_idx[inst].size()<2);
@@ -2288,7 +2297,12 @@ public:
                     inst2num_vl_prefetched[inst]--;
                     // m_el_tail_ready = true;
                 } 
-                
+
+                if(addr != vid_addr && addr != next_vid_addr) {
+                    printf("no addr matched.vid_addr(0x%x), next_vid_addr(0x%x), addr(0x%x)\n",vid_addr,next_vid_addr,addr);
+                    exit(1);
+                }
+
                 if(!inst2num_vl_prefetched[inst]){
                     el_idx = inst2el_idx[inst][0];
                     // el_tail = inst2el_idx[inst][1];
@@ -2312,6 +2326,8 @@ public:
                         gen_prefetch_visitedlist(prefetch_vl_addr,inst);
                     }
                 }
+                el_idx_it = inst2el_idx.find(inst);
+                inst2el_idx.erase(el_idx_it);
             break;
             default:    
             break;

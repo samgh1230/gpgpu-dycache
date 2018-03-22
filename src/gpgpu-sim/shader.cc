@@ -697,7 +697,8 @@ void shader_core_ctx::func_exec_inst( warp_inst_t &inst )
             {
                 new_addr_type wl_idx_addr = inst.get_addr(0);
                 for(unsigned i=0; i<32; i++)
-                    assert(wl_idx_addr==inst.get_addr(i));
+                    if(inst.active(i))
+                        assert(wl_idx_addr==inst.get_addr(i));
                 // unsigned long long data;
                 // get_gpu()->get_global_memory()->read(addr,8,&data);
 
@@ -1437,7 +1438,7 @@ mem_stage_stall_type ldst_unit::process_memory_access_queue( cache_t *cache, war
     //const mem_access_t &access = inst.accessq_back();
     mem_fetch *mf = m_mf_allocator->alloc(inst,inst.accessq_back());
     std::list<cache_event> events;
-    if(inst.is_load() && m_core->is_prefetch_started())
+    if(inst.is_load() && m_core->is_prefetch_started()&&inst.is_marked())
         m_prefetcher->new_load_addr(mf->get_addr(),&inst);
     if(inst.space.get_type()==global_space && mf->get_data_size()>m_core->m_config->gpgpu_cache_data1_linesize){
         printf("mem_fetch data size=%d,cache line size=%d\n",mf->get_data_size(),m_core->m_config->gpgpu_cache_data1_linesize);
