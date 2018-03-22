@@ -2199,7 +2199,7 @@ public:
                 if(inst2next_wl.find(inst)==inst2next_wl.end())
                     inst2next_wl[inst]=cur_wl+1;
                 else{
-                    printf("already has a mapping. inst(0x%x), next_wl_index(%llu)\n",inst,addr2next_wl[inst]);
+                    printf("already has a mapping. inst(0x%x), next_wl_index(%llu)\n",inst,inst2next_wl[inst]);
                     exit(1);
                 }
                 printf("current wl index:%llu, next_wl_index_addr:0x%x\n", cur_wl, next_addr);
@@ -2235,7 +2235,7 @@ public:
                 if(inst2vid.find(inst)==inst2vid.end())
                     inst2vid[inst]=prefetched_vid;
                 else{
-                    printf("already has a mapping. prefetched_wl_index(%llu), prefetched_vid(%llu)\n",prefetched_next_wl_idx,next_wl2vid[prefetched_next_wl_idx]);
+                    printf("already has a mapping. prefetched_wl_index(%llu), prefetched_vid(%llu)\n",prefetched_next_wl_idx,inst2vid[prefetched_next_wl_idx]);
                     exit(1);
                 }
                 el_head_addr = m_bound_regs[2] + prefetched_vid/16*128 + (prefetched_vid%16)*8;//计算需要访问vertex结构的地址，并128B对齐
@@ -2244,7 +2244,7 @@ public:
                 el_tail_addr &= ADDRALIGN;
 
                 if(el_tail_addr == el_head_addr){
-                    assert(inst2num_prefetched.find(inst)==inst2num_vl_prefetched.end());
+                    assert(inst2num_vl_prefetched.find(inst)==inst2num_vl_prefetched.end());
                     inst2num_vl_prefetched[inst]=1;
                    
                     assert(inst2el_addr.find(inst)==inst2el_addr.end());
@@ -2253,7 +2253,7 @@ public:
                     gen_prefetch_vertexlist(el_head_addr,inst); 
                 }
                 else {
-                    assert(inst2num_prefetched.find(inst)==inst2num_vl_prefetched.end());
+                    assert(inst2num_vl_prefetched.find(inst)==inst2num_vl_prefetched.end());
                     inst2num_vl_prefetched[inst]=2;
                     
                     assert(inst2el_addr.find(inst)==inst2el_addr.end());
@@ -2391,11 +2391,11 @@ public:
             m_req_q.push_back(access);
         }
     }
-    void gen_prefetch_visitedlist(new_addr_type addr)//generate visited list prefetch, push reqs into req_q
+    void gen_prefetch_visitedlist(new_addr_type addr, warp_inst_t* inst)//generate visited list prefetch, push reqs into req_q
     {
         printf("generate visitlist prefetch\n");
         assert(addr>=m_bound_regs[6]&&addr<m_bound_regs[7]);
-        mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, addr, 128, false);
+        mem_access_t* access = new mem_access_t(GLOBAL_ACC_R, addr, 128, false,inst);
         m_req_q.push_back(access);
     }
 

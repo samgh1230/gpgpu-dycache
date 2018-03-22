@@ -642,10 +642,7 @@ public:
                  new_addr_type address, 
                  unsigned size, 
                  bool wr, 
-                 const active_mask_t &active_mask,
-                 const mem_access_byte_mask_t &byte_mask,
-                 warp_inst_t* inst )
-    : m_warp_mask(active_mask), m_byte_mask(byte_mask)
+                 warp_inst_t* inst)
    {
       init();
       m_type = type;
