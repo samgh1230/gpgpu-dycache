@@ -2235,7 +2235,7 @@ public:
                 if(inst2vid.find(inst)==inst2vid.end())
                     inst2vid[inst]=prefetched_vid;
                 else{
-                    printf("already has a mapping. prefetched_wl_index(%llu), prefetched_vid(%llu)\n",prefetched_next_wl_idx,inst2vid[prefetched_next_wl_idx]);
+                    printf("already has a mapping. prefetched_wl_index(%llu), prefetched_vid(%llu)\n",prefetched_next_wl_idx,inst2vid[inst]);
                     exit(1);
                 }
                 el_head_addr = m_bound_regs[2] + prefetched_vid/16*128 + (prefetched_vid%16)*8;//计算需要访问vertex结构的地址，并128B对齐
