@@ -2164,6 +2164,7 @@ public:
     void update_struct_bound(new_addr_type* struct_bound){
         for(unsigned i=0; i<10; i++)
             m_bound_regs[i] = struct_bound[i];
+        printf("worklist range(0x%x ~ 0x%x).\n",m_bound_regs[0],m_bound_regs[1]);
     }
 
     void set_worklist_band(unsigned long long start, unsigned long long end)
@@ -2192,10 +2193,11 @@ public:
         if(type==WORK_LIST && it!=inst2cur_wl.end()){
             unsigned long long cur_wl = it->second;
             unsigned long long next_addr = m_bound_regs[0]+8*(cur_wl+1);
-            next_addr &= ADDRALIGN;
+            // next_addr &= ADDRALIGN;
 
             if(next_addr>=m_bound_regs[0]&&next_addr<m_bound_regs[1])
             {
+                next_addr &= ADDRALIGN;
                 if(inst2next_wl.find(inst)==inst2next_wl.end())
                     inst2next_wl[inst]=cur_wl+1;
                 else{
