@@ -2224,7 +2224,8 @@ public:
         unsigned long long prefetched_next_wl_idx, prefetched_vid;
         unsigned long long m_prefetched_vid, el_idx;
 
-        std::map<warp_inst_t*,unsigned long long>::iterator next_wl_it, vid_it,el_idx_it;
+        std::map<warp_inst_t*,unsigned long long>::iterator next_wl_it, vid_it;
+        std::map<warp_inst_t*, std::vector<unsigned long long> >::iterator el_idx_it;
 
 
         switch(type){
