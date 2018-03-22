@@ -2206,10 +2206,11 @@ public:
                 }
                 printf("current wl index:%llu, next_wl_index_addr:0x%x\n", cur_wl, next_addr);
                 gen_prefetch_requests(next_addr, type, inst);
-            } else {
-                printf("prefetch address exceeds wl range. addr(0x%x)\n",next_addr);
-                exit(1);
-            }
+            } 
+            // else {
+            //     printf("prefetch address exceeds wl range. addr(0x%x)\n",next_addr);
+            //     exit(1);
+            // }
         } else if(it==inst2cur_wl.end()){
             printf("cannot find mapping for current warp wl index. inst(0x%x)\n",inst);
             exit(1);
