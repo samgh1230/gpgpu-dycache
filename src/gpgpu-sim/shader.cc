@@ -1437,7 +1437,7 @@ mem_stage_stall_type ldst_unit::process_memory_access_queue( cache_t *cache, war
     //const mem_access_t &access = inst.accessq_back();
     mem_fetch *mf = m_mf_allocator->alloc(inst,inst.accessq_back());
     std::list<cache_event> events;
-    if(inst.is_load())
+    if(inst.is_load() && m_core->is_prefetch_started())
         m_prefetcher->new_load_addr(mf->get_addr(),&inst);
     if(inst.space.get_type()==global_space && mf->get_data_size()>m_core->m_config->gpgpu_cache_data1_linesize){
         printf("mem_fetch data size=%d,cache line size=%d\n",mf->get_data_size(),m_core->m_config->gpgpu_cache_data1_linesize);
@@ -1919,7 +1919,7 @@ void ldst_unit::cycle()
                unsigned long long data[16];
                for(unsigned i=0;i<16;i++)
                     m_core->read_data_from_memory(&data[i],mf->get_addr()+8*i);
-               m_prefetcher->prefetched_data(data,mf->get_addr());
+               m_prefetcher->prefetched_data(data,mf->get_addr(),mf->get_marked_inst());
                //delete mf;//是否需要删除
            }
        } else if (mf->istexture()) {
