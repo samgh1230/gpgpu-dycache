@@ -2441,12 +2441,12 @@ private:
 
     unsigned long long m_worklist_head, m_worklist_tail;//整个GPU共享work list的addr range
 
-    std::map<new_addr_type, unsigned long long> wid2cur_wl;//<inst, current warp wl index>
-    std::map<new_addr_type, unsigned long long> wid2next_wl;//<current wl index, next wl index>
-    std::map<new_addr_type, unsigned long long> wid2vid; //<next wl index, prefetched vid>
-    std::map<new_addr_type, unsigned> wid2num_vl_prefetched;//<prefetched vertexlist addr, issued num of prefetching>
-    std::map<new_addr_type, std::vector<unsigned long long> > wid2el_addr;
-    std::map<new_addr_type, std::vector<unsigned long long> > wid2el_idx;
+    std::map<unsigned, unsigned long long> wid2cur_wl;//<inst, current warp wl index>
+    std::map<unsigned, unsigned long long> wid2next_wl;//<current wl index, next wl index>
+    std::map<unsigned, unsigned long long> wid2vid; //<next wl index, prefetched vid>
+    std::map<unsigned, unsigned> wid2num_vl_prefetched;//<prefetched vertexlist addr, issued num of prefetching>
+    std::map<unsigned, std::vector<unsigned long long> > wid2el_addr;
+    std::map<unsigned, std::vector<unsigned long long> > wid2el_idx;
 
     // unsigned long long m_prefetched_vid;
     // unsigned long long m_prefetched_el_head, m_prefetched_el_tail;

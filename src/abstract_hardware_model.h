@@ -1017,7 +1017,7 @@ protected:
     active_mask_t m_warp_active_mask; // dynamic active mask for timing model (after predication)
     active_mask_t m_warp_issued_mask; // active mask at issue (prior to predication test) -- for instruction counting
 
-    bool m_wid;
+    bool m_marked_inst;
     
     struct per_thread_info {
         per_thread_info() {
