@@ -2154,6 +2154,12 @@ public:
         // m_el_tail_ready=m_el_head_ready=false;
         // m_cur_wl_idx=-1;
         // m_prefetched_wl_idx=-1;
+        addr2cur_wl.clear();//<inst, current warp wl index>
+        addr2next_wl.clear();//<current wl index, next wl index>
+        addr2vid.clear(); //<next wl index, prefetched vid>
+        addr2num_vl_prefetched.clear();//<prefetched vertexlist addr, issued num of prefetching>
+        addr2el_addr.clear();
+        addr2el_idx.clear();
     }
     
     void reinit()
