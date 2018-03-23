@@ -642,14 +642,14 @@ public:
                  new_addr_type address, 
                  unsigned size, 
                  bool wr, 
-                 warp_inst_t* inst)
+                 new_addr_type marked_addr)
    {
       init();
       m_type = type;
       m_addr = address;
       m_req_size = size;
       m_write = wr;
-      m_inst = inst;
+      m_marked_addr = marked_addr;
    } 
 
    warp_inst_t* get_marked_inst() {return m_inst;}
@@ -695,7 +695,7 @@ private:
    active_mask_t m_warp_mask;
    mem_access_byte_mask_t m_byte_mask;
 
-   warp_inst_t* m_inst;
+   new_addr_type m_marked_addr;
 
    static unsigned sm_next_access_uid;
 };
@@ -968,6 +968,15 @@ public:
     {
         assert( m_per_scalar_thread_valid );
         return m_per_scalar_thread[n].memreqaddr[0];
+    }
+
+    new_addr_type get_first_valid_addr(){
+        assert( m_per_scalar_thread_valid )    ;
+        for(unsigned i=0; i<32; i++)
+            if(active(i))
+                return m_per_scalar_thread[i].memreqaddr[0];
+        printf("Error! NO valid thread\n");
+        exit(1);
     }
 
     bool isatomic() const { return m_isatomic; }
