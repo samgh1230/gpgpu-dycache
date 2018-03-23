@@ -1421,7 +1421,7 @@ mem_stage_stall_type ldst_unit::process_prefetch_queue( cache_t *cache )
     mem_fetch *mf = m_mf_allocator->alloc(access->get_addr(),access->get_type(),access->get_size(),false);
     std::list<cache_event> events;
     mf->set_prefetch_flag();
-    mf->set_marked_addr(access->get_marked_addr());
+    mf->set_marked_wid(access->get_marked_wid());
     enum cache_request_status status = cache->access(mf->get_addr(),mf,gpu_sim_cycle+gpu_tot_sim_cycle,events);
     return process_prefetch_cache_access( cache, mf->get_addr(), events, mf, status );
 }

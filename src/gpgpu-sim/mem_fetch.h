@@ -114,8 +114,8 @@ public:
 
    void set_prefetch_flag(){m_prefetched=true;}
    bool is_prefetched(){return m_prefetched;}
-   void set_marked_addr(unsigned wid) {m_warp_id=wid;}
-   unsigned get_marked_addr() {return m_warp_id;}
+   void set_marked_wid(unsigned wid) {m_warp_id=wid;}
+   unsigned get_marked_wid() {return m_warp_id;}
 private:
    // request source information
    unsigned m_request_uid;
