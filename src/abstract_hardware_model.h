@@ -652,7 +652,7 @@ public:
       m_marked_addr = marked_addr;
    } 
 
-   warp_inst_t* get_marked_inst() {return m_inst;}
+   new_addr_type get_marked_addr() {return m_marked_addr;}
 
    new_addr_type get_addr() const { return m_addr; }
    void set_addr(new_addr_type addr) {m_addr=addr;}

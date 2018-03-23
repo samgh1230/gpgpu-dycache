@@ -1389,7 +1389,7 @@ ldst_unit::process_prefetch_cache_access( cache_t* cache,
         unsigned long long data[16];
         for(unsigned i=0;i<16;i++)
             m_core->read_data_from_memory(&data[i],mf->get_addr()+8*i);
-        m_prefetcher->prefetched_data(data,mf->get_addr(),mf->get_marked_inst());
+        m_prefetcher->prefetched_data(data,mf->get_addr(),mf->get_marked_addr());
         delete mf;
     } else if ( status == RESERVATION_FAIL ) {
         result = COAL_STALL;
@@ -1920,7 +1920,7 @@ void ldst_unit::cycle()
                unsigned long long data[16];
                for(unsigned i=0;i<16;i++)
                     m_core->read_data_from_memory(&data[i],mf->get_addr()+8*i);
-               m_prefetcher->prefetched_data(data,mf->get_addr(),mf->get_marked_inst());
+               m_prefetcher->prefetched_data(data,mf->get_addr(),mf->get_marked_addr());
                //delete mf;//是否需要删除
            }
        } else if (mf->istexture()) {
