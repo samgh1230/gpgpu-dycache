@@ -114,8 +114,8 @@ public:
 
    void set_prefetch_flag(){m_prefetched=true;}
    bool is_prefetched(){return m_prefetched;}
-   void set_marked_addr(new_addr_type marked_addr) {m_marked_addr=marked_addr;}
-   new_addr_type get_marked_addr() {return m_marked_addr;}
+   void set_marked_addr(unsigned wid) {m_wid=wid;}
+   unsigned get_marked_addr() {return m_wid;}
 private:
    // request source information
    unsigned m_request_uid;
@@ -143,7 +143,7 @@ private:
    // requesting instruction (put last so mem_fetch prints nicer in gdb)
    warp_inst_t m_inst;
 
-   new_addr_type m_marked_addr;
+   unsigned m_wid;
 
    static unsigned sm_next_mf_request_uid;
 

@@ -642,17 +642,17 @@ public:
                  new_addr_type address, 
                  unsigned size, 
                  bool wr, 
-                 new_addr_type marked_addr)
+                 unsigned wid)
    {
       init();
       m_type = type;
       m_addr = address;
       m_req_size = size;
       m_write = wr;
-      m_marked_addr = marked_addr;
+      m_wid = wid;
    } 
 
-   new_addr_type get_marked_addr() {return m_marked_addr;}
+   unsigned get_marked_wid() {return m_wid;}
 
    new_addr_type get_addr() const { return m_addr; }
    void set_addr(new_addr_type addr) {m_addr=addr;}
@@ -695,8 +695,7 @@ private:
    active_mask_t m_warp_mask;
    mem_access_byte_mask_t m_byte_mask;
 
-   new_addr_type m_marked_addr;
-
+   unsigned m_wid;
    static unsigned sm_next_access_uid;
 };
 
@@ -1018,7 +1017,7 @@ protected:
     active_mask_t m_warp_active_mask; // dynamic active mask for timing model (after predication)
     active_mask_t m_warp_issued_mask; // active mask at issue (prior to predication test) -- for instruction counting
 
-    bool m_marked_inst;
+    bool m_wid;
     
     struct per_thread_info {
         per_thread_info() {
