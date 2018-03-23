@@ -1141,10 +1141,10 @@ public:
     unsigned get_num_processed_reqs(){
         return m_L1D->get_num_processed_reqs();
     }
-    void set_prefetch_cur_wl_idx(unsigned long long  wl_idx, warp_inst_t* inst)
-    {
-        m_prefetcher->set_cur_wl_idx(wl_idx,inst);
-    }
+    // void set_prefetch_cur_wl_idx(unsigned long long  wl_idx, warp_inst_t* inst)
+    // {
+    //     m_prefetcher->set_cur_wl_idx(wl_idx,inst);
+    // }
 
     Prefetch_Unit* get_prefetcher() {return m_prefetcher;}
     class shader_core_ctx *m_core;

@@ -703,7 +703,7 @@ void shader_core_ctx::func_exec_inst( warp_inst_t &inst )
                 // get_gpu()->get_global_memory()->read(addr,8,&data);
 
                 //printf("get current worklist idx: %llu\n",data);
-                m_ldst_unit->get_prefetcher()->set_cur_wl_idx(wl_idx_addr,&inst);
+                m_ldst_unit->get_prefetcher()->set_cur_wl_idx(wl_idx_addr);
             }
         }
         else 
