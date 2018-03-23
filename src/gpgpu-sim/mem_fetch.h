@@ -114,14 +114,14 @@ public:
 
    void set_prefetch_flag(){m_prefetched=true;}
    bool is_prefetched(){return m_prefetched;}
-   void set_marked_addr(unsigned wid) {m_wid=wid;}
-   unsigned get_marked_addr() {return m_wid;}
+   void set_marked_addr(unsigned wid) {m_warp_id=wid;}
+   unsigned get_marked_addr() {return m_warp_id;}
 private:
    // request source information
    unsigned m_request_uid;
    unsigned m_sid;
    unsigned m_tpc;
-   unsigned m_wid;
+   unsigned m_warp_id;
 
    // where is this request now?
    enum mem_fetch_status m_status;
