@@ -2230,10 +2230,12 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
                 next_addr &= ADDRALIGN;
                 //it_wid it3 = wid2next_wl.find(wid);
                 if(wid2next_wl.find(wid)==wid2next_wl.end()){
-                    wid2next_wl.insert(wid2map::value_type(wid, addr2value::value_type(marked_addr,cur_wl+1)));
+                    addr2value tmp;
+                    tmp[marked_addr]=cur_wl+1;
+                    wid2next_wl.insert(wid2map::value_type(wid, tmp));
                 } else{
-                    it_addr it3 = wid2next_wl[wid].second().find(marked_addr);
-                    if(it3==wid2next_wl[wid].second().end()){
+                    it_addr it3 = wid2next_wl[wid].find(marked_addr);
+                    if(it3==wid2next_wl[wid].end()){
                         wid2next_wl[wid][marked_addr] = cur_wl+1;
                     } else {
                         printf("already has a mapping. wid(%u), marked_addr(0x%x), next_wl_index(%llu)\n",wid, marked_addr, wid2next_wl[wid][marked_addr]);
@@ -2266,6 +2268,10 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
 
         std::vector<unsigned long long> el_idx_vec;
 
+        addr2value tmp2;
+        addr2u tmp;
+        addr2vec tmp1;
+
 
         switch(type){
             case WORK_LIST:
@@ -2283,7 +2289,8 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
 
                 vid_it = wid2vid.find(wid);
                 if(vid_it==wid2vid.end()){
-                    wid2vid.insert(wid2map::value_type(wid, addr2value::value_type(marked_addr,prefetched_vid)));
+                    tmp2[marked_addr]=prefetched_vid;
+                    wid2vid.insert(wid2map::value_type(wid, tmp2));
                 } else{
                     vid_it2 = vid_it->second.find(marked_addr);
                     if(vid_it2==vid_it->second.end()){
@@ -2302,7 +2309,8 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
                 if(el_tail_addr == el_head_addr){
                     num_prefetch_it = wid2num_vl_prefetched.find(wid);
                     if(num_prefetch_it==wid2num_vl_prefetched.end()){
-                        wid2num_vl_prefetched.insert(wid2u::value_type(wid, addr2u::value_type(marked_addr,1)));
+                        tmp[marked_addr]=1;
+                        wid2num_vl_prefetched.insert(wid2u::value_type(wid, tmp));
                     } else{
                         num_prefetch_it2 = num_prefetch_it->second.find(marked_addr);
                         assert(num_prefetch_it2==num_prefetch_it->second.end());
@@ -2319,7 +2327,8 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
                 else {
                     num_prefetch_it = wid2num_vl_prefetched.find(wid);
                     if(num_prefetch_it==wid2num_vl_prefetched.end()){
-                        wid2num_vl_prefetched.insert(wid2u::value_type(wid, addr2u::value_type(marked_addr,2)));
+                        tmp[marked_addr]=2;
+                        wid2num_vl_prefetched.insert(wid2u::value_type(wid, tmp));
                     } else{
                         num_prefetch_it2 = num_prefetch_it->second.find(marked_addr);
                         assert(num_prefetch_it2==num_prefetch_it->second.end());
@@ -2358,7 +2367,8 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
                 el_idx_vec.push_back(-1);
                 el_idx_it = wid2el_idx.find(wid);
                 if(el_idx_it==wid2el_idx.end()){
-                    wid2el_idx.insert(wid2vector::value_type(wid,addr2vec::value_type(marked_addr,el_idx_vec)));
+                    tmp1[marked_addr] = el_idx_vec;
+                    wid2el_idx.insert(wid2vector::value_type(wid,tmp1));
                 } else{
                     el_idx_it2 = wid2el_idx[wid].find(marked_addr);
                     assert(el_idx_it2==wid2el_idx[wid].end());
@@ -2417,7 +2427,7 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
                         el_idx_it = wid2el_idx.find(wid);
                         wid2el_idx.erase(el_idx_it);
                     }
-                    if(wid2num_el_prefetched[wid].size==0){
+                    if(wid2num_el_prefetched[wid].size()==0){
                         wid2num_el_prefetched.erase(wid2num_el_prefetched.find(wid));
                     }
                 }
