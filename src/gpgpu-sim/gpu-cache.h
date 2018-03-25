@@ -2409,7 +2409,7 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
                 assert(wid2el_idx.find(wid)!=wid2el_idx.end());
                 assert(wid2el_idx[wid].find(marked_addr)!=wid2el_idx[wid].end());
                 for(unsigned i=0; i<16; i++){
-                    if(el_addr+i*8<m_bound_regs[6]+8*wid2el_idx[wid][makred_addr][1])
+                    if(el_addr+i*8<m_bound_regs[6]+8*wid2el_idx[wid][marked_addr][1])
                     {
                         prefetch_vl_addr = m_bound_regs[6] + pre_data[i]*4;
                         gen_prefetch_visitedlist(prefetch_vl_addr,wid,marked_addr);
@@ -2506,7 +2506,8 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
 
         it_wid_u num_el_prefetch_it = wid2num_el_prefetched.find(wid);
         if(num_el_prefetch_it==wid2num_el_prefetched.end()){
-            tmp[makred_addr]=max_lines;
+            addr2u tmp;
+            tmp[marked_addr]=max_lines;
             wid2num_el_prefetched.insert(wid2u::value_type(wid, tmp));
         } else{
             it_addr_u num_el_prefetch_it2 = wid2num_el_prefetched[wid].find(marked_addr);
