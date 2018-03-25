@@ -2347,18 +2347,14 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
                 break;
             case VERTEX_LIST:
                 assert(wid2vid.find(wid)!=wid2vid.end());
-                assert(wid2vid[wid].find(marked_addr)==wid2vid[wid].end());
+                assert(wid2vid[wid].find(marked_addr)!=wid2vid[wid].end());
                 m_prefetched_vid = wid2vid[wid][marked_addr];
                 vid_addr = m_bound_regs[2] + (m_prefetched_vid/16)*128 + (m_prefetched_vid%16)*8;
                 next_vid_addr = vid_addr+8;
                 vid_addr &= ADDRALIGN;
                 next_vid_addr &= ADDRALIGN;
 
-                vid_it = wid2vid.find(wid);
-                vid_it2 = vid_it->second.find(marked_addr);
-                vid_it->second.erase(vid_it2);
-                if(wid2vid[wid].size()==0)
-                    wid2vid.erase(vid_it);
+                
 
                 assert(wid2num_vl_prefetched.find(wid)!=wid2num_vl_prefetched.end());
                 //assert(wid2el_idx.find(wid)==wid2el_idx.end()||wid2el_idx[wid].size()<2);
@@ -2401,6 +2397,11 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
                     //     wid2el_idx[wid][1] = el_idx;
                     //     // gen_prefetch_edgelist_on_vertex(el_tail,el_head,inst);
                     // }
+                    vid_it = wid2vid.find(wid);
+                    vid_it2 = vid_it->second.find(marked_addr);
+                    vid_it->second.erase(vid_it2);
+                    if(wid2vid[wid].size()==0)
+                        wid2vid.erase(vid_it);
                     gen_prefetch_edgelist_on_vertex(wid2el_idx[wid][marked_addr][0],wid2el_idx[wid][marked_addr][1],wid,marked_addr);
                 }
             break;

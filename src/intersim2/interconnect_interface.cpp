@@ -178,7 +178,7 @@ void InterconnectInterface::Push(unsigned input_deviceID, unsigned output_device
     case WRITE_REQUEST: packet_type = Flit::WRITE_REQUEST  ;break;
     case READ_REPLY:    packet_type = Flit::READ_REPLY     ;break;
     case WRITE_ACK:     packet_type = Flit::WRITE_REPLY    ;break;
-    default: assert (0);
+    default: printf("error\n");assert (0);
   }
 
   //TODO: _include_queuing ?
