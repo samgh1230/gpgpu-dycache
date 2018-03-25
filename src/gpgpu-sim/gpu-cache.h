@@ -2201,7 +2201,7 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
         if(it!=wid2cur_wl.end()){
             it_addr it2 = it->second.find(marked_addr);
             assert(it2==it->second.end());
-            (*it2)[marked_addr] = cur_wl_idx;
+            wid2cur_wl[wid][marked_addr] = cur_wl_idx;
         } else {
             addr2value tmp;
             tmp[marked_addr]=cur_wl_idx;
@@ -2270,9 +2270,9 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
         switch(type){
             case WORK_LIST:
                 next_wl_it = wid2next_wl.find(wid);
-                assert(next_wl_it);
+                assert(next_wl_it!=wid2next_wl.end());
                 next_wl_it2 = next_wl_it->second.find(marked_addr);
-                assert(next_wl_it2);
+                assert(next_wl_it2!=wid2next_wl[wid].end());
                 prefetched_next_wl_idx = wid2next_wl[wid][marked_addr];
 
                 next_wl_it->second.erase(next_wl_it2);
@@ -2305,7 +2305,7 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
                         wid2num_vl_prefetched.insert(wid2u::value_type(wid, addr2u::value_type(marked_addr,1)));
                     } else{
                         num_prefetch_it2 = num_prefetch_it->second.find(marked_addr);
-                        assert(num_prefetch_it2==num_prefetch_it->second.end())
+                        assert(num_prefetch_it2==num_prefetch_it->second.end());
                         num_prefetch_it->second[marked_addr]=1;
                     }
                     //assert(wid2num_vl_prefetched.find(wid)==wid2num_vl_prefetched.end());
@@ -2322,7 +2322,7 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
                         wid2num_vl_prefetched.insert(wid2u::value_type(wid, addr2u::value_type(marked_addr,2)));
                     } else{
                         num_prefetch_it2 = num_prefetch_it->second.find(marked_addr);
-                        assert(num_prefetch_it2==num_prefetch_it->second.end())
+                        assert(num_prefetch_it2==num_prefetch_it->second.end());
                         num_prefetch_it->second[marked_addr]=2;
                     }
                     // assert(wid2num_vl_prefetched.find(wid)==wid2num_vl_prefetched.end());
