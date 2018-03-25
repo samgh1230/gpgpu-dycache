@@ -116,12 +116,16 @@ public:
    bool is_prefetched(){return m_prefetched;}
    void set_marked_wid(unsigned wid) {m_warp_id=wid;}
    unsigned get_marked_wid() {return m_warp_id;}
+   void set_marked_addr(new_addr_type marked_addr) {m_marked_addr = marked_addr;}
+   new_addr_type get_marked_addr(){return m_marked_addr;}
 private:
    // request source information
    unsigned m_request_uid;
    unsigned m_sid;
    unsigned m_tpc;
+
    unsigned m_warp_id;
+   new_addr_type m_marked_addr;
 
    // where is this request now?
    enum mem_fetch_status m_status;

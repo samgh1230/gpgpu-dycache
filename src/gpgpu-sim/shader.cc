@@ -703,7 +703,7 @@ void shader_core_ctx::func_exec_inst( warp_inst_t &inst )
                 // get_gpu()->get_global_memory()->read(addr,8,&data);
 
                 printf("core %u get current worklist addr: 0x%x\n", m_sid, wl_idx_addr);
-                m_ldst_unit->get_prefetcher()->set_cur_wl_idx(wl_idx_addr,inst.warp_id());
+                m_ldst_unit->get_prefetcher()->set_cur_wl_idx(wl_idx_addr,inst.warp_id(),wl_idx_addr);
             }
         }
         else 
@@ -1422,6 +1422,7 @@ mem_stage_stall_type ldst_unit::process_prefetch_queue( cache_t *cache )
     std::list<cache_event> events;
     mf->set_prefetch_flag();
     mf->set_marked_wid(access->get_marked_wid());
+    mf->set_marked_addr(access->get_marked_addr());
     enum cache_request_status status = cache->access(mf->get_addr(),mf,gpu_sim_cycle+gpu_tot_sim_cycle,events);
     return process_prefetch_cache_access( cache, mf->get_addr(), events, mf, status );
 }
@@ -1439,7 +1440,7 @@ mem_stage_stall_type ldst_unit::process_memory_access_queue( cache_t *cache, war
     mem_fetch *mf = m_mf_allocator->alloc(inst,inst.accessq_back());
     std::list<cache_event> events;
     if(inst.is_load() && m_core->is_prefetch_started()&&inst.is_marked())
-        m_prefetcher->new_load_addr(mf->get_addr(),inst.warp_id());
+        m_prefetcher->new_load_addr(mf->get_addr(),inst.warp_id(),inst.get_first_valid_addr());
     if(inst.space.get_type()==global_space && mf->get_data_size()>m_core->m_config->gpgpu_cache_data1_linesize){
         printf("mem_fetch data size=%d,cache line size=%d\n",mf->get_data_size(),m_core->m_config->gpgpu_cache_data1_linesize);
         exit(1);

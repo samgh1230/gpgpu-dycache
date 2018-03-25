@@ -642,7 +642,8 @@ public:
                  new_addr_type address, 
                  unsigned size, 
                  bool wr, 
-                 unsigned wid)
+                 unsigned wid,
+                 new_addr_type marked_addr)
    {
       init();
       m_type = type;
@@ -650,9 +651,11 @@ public:
       m_req_size = size;
       m_write = wr;
       m_wid = wid;
+      m_marked_addr = marked_addr;
    } 
 
    unsigned get_marked_wid() {return m_wid;}
+   new_addr_type get_marked_addr() {return m_marked_addr;}
 
    new_addr_type get_addr() const { return m_addr; }
    void set_addr(new_addr_type addr) {m_addr=addr;}
@@ -696,6 +699,7 @@ private:
    mem_access_byte_mask_t m_byte_mask;
 
    unsigned m_wid;
+   new_addr_type m_marked_addr;
    static unsigned sm_next_access_uid;
 };
 
