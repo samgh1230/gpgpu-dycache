@@ -2179,18 +2179,18 @@ public:
         m_worklist_tail = end;
     }
 
-#typedef std::map<new_addr_type, unsigned long long> addr2value;
-#typedef std::map<unsigned, std::map<new_addr_type, unsigned long long> > wid2map;
-#typedef std::map<unsigned, std::map<new_addr_type, unsigned long long> >::iterator it_wid;
-#typedef std::map<new_addr_type, unsigned long long>::iterator it_addr;
-#typedef std::map<unsigned, std::map<new_addr_type, std::vector<unsigned long long> > > wid2vector
-#typedef std::map<unsigned, std::map<new_addr_type, std::vector<unsigned long long> > >::iterator it_wid_vec
-#typedef std::map<new_addr_type, std::vector<unsigned long long> > addr2vec;
-#typedef std::map<new_addr_type, std::vector<unsigned long long> >::iterator it_addr_vec;
-#typedef std::map<unsigned, std::map<new_addr_type, unsigned> > wid2u;
-#typedef std::map<unsigned, std::map<new_addr_type, unsigned> >::iterator it_wid_u;
-#typedef std::map<new_addr_type, unsigned> addr2u;
-#typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
+typedef std::map<new_addr_type, unsigned long long> addr2value;
+typedef std::map<unsigned, std::map<new_addr_type, unsigned long long> > wid2map;
+typedef std::map<unsigned, std::map<new_addr_type, unsigned long long> >::iterator it_wid;
+typedef std::map<new_addr_type, unsigned long long>::iterator it_addr;
+typedef std::map<unsigned, std::map<new_addr_type, std::vector<unsigned long long> > > wid2vector
+typedef std::map<unsigned, std::map<new_addr_type, std::vector<unsigned long long> > >::iterator it_wid_vec
+typedef std::map<new_addr_type, std::vector<unsigned long long> > addr2vec;
+typedef std::map<new_addr_type, std::vector<unsigned long long> >::iterator it_addr_vec;
+typedef std::map<unsigned, std::map<new_addr_type, unsigned> > wid2u;
+typedef std::map<unsigned, std::map<new_addr_type, unsigned> >::iterator it_wid_u;
+typedef std::map<new_addr_type, unsigned> addr2u;
+typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
 
 
     void set_cur_wl_idx(new_addr_type addr, unsigned wid, new_addr_type marked_addr) {
