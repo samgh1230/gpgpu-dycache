@@ -2183,8 +2183,8 @@ typedef std::map<new_addr_type, unsigned long long> addr2value;
 typedef std::map<unsigned, std::map<new_addr_type, unsigned long long> > wid2map;
 typedef std::map<unsigned, std::map<new_addr_type, unsigned long long> >::iterator it_wid;
 typedef std::map<new_addr_type, unsigned long long>::iterator it_addr;
-typedef std::map<unsigned, std::map<new_addr_type, std::vector<unsigned long long> > > wid2vector
-typedef std::map<unsigned, std::map<new_addr_type, std::vector<unsigned long long> > >::iterator it_wid_vec
+typedef std::map<unsigned, std::map<new_addr_type, std::vector<unsigned long long> > > wid2vector;
+typedef std::map<unsigned, std::map<new_addr_type, std::vector<unsigned long long> > >::iterator it_wid_vec;
 typedef std::map<new_addr_type, std::vector<unsigned long long> > addr2vec;
 typedef std::map<new_addr_type, std::vector<unsigned long long> >::iterator it_addr_vec;
 typedef std::map<unsigned, std::map<new_addr_type, unsigned> > wid2u;
@@ -2203,7 +2203,9 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
             assert(it2==it->second.end());
             (*it2)[marked_addr] = cur_wl_idx;
         } else {
-            wid2cur_wl.insert(std::map<unsigned long long, std::map<new_addr_type, unsigned long long> >::value_type(wid, std::map<unsigned long long, unsigned long long>::value_type(marked_addr,cur_wl_idx)));
+            addr2value tmp;
+            tmp[marked_addr]=cur_wl_idx;
+            wid2cur_wl.insert(std::map<unsigned long long, std::map<new_addr_type, unsigned long long> >::value_type(wid, tmp));
         }
     }
 
