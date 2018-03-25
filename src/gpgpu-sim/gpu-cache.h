@@ -2397,6 +2397,10 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
                     //     wid2el_idx[wid][1] = el_idx;
                     //     // gen_prefetch_edgelist_on_vertex(el_tail,el_head,inst);
                     // }
+                    wid2num_vl_prefetched[wid].erase(wid2num_vl_prefetched[wid].find(marked_addr));
+                    if(wid2num_vl_prefetched[wid].size()==0){
+                        wid2num_vl_prefetched.erase(wid2num_vl_prefetched.find(wid));
+                    }
                     vid_it = wid2vid.find(wid);
                     vid_it2 = vid_it->second.find(marked_addr);
                     vid_it->second.erase(vid_it2);
