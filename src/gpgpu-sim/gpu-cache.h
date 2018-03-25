@@ -2367,8 +2367,8 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
                     wid2el_idx.insert(wid2vector::value_type(wid,tmp1));
                 } else{
                     el_idx_it2 = wid2el_idx[wid].find(marked_addr);
-                    assert(el_idx_it2==wid2el_idx[wid].end());
-                    wid2el_idx[wid][marked_addr]=el_idx_vec;
+                    if(el_idx_it2==wid2el_idx[wid].end())
+                        wid2el_idx[wid][marked_addr]=el_idx_vec;
                 }
 
                 if(wid2num_vl_prefetched[wid][marked_addr]==1){
