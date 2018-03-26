@@ -2003,8 +2003,10 @@ l1_cache::access( new_addr_type addr,
         = m_tag_array->probe( block_addr, common_tag, chunck_tag, cache_index,sid,current_blksz,data_size );
     enum cache_request_status access_status
         = process_tag_probe( wr, probe_status, addr, cache_index, sid, mf, time, events );
-    m_stats.inc_stats(mf->get_access_type(),
-        m_stats.select_stats_status(probe_status, access_status));
+    
+    if(!mf->is_prefetched())
+        m_stats.inc_stats(mf->get_access_type(),
+            m_stats.select_stats_status(probe_status, access_status));
    
     return access_status;
 }
