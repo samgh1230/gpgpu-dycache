@@ -2705,12 +2705,12 @@ void shader_core_ctx::cycle()
 {
     m_sample_cycles++;
     // if(m_sample_cycles==SAMPLE_INTERVAL)
-    if(get_num_processed_reqs()>=SAMPLE_REQ)
-    {
-        adjust_cache_blk();
-        //m_sample_cycles=0;
-        m_sample_reqs=0;
-    }
+    // if(get_num_processed_reqs()>=SAMPLE_REQ)
+    // {
+    //     adjust_cache_blk();
+    //     //m_sample_cycles=0;
+    //     m_sample_reqs=0;
+    // }
 
     /*if(cache_efficiency()<=0.5||avg_reqs_per_inst()>=4)
         change2small_blksz(32);*/
