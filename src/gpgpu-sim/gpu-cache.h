@@ -2216,6 +2216,8 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
         it_wid it = wid2cur_wl.find(wid);
         assert(it!=wid2cur_wl.end());
         it_addr it2 = it->second.find(marked_addr);
+
+        
         
         
         // if(!is_full()){
@@ -2243,12 +2245,16 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
                     }
                 }
                 printf("current wl index:%llu, next_wl_index_addr:0x%x\n", cur_wl, next_addr);
-                gen_prefetch_requests(next_addr, type, wid, marked_addr);
+                gen_prefetch_worklist(next_addr, wid, marked_addr);
             } 
+            wid2cur_wl[wid].erase(it2);
+            if(wid2cur_wl[wid].size()==0)
+                wid2cur_wl.erase(it);
         } 
-        wid2cur_wl[wid].erase(it2);
-        if(wid2cur_wl[wid].size()==0)
-            wid2cur_wl.erase(it);
+        // else if(type==EDGE_LIST){
+        //     gen_prefetch_edgelist(addr, wid, marked_addr);
+        // }
+        
     }
 
     void prefetched_data(unsigned long long* pre_data, new_addr_type addr, unsigned wid, new_addr_type marked_addr){
@@ -2455,23 +2461,23 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
         else return NONE;
     }
 
-    void gen_prefetch_requests(new_addr_type addr, List_Type type, unsigned wid, new_addr_type marked_addr)//统一入口
-    {
-        switch(type){
-            case WORK_LIST: 
+    // void gen_prefetch_requests(new_addr_type addr, List_Type type, unsigned wid, new_addr_type marked_addr)//统一入口
+    // {
+    //     switch(type){
+    //         case WORK_LIST: 
                 //assert(addr%128==0);
                 //printf("current worklist index:%llu\n",m_cur_wl_idx);
                 // if(addr< m_bound_regs[1]){
-                gen_prefetch_worklist(addr,wid,marked_addr);
+                // gen_prefetch_worklist(addr,wid,marked_addr);
                     //m_prefetched_wl_idx = m_cur_wl_idx+1;
                 // }
-                break;
+                // break;
             // case VERTEX_LIST: gen_prefetch_vertexlist(addr);break;
             // case EDGE_LIST:  if((addr-m_bound_regs[4])%(4*128)==0) gen_prefetch_edgelist(addr); break;
             // case VISIT_LIST:   gen_prefetch_visitedlist(addr);break;
-            default: break;
-        }
-    }
+    //         default: break;
+    //     }
+    // }
 
     void gen_prefetch_worklist(new_addr_type addr, unsigned wid, new_addr_type marked_addr)//generate worklist prefetch, push reqs into req_q
     {
@@ -2490,7 +2496,7 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
     void gen_prefetch_edgelist(new_addr_type addr, unsigned wid, new_addr_type marked_addr)//generate edgelist prefetch, push reqs into req_q
     {
         printf("generate edgelist prefetch\n");
-        for(unsigned i=0;i<4;i++){
+        for(unsigned i=1;i<5;i++){
             new_addr_type next_addr = addr + 128*(4+i);
             if(next_addr>=m_bound_regs[5]||next_addr<m_bound_regs[4])
                 break;
