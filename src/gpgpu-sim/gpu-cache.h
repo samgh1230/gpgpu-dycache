@@ -2558,10 +2558,12 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
 
     bool req_in_queue(new_addr_type addr)
     {
-        addr &= ADDRALIGN;
+        if(addr==m_bound_regs[0])
+            return false;
+        new_addr_type marked_addr = addr-8;
         std::list<mem_access_t*>::iterator it = m_req_q.begin();
         for(;it!=m_req_q.end();it++){
-            if((*it)->get_addr()==addr)
+            if((*it)->get_marked_addr()==addr)
                 return true;
         }
         return false;
@@ -2569,18 +2571,39 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
 
     bool waiting_for_data(new_addr_type addr, unsigned wid)
     {
-        if(wid2next_wl.find(wid)!=wid2next_wl.end())
-            return true;
-        if(wid2vid.find(wid)!=wid2vid.end())
-            return true;
-        if(wid2num_vl_prefetched.find(wid)!=wid2num_vl_prefetched.end())
-            return true;
-        if(wid2num_el_prefetched.find(wid)!=wid2num_el_prefetched.end())
-            return true;
-        if(wid2el_addr.find(wid)!=wid2el_addr.end())
-            return true;
-        if(wid2el_idx.find(wid)!=wid2el_idx.end())
-            return true;
+        if(addr==m_bound_regs[0])
+            return false;
+        addr -= 8;
+        if(wid2next_wl.find(wid)!=wid2next_wl.end()){
+            if(wid2next_wl[wid].find(addr)!=wid2next_wl[wid].end())
+                return true;
+        }
+         
+        if(wid2vid.find(wid)!=wid2vid.end()){
+            if(wid2vid[wid].find(addr)!=wid2vid[wid].end())
+                return true;
+        }
+        
+        if(wid2num_vl_prefetched.find(wid)!=wid2num_vl_prefetched.end()){
+            if(wid2num_vl_prefetched[wid].find(addr)!=wid2num_vl_prefetched[wid].end())
+                return true;
+        }
+            // return true;
+        if(wid2num_el_prefetched.find(wid)!=wid2num_el_prefetched.end()){
+            if(wid2num_el_prefetched[wid].find(addr)!=wid2num_el_prefetched[wid].end())
+                return true;
+        }
+            // return true;
+        if(wid2el_addr.find(wid)!=wid2el_addr.end()){
+            if(wid2el_addr[wid].find(addr)!=wid2el_addr[wid].end())
+                return true;
+        }
+            // return true;
+        if(wid2el_idx.find(wid)!=wid2el_idx.end()){
+            if(wid2el_idx[wid].find(wid)!=wid2el_idx[wid].end())
+                return true;
+        }
+            // return true;
         return false;
     }
 
@@ -2611,7 +2634,6 @@ private:
 
     unsigned m_stat_wl_load;
     unsigned m_stat_not_finished;
-
 };
 
 #endif

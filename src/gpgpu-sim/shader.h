@@ -1967,8 +1967,8 @@ public:
 
     void get_icnt_stats(long &n_simt_to_mem, long &n_mem_to_simt) const;
 
-    unsigned get_cluster_stat_wl_load(){
-        unsigned tot_loads=0
+    unsigned get_cluster_stat_wl_loads(){
+        unsigned tot_loads=0;
         for ( unsigned i = 0; i < m_config->n_simt_cores_per_cluster; ++i ) {
             tot_loads += m_core[i]->get_stat_wl_load();
         }
