@@ -2140,6 +2140,7 @@ enum Prefetch_Mode{
 #define ADDRALIGN 0xffffff80;
 #define MAX_LINE 8
 #define ALIGN_32 0xffffffe0;
+#define STEP 1
 class Prefetch_Unit{
 public:
     Prefetch_Unit(){init();m_stat_not_finished=0;m_stat_wl_load=0;}
@@ -2231,7 +2232,7 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
         List_Type type = addr_filter(addr);
         if(type==WORK_LIST && it!=wid2cur_wl.end() && it2!=it->second.end()){
             unsigned long long cur_wl = it2->second;
-            unsigned long long next_addr = m_bound_regs[0]+8*(cur_wl+1);
+            unsigned long long next_addr = m_bound_regs[0]+8*(cur_wl+STEP);
             // next_addr &= ADDRALIGN;
 
             if(next_addr>=m_bound_regs[0]&&next_addr<m_bound_regs[1])
@@ -2240,12 +2241,12 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
                 //it_wid it3 = wid2next_wl.find(wid);
                 if(wid2next_wl.find(wid)==wid2next_wl.end()){
                     addr2value tmp;
-                    tmp[marked_addr]=cur_wl+1;
+                    tmp[marked_addr]=cur_wl+STEP;
                     wid2next_wl.insert(wid2map::value_type(wid, tmp));
                 } else{
                     it_addr it3 = wid2next_wl[wid].find(marked_addr);
                     if(it3==wid2next_wl[wid].end()){
-                        wid2next_wl[wid][marked_addr] = cur_wl+1;
+                        wid2next_wl[wid][marked_addr] = cur_wl+STEP;
                     } else {
                         printf("already has a mapping. wid(%u), marked_addr(0x%x), next_wl_index(%llu)\n",wid, marked_addr, wid2next_wl[wid][marked_addr]);
                         exit(1);
