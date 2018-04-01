@@ -916,11 +916,15 @@ void gpgpu_sim::gpu_print_stat()
 
    cache_stats core_cache_stats;
    core_cache_stats.clear();
+   unsigned tot_wl_loads=0, tot_not_finished_prefetching=0;
    for(unsigned i=0; i<m_config.num_cluster(); i++){
        m_cluster[i]->get_cache_stats(core_cache_stats);
+       tot_wl_loads += m_cluster[i]->get_cluster_stat_wl_loads();
+       tot_not_finished_prefetching += m_cluster[i]->get_cluster_stat_not_finished();
    }
    printf("\nTotal_core_cache_stats:\n");
    core_cache_stats.print_stats(stdout, "Total_core_cache_stats_breakdown");
+   printf("ratio of not finished prefetching:%f\%\n",(float)tot_not_finished_prefetching/tot_wl_loads*100);
    shader_print_scheduler_stat( stdout, false );
 
    m_shader_stats->print(stdout);
@@ -1172,6 +1176,7 @@ void shader_core_ctx::issue_block2core( kernel_info_t &kernel, new_addr_type* st
     printf("GPGPU-Sim uArch: core:%3d, cta:%2u initialized @(%lld,%lld)\n", m_sid, free_cta_hw_id, gpu_sim_cycle, gpu_tot_sim_cycle );
 
     update_struct_bound(struct_bound);
+    m_ldst_unit->get_prefetcher()->init();
 }
 ///////////////////////////////////////////////////////////////////////////////////////////
 

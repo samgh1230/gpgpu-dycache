@@ -1619,6 +1619,9 @@ public:
     bool is_prefetch_started() {return m_prefetch_started;}
     void reset_prefetch_started() {m_prefetch_started=false;}
 
+    unsigned get_stat_wl_load() {return m_ldst_unit->get_prefetcher()->get_stat_wl_load();}
+    unsigned get_stat_not_finished() {return m_ldst_unit->get_prefetcher()->get_stat_not_finished();}
+
     void read_data_from_memory(unsigned long long* data, new_addr_type addr);
 
     void change2small_blksz(unsigned blksz);
@@ -1964,6 +1967,20 @@ public:
 
     void get_icnt_stats(long &n_simt_to_mem, long &n_mem_to_simt) const;
 
+    unsigned get_cluster_stat_wl_load(){
+        unsigned tot_loads=0
+        for ( unsigned i = 0; i < m_config->n_simt_cores_per_cluster; ++i ) {
+            tot_loads += m_core[i]->get_stat_wl_load();
+        }
+        return tot_loads;
+    }
+    unsigned get_cluster_stat_not_finished(){
+        unsigned sum=0;
+        for ( unsigned i = 0; i < m_config->n_simt_cores_per_cluster; ++i ) {
+            sum += m_core[i]->get_stat_not_finished();
+        }
+        return sum;
+    }
 private:
     unsigned m_cluster_id;
     gpgpu_sim *m_gpu;

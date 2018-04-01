@@ -2138,9 +2138,11 @@ enum Prefetch_Mode{
     LARGE_NODE
 };
 #define ADDRALIGN 0xffffff80;
+#define MAX_LINE 8
+#define ALIGN_32 0xffffffe0;
 class Prefetch_Unit{
 public:
-    Prefetch_Unit(){init();}
+    Prefetch_Unit(){init();m_stat_not_finished=0;m_stat_wl_load=0;}
     ~Prefetch_Unit(){}
 
     void init()
@@ -2158,8 +2160,10 @@ public:
         wid2next_wl.clear();//<current wl index, next wl index>
         wid2vid.clear(); //<next wl index, prefetched vid>
         wid2num_vl_prefetched.clear();//<prefetched vertexlist addr, issued num of prefetching>
+        wid2num_el_prefetched.clear();
         wid2el_addr.clear();
         wid2el_idx.clear();
+
     }
     
     void reinit()
@@ -2192,11 +2196,17 @@ typedef std::map<unsigned, std::map<new_addr_type, unsigned> >::iterator it_wid_
 typedef std::map<new_addr_type, unsigned> addr2u;
 typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
 
+    unsigned get_stat_wl_load() {return m_stat_wl_load;}
+    unsigned get_stat_not_finished() {return m_stat_not_finished;}
 
     void set_cur_wl_idx(new_addr_type addr, unsigned wid, new_addr_type marked_addr) {
         assert((addr-m_bound_regs[0])%8==0);
         unsigned long long cur_wl_idx = (addr-m_bound_regs[0])/8;
         printf("add wid2cur_wl mapping. addr:0x%x, current wl index:%llu\n",addr,cur_wl_idx);
+        m_stat_wl_load++;
+        if(is_prefetching(addr,wid)){
+            m_stat_not_finished++;
+        }
         it_wid it = wid2cur_wl.find(wid);
         if(it!=wid2cur_wl.end()){
             it_addr it2 = it->second.find(marked_addr);
@@ -2217,9 +2227,6 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
         assert(it!=wid2cur_wl.end());
         it_addr it2 = it->second.find(marked_addr);
 
-        
-        
-        
         // if(!is_full()){
         List_Type type = addr_filter(addr);
         if(type==WORK_LIST && it!=wid2cur_wl.end() && it2!=it->second.end()){
@@ -2512,7 +2519,7 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
         if(length%128) length = length/128+1;
         else length /=128;
 
-        unsigned max_lines = (length>8)?8:length;
+        unsigned max_lines = (length>MAX_LINE)?MAX_LINE:length;
 
 
         it_wid_u num_el_prefetch_it = wid2num_el_prefetched.find(wid);
@@ -2542,6 +2549,41 @@ typedef std::map<new_addr_type, unsigned>::iterator it_addr_u;
         m_req_q.push_back(access);
     }
 
+    bool is_prefetching(new_addr_type addr, unsigned wid)
+    {
+        if(req_in_queue(addr)||waiting_for_data(addr,wid))
+            return true;
+        else return false;
+    }
+
+    bool req_in_queue(new_addr_type addr)
+    {
+        addr &= ADDRALIGN;
+        std::list<mem_access_t*>::iterator it = m_req_q.begin();
+        for(;it!=m_req_q.end();it++){
+            if((*it)->get_addr()==addr)
+                return true;
+        }
+        return false;
+    }
+
+    bool waiting_for_data(new_addr_type addr, unsigned wid)
+    {
+        if(wid2next_wl.find(wid)!=wid2next_wl.end())
+            return true;
+        if(wid2vid.find(wid)!=wid2vid.end())
+            return true;
+        if(wid2num_vl_prefetched.find(wid)!=wid2num_vl_prefetched.end())
+            return true;
+        if(wid2num_el_prefetched.find(wid)!=wid2num_el_prefetched.end())
+            return true;
+        if(wid2el_addr.find(wid)!=wid2el_addr.end())
+            return true;
+        if(wid2el_idx.find(wid)!=wid2el_idx.end())
+            return true;
+        return false;
+    }
+
     mem_access_t* pop_from_top() {return m_req_q.front();}
     void del_req_from_top() {m_req_q.pop_front();}
     bool queue_empty() {return !m_req_q.size();}
@@ -2552,6 +2594,7 @@ private:
     //worklist, vertexlist, edgelist, visitedlist, out_worklist. (start, end)
     //EWMA_Unit m_ewma;
     std::list<mem_access_t*> m_req_q;
+    std::list<mem_access_t*> m_prior_q;
     //Prefetch_Mode m_mode;
     unsigned m_max_queue_length;
     bool m_double_line;
@@ -2565,6 +2608,9 @@ private:
     wid2u wid2num_el_prefetched;
     wid2vector wid2el_addr;
     wid2vector wid2el_idx;
+
+    unsigned m_stat_wl_load;
+    unsigned m_stat_not_finished;
 
 };
 
